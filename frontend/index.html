@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinSight - AI Market Anomaly Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen">
+    <div id="app"></div>
+
+    <script>
+        // =================================================================
+        // CONFIG
+        // =================================================================
+        const API_URL = localStorage.getItem('api_url') || 'http://localhost:8000';
+
+        // =================================================================
+        // SECURITY UTILITIES
+        // =================================================================
+        /**
+         * Escape HTML special characters to prevent XSS attacks.
+         * ALWAYS use this when inserting user-controlled data into HTML.
+         */
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        /**
+         * Escape string for use in JavaScript string literals (e.g., onclick handlers).
+         * Prevents injection via quotes and special characters.
+         */
+        function escapeJs(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/</g, '\\x3c')
+                .replace(/>/g, '\\x3e');
+        }
+
+        // =================================================================
+        // STATE MANAGEMENT
+        // =================================================================
+        const state = {
+            token: localStorage.getItem('token'),
+            user: JSON.parse(localStorage.getItem('user') || 'null'),
+            page: 'landing', // landing, login, register, dashboard
+            signals: [],
+            watchlist: [],
+            loading: false,
+            error: null
+        };
+
+        function setState(updates) {
+            Object.assign(state, updates);
+            render();
+        }
+
+        // =================================================================
+        // API CALLS
+        // =================================================================
+        async function api(endpoint, options = {}) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (state.token) {
+                headers['Authorization'] = `Bearer ${state.token}`;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`, {
+                    ...options,
+                    headers: { ...headers, ...options.headers }
+                });
+                
+                if (res.status === 401) {
+                    logout();
+                    throw new Error('Session expired');
+                }
+                
+                const data = await res.json();
+                
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Request failed');
+                }
+                
+                return data;
+            } catch (err) {
+                if (err.message === 'Failed to fetch') {
+                    throw new Error('Cannot connect to API. Is the server running?');
+                }
+                throw err;
+            }
+        }
+
+        async function register(email, password, name) {
+            setState({ loading: true, error: null });
+            try {
+                const data = await api('/api/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password, name })
+                });
+                localStorage.setItem('token', data.access_token);
+                state.token = data.access_token;
+                await loadUser();
+                setState({ page: 'dashboard', loading: false });
+            } catch (err) {
+                setState({ error: err.message, loading: false });
+            }
+        }
+
+        async function login(email, password) {
+            setState({ loading: true, error: null });
+            try {
+                const data = await api('/api/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                localStorage.setItem('token', data.access_token);
+                state.token = data.access_token;
+                await loadUser();
+                setState({ page: 'dashboard', loading: false });
+            } catch (err) {
+                setState({ error: err.message, loading: false });
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setState({ token: null, user: null, page: 'landing', signals: [], watchlist: [] });
+        }
+
+        async function loadUser() {
+            const user = await api('/api/auth/me');
+            localStorage.setItem('user', JSON.stringify(user));
+            state.user = user;
+        }
+
+        async function loadWatchlist() {
+            const data = await api('/api/watchlist');
+            setState({ watchlist: data.symbols });
+        }
+
+        async function loadSignals() {
+            const data = await api('/api/signals/latest?limit=10');
+            setState({ signals: data });
+        }
+
+        async function addSymbol(symbol) {
+            setState({ loading: true, error: null });
+            try {
+                await api('/api/watchlist', {
+                    method: 'POST',
+                    body: JSON.stringify({ symbol })
+                });
+                await loadWatchlist();
+                await loadSignals();
+                setState({ loading: false });
+            } catch (err) {
+                setState({ error: err.message, loading: false });
+            }
+        }
+
+        async function removeSymbol(symbol) {
+            try {
+                await api(`/api/watchlist/${symbol}`, { method: 'DELETE' });
+                await loadWatchlist();
+            } catch (err) {
+                setState({ error: err.message });
+            }
+        }
+
+        async function recordAction(signalId, action) {
+            try {
+                await api(`/api/signals/${signalId}/action`, {
+                    method: 'POST',
+                    body: JSON.stringify({ action })
+                });
+                // Visual feedback
+                const el = document.querySelector(`[data-signal="${signalId}"]`);
+                if (el) el.classList.add('opacity-50');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // =================================================================
+        // COMPONENTS
+        // =================================================================
+        function Landing() {
+            return `
+                <nav class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur border-b border-white/10">
+                    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+                        <div class="text-xl font-bold">
+                            <span class="text-emerald-400">Fin</span>Sight
+                        </div>
+                        <div class="flex gap-4">
+                            <button onclick="setState({page:'login'})" class="text-white/70 hover:text-white">
+                                Login
+                            </button>
+                            <button onclick="setState({page:'register'})" class="bg-emerald-500 hover:bg-emerald-400 px-4 py-2 rounded-lg font-medium">
+                                Start Free
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+
+                <section class="pt-32 pb-20 px-6">
+                    <div class="max-w-4xl mx-auto text-center">
+                        <h1 class="text-5xl md:text-7xl font-bold mb-6">
+                            Stop Chasing Noise.<br>
+                            <span class="text-emerald-400">Start Catching Signals.</span>
+                        </h1>
+                        <p class="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
+                            AI-powered anomaly detection that tells you when something 
+                            statistically unusual happens—so you can research what matters.
+                        </p>
+                        <button onclick="setState({page:'register'})" class="bg-emerald-500 hover:bg-emerald-400 px-8 py-4 rounded-lg font-semibold text-lg">
+                            Try Free for 14 Days →
+                        </button>
+                    </div>
+                </section>
+
+                <section class="py-20 px-6 bg-white/5">
+                    <div class="max-w-6xl mx-auto">
+                        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+                        <div class="grid md:grid-cols-3 gap-8">
+                            <div class="bg-black border border-white/10 rounded-xl p-6">
+                                <div class="text-emerald-400 text-2xl mb-4">1</div>
+                                <h3 class="font-semibold text-lg mb-2">Add Your Watchlist</h3>
+                                <p class="text-white/50">Pick the stocks you want to track. Free tier gets 5 symbols.</p>
+                            </div>
+                            <div class="bg-black border border-white/10 rounded-xl p-6">
+                                <div class="text-emerald-400 text-2xl mb-4">2</div>
+                                <h3 class="font-semibold text-lg mb-2">AI Monitors 24/7</h3>
+                                <p class="text-white/50">Our detection engine watches for statistically unusual activity.</p>
+                            </div>
+                            <div class="bg-black border border-white/10 rounded-xl p-6">
+                                <div class="text-emerald-400 text-2xl mb-4">3</div>
+                                <h3 class="font-semibold text-lg mb-2">Get Actionable Signals</h3>
+                                <p class="text-white/50">Only see what matters. No noise, just anomalies worth researching.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="py-20 px-6">
+                    <div class="max-w-5xl mx-auto">
+                        <h2 class="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
+                        <p class="text-white/50 text-center mb-12">One good trade covers a year of Pro.</p>
+                        
+                        <div class="grid md:grid-cols-3 gap-8">
+                            <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+                                <h3 class="text-xl font-semibold mb-2">Free</h3>
+                                <div class="mb-6">
+                                    <span class="text-4xl font-bold">₹0</span>
+                                    <span class="text-white/50">/forever</span>
+                                </div>
+                                <ul class="space-y-3 mb-8 text-sm">
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 5 symbols</li>
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Daily digest</li>
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 7-day history</li>
+                                </ul>
+                                <button onclick="setState({page:'register'})" class="w-full py-3 rounded-lg bg-white/10 hover:bg-white/20 font-semibold">
+                                    Start Free
+                                </button>
+                            </div>
+                            
+                            <div class="bg-emerald-500 text-black rounded-2xl p-8">
+                                <h3 class="text-xl font-semibold mb-2">Pro</h3>
+                                <div class="mb-6">
+                                    <span class="text-4xl font-bold">₹1,499</span>
+                                    <span class="text-black/60">/month</span>
+                                </div>
+                                <ul class="space-y-3 mb-8 text-sm">
+                                    <li class="flex items-center gap-2"><span>✓</span> 25 symbols</li>
+                                    <li class="flex items-center gap-2"><span>✓</span> Real-time alerts</li>
+                                    <li class="flex items-center gap-2"><span>✓</span> AI explanations</li>
+                                    <li class="flex items-center gap-2"><span>✓</span> 90-day history</li>
+                                    <li class="flex items-center gap-2"><span>✓</span> Learning engine</li>
+                                </ul>
+                                <button onclick="setState({page:'register'})" class="w-full py-3 rounded-lg bg-black text-white font-semibold hover:bg-black/80">
+                                    Go Pro
+                                </button>
+                            </div>
+                            
+                            <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+                                <h3 class="text-xl font-semibold mb-2">Serious</h3>
+                                <div class="mb-6">
+                                    <span class="text-4xl font-bold">₹4,999</span>
+                                    <span class="text-white/50">/month</span>
+                                </div>
+                                <ul class="space-y-3 mb-8 text-sm">
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 100 symbols</li>
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> API access</li>
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Webhooks</li>
+                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 1-year history</li>
+                                </ul>
+                                <button class="w-full py-3 rounded-lg bg-white/10 hover:bg-white/20 font-semibold">
+                                    Contact Us
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <footer class="py-12 px-6 border-t border-white/10">
+                    <div class="max-w-6xl mx-auto flex justify-between items-center">
+                        <div class="text-white/50 text-sm">© 2025 FinSight. Not financial advice.</div>
+                        <div class="flex gap-6 text-white/50 text-sm">
+                            <a href="#" class="hover:text-white">Privacy</a>
+                            <a href="#" class="hover:text-white">Terms</a>
+                        </div>
+                    </div>
+                </footer>
+            `;
+        }
+
+        function AuthForm(isLogin) {
+            return `
+                <div class="min-h-screen flex items-center justify-center px-6">
+                    <div class="w-full max-w-md">
+                        <div class="text-center mb-8">
+                            <a href="#" onclick="setState({page:'landing'})" class="text-2xl font-bold">
+                                <span class="text-emerald-400">Fin</span>Sight
+                            </a>
+                            <h1 class="text-xl text-white/70 mt-2">${isLogin ? 'Welcome back' : 'Create account'}</h1>
+                        </div>
+
+                        ${state.error ? `
+                            <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+                                ${escapeHtml(state.error)}
+                            </div>
+                        ` : ''}
+
+                        <form onsubmit="handleAuth(event, ${isLogin})" class="space-y-4">
+                            ${!isLogin ? `
+                                <div>
+                                    <label class="block text-white/50 text-sm mb-2">Name</label>
+                                    <input type="text" name="name" required minlength="2"
+                                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
+                                </div>
+                            ` : ''}
+                            
+                            <div>
+                                <label class="block text-white/50 text-sm mb-2">Email</label>
+                                <input type="email" name="email" required
+                                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-white/50 text-sm mb-2">Password</label>
+                                <input type="password" name="password" required minlength="8"
+                                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
+                            </div>
+
+                            <button type="submit" ${state.loading ? 'disabled' : ''} 
+                                class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 py-3 rounded-lg font-semibold">
+                                ${state.loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+                            </button>
+                        </form>
+
+                        <p class="text-center text-white/50 mt-6">
+                            ${isLogin ? "Don't have an account?" : "Already have an account?"}
+                            <button onclick="setState({page:'${isLogin ? 'register' : 'login'}', error: null})" class="text-emerald-400 hover:underline ml-1">
+                                ${isLogin ? 'Sign up' : 'Sign in'}
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleAuth(e, isLogin) {
+            e.preventDefault();
+            const form = e.target;
+            const email = form.email.value;
+            const password = form.password.value;
+            
+            if (isLogin) {
+                login(email, password);
+            } else {
+                const name = form.name.value;
+                register(email, password, name);
+            }
+        }
+
+        function Dashboard() {
+            const user = state.user || {};
+            const tierLimits = { free: 5, pro: 25, serious: 100 };
+            const limit = tierLimits[user.tier] || 5;
+            
+            return `
+                <header class="border-b border-white/10 px-6 py-4">
+                    <div class="max-w-6xl mx-auto flex justify-between items-center">
+                        <div class="text-xl font-bold">
+                            <span class="text-emerald-400">Fin</span>Sight
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-white/50 text-sm">
+                                ${user.name || 'User'} • <span class="capitalize">${user.tier || 'free'}</span>
+                            </span>
+                            <button onclick="logout()" class="text-white/50 hover:text-white" title="Logout">
+                                <i data-lucide="log-out" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="max-w-6xl mx-auto px-6 py-8">
+                    ${state.error ? `
+                        <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-6">
+                            ${escapeHtml(state.error)}
+                            <button onclick="setState({error:null})" class="float-right">×</button>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <!-- Signals -->
+                        <div class="lg:col-span-2">
+                            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                                <i data-lucide="bell" class="w-6 h-6 text-emerald-400"></i>
+                                Latest Signals
+                            </h2>
+                            
+                            ${state.signals.length === 0 ? `
+                                <div class="bg-white/5 rounded-xl p-8 text-center text-white/50">
+                                    <i data-lucide="activity" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
+                                    <p>No signals yet. Add symbols to your watchlist to get started.</p>
+                                </div>
+                            ` : `
+                                <div class="space-y-4">
+                                    ${state.signals.map(signal => SignalCard(signal)).join('')}
+                                </div>
+                            `}
+                        </div>
+
+                        <!-- Watchlist -->
+                        <div>
+                            <h2 class="text-xl font-semibold mb-6">
+                                Watchlist
+                                <span class="text-white/50 text-sm font-normal ml-2">
+                                    ${state.watchlist.length}/${limit}
+                                </span>
+                            </h2>
+                            
+                            <form onsubmit="handleAddSymbol(event)" class="flex gap-2 mb-6">
+                                <input type="text" name="symbol" placeholder="AAPL" maxlength="5"
+                                    class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white uppercase placeholder:text-white/30 focus:outline-none focus:border-emerald-500">
+                                <button type="submit" ${state.watchlist.length >= limit ? 'disabled' : ''}
+                                    class="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 p-2 rounded-lg">
+                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                </button>
+                            </form>
+
+                            <div class="space-y-2">
+                                ${state.watchlist.map(symbol => `
+                                    <div class="flex justify-between items-center bg-white/5 rounded-lg px-4 py-3 group">
+                                        <span class="font-medium">${escapeHtml(symbol)}</span>
+                                        <button onclick="removeSymbol('${escapeJs(symbol)}')"
+                                            class="text-white/30 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            ${state.watchlist.length >= limit && user.tier === 'free' ? `
+                                <div class="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                                    <p class="text-sm text-emerald-400">Watchlist full! Upgrade to Pro for 25 symbols.</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+
+        function SignalCard(signal) {
+            const isBullish = signal.agent_decision === 'EXECUTE' || signal.agent_decision === 'REVIEW';
+            const date = new Date(signal.detected_at).toLocaleString();
+
+            // Safely format numeric values
+            const confidence = signal.agent_confidence ? (signal.agent_confidence * 100).toFixed(0) + '%' : 'N/A';
+            const zScore = typeof signal.z_score === 'number' ? signal.z_score.toFixed(1) : '0.0';
+            const price = typeof signal.price === 'number' ? signal.price.toFixed(2) : '0.00';
+
+            return `
+                <div data-signal="${escapeHtml(signal.id)}" class="fade-in bg-white/5 border border-white/10 rounded-xl p-6 hover:border-emerald-500/50 transition">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl font-bold">${escapeHtml(signal.symbol)}</span>
+                            <span class="px-2 py-1 rounded text-xs font-medium ${
+                                signal.severity === 'high' || signal.severity === 'critical'
+                                    ? 'bg-red-500/20 text-red-400'
+                                    : signal.severity === 'medium'
+                                        ? 'bg-yellow-500/20 text-yellow-400'
+                                        : 'bg-white/10 text-white/70'
+                            }">
+                                ${escapeHtml(signal.severity)}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-emerald-400 font-semibold">${escapeHtml(confidence)}</div>
+                            <div class="text-white/40 text-sm">${escapeHtml(date)}</div>
+                        </div>
+                    </div>
+
+                    <div class="text-white/70 mb-2">
+                        <span class="text-white/50">${escapeHtml(signal.pattern_type)}:</span>
+                        Z-score ${escapeHtml(zScore)}σ at $${escapeHtml(price)}
+                    </div>
+
+                    ${signal.agent_reason ? `
+                        <p class="text-white/50 text-sm mb-4">${escapeHtml(signal.agent_reason)}</p>
+                    ` : ''}
+
+                    <div class="flex gap-3">
+                        <button onclick="recordAction('${escapeJs(signal.id)}', 'traded')"
+                            class="text-sm text-emerald-400 hover:underline">Mark as Traded</button>
+                        <button onclick="recordAction('${escapeJs(signal.id)}', 'reviewed')"
+                            class="text-sm text-white/50 hover:underline">Reviewed</button>
+                        <button onclick="recordAction('${escapeJs(signal.id)}', 'ignored')"
+                            class="text-sm text-white/30 hover:underline">Ignore</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleAddSymbol(e) {
+            e.preventDefault();
+            const symbol = e.target.symbol.value.trim().toUpperCase();
+            if (symbol) {
+                addSymbol(symbol);
+                e.target.reset();
+            }
+        }
+
+        // =================================================================
+        // RENDER
+        // =================================================================
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (state.page === 'landing') {
+                app.innerHTML = Landing();
+            } else if (state.page === 'login') {
+                app.innerHTML = AuthForm(true);
+            } else if (state.page === 'register') {
+                app.innerHTML = AuthForm(false);
+            } else if (state.page === 'dashboard') {
+                app.innerHTML = Dashboard();
+            }
+            
+            // Initialize Lucide icons
+            lucide.createIcons();
+        }
+
+        // =================================================================
+        // INIT
+        // =================================================================
+        async function init() {
+            // Check if logged in
+            if (state.token) {
+                try {
+                    await loadUser();
+                    await loadWatchlist();
+                    await loadSignals();
+                    state.page = 'dashboard';
+                } catch (err) {
+                    console.error('Session invalid:', err);
+                    logout();
+                }
+            }
+            render();
+        }
+
+        init();
+    </script>
+</body>
+</html>
