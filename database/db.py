@@ -17,7 +17,7 @@ class Database:
     async def connect(self):
         """Create connection pool."""
         self.pool = await asyncpg.create_pool(self.url, min_size=2, max_size=10)
-        print("✓ Database connected")
+        print("[OK] Database connected")
     
     async def close(self):
         """Close connection pool."""

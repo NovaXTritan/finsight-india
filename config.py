@@ -47,7 +47,7 @@ INDIA_SYMBOLS = [
     "BAJFINANCE.NS",  # Bajaj Finance
     "SUNPHARMA.NS",   # Sun Pharmaceutical
     "WIPRO.NS",       # Wipro
-    "TATAMOTORS.NS",  # Tata Motors
+    "M&M.NS",         # Mahindra & Mahindra
     "HCLTECH.NS",     # HCL Technologies
 ]
 

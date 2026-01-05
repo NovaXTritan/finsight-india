@@ -59,24 +59,19 @@ logger = logging.getLogger(__name__)
 def print_banner():
     market_name = "INDIA" if config.MARKET == "INDIA" else "US"
     print(f"""
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║   ███████╗██╗███╗   ██╗███████╗██╗ ██████╗ ██╗  ██╗████████╗      ║
-║   ██╔════╝██║████╗  ██║██╔════╝██║██╔════╝ ██║  ██║╚══██╔══╝      ║
-║   █████╗  ██║██╔██╗ ██║███████╗██║██║  ███╗███████║   ██║         ║
-║   ██╔══╝  ██║██║╚██╗██║╚════██║██║██║   ██║██╔══██║   ██║         ║
-║   ██║     ██║██║ ╚████║███████║██║╚██████╔╝██║  ██║   ██║         ║
-║   ╚═╝     ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝         ║
-║                                                                   ║
-║           ENHANCED AI AGENT - Causal Learning Edition             ║
-║                       Market: {market_name:^10}                          ║
-║                                                                   ║
-║   • Regime-Aware Detection                                        ║
-║   • Composite Confidence Scoring                                  ║
-║   • Agent Decision Authority                                      ║
-║   • Backtesting & Attribution                                     ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
++===================================================================+
+|                                                                   |
+|   FINSIGHT - AI-Powered Market Anomaly Detection                  |
+|                                                                   |
+|           ENHANCED AI AGENT - Causal Learning Edition             |
+|                       Market: {market_name:^10}                          |
+|                                                                   |
+|   * Regime-Aware Detection                                        |
+|   * Composite Confidence Scoring                                  |
+|   * Agent Decision Authority                                      |
+|   * Backtesting & Attribution                                     |
+|                                                                   |
++===================================================================+
     """)
 
 
@@ -85,25 +80,25 @@ async def print_india_market_summary():
     if config.MARKET != "INDIA":
         return
 
-    print("\n📊 INDIAN MARKET SUMMARY")
+    print("\n[INDIAN MARKET SUMMARY]")
     print("=" * 60)
 
     try:
         summary = await fetch_india_market_summary()
 
         # Market Status
-        status = "🟢 OPEN" if summary.get("market_open") else "🔴 CLOSED"
+        status = "[OPEN]" if summary.get("market_open") else "[CLOSED]"
         print(f"Market Status: {status}")
 
         # Indices
         indices = summary.get("indices", {})
         if indices:
-            print("\n📈 Major Indices:")
+            print("\nMajor Indices:")
             for name, data in indices.items():
                 if isinstance(data, dict):
                     value = data.get("value", 0)
                     change_pct = data.get("change_pct", 0)
-                    arrow = "▲" if change_pct >= 0 else "▼"
+                    arrow = "+" if change_pct >= 0 else "-"
                     color_code = "\033[92m" if change_pct >= 0 else "\033[91m"
                     reset = "\033[0m"
                     print(f"   {name:12} {value:>12,.2f} {color_code}{arrow} {change_pct:+.2f}%{reset}")
@@ -111,7 +106,7 @@ async def print_india_market_summary():
         # FII/DII
         fii_dii = summary.get("fii_dii")
         if fii_dii:
-            print("\n💰 FII/DII Activity (Cr):")
+            print("\nFII/DII Activity (Cr):")
             fii_net = fii_dii.get("fii_net", 0)
             dii_net = fii_dii.get("dii_net", 0)
             fii_color = "\033[92m" if fii_net >= 0 else "\033[91m"
@@ -125,19 +120,19 @@ async def print_india_market_summary():
         losers = summary.get("top_losers", [])
 
         if gainers:
-            print("\n🚀 Top Gainers:")
+            print("\nTop Gainers:")
             for stock in gainers[:3]:
                 if isinstance(stock, dict):
                     print(f"   {stock.get('symbol', 'N/A'):12} {stock.get('change_pct', 0):+.2f}%")
 
         if losers:
-            print("\n📉 Top Losers:")
+            print("\nTop Losers:")
             for stock in losers[:3]:
                 if isinstance(stock, dict):
                     print(f"   {stock.get('symbol', 'N/A'):12} {stock.get('change_pct', 0):+.2f}%")
 
     except Exception as e:
-        print(f"   ⚠️ Could not fetch market summary: {e}")
+        print(f"   Warning: Could not fetch market summary: {e}")
 
     print("=" * 60)
 
@@ -157,41 +152,41 @@ def print_decision(decision: EnhancedDecision, anomaly: dict):
     color = state_colors.get(decision.state, "")
     
     print(f"\n{'='*70}")
-    print(f"🎯 {anomaly['symbol']} - {anomaly['type'].upper()}")
+    print(f">>> {anomaly['symbol']} - {anomaly['type'].upper()}")
     print(f"{'='*70}")
     
     # Decision state
-    print(f"\n{color}█ DECISION: {decision.state.value}{reset}")
+    print(f"\n{color}[DECISION: {decision.state.value}]{reset}")
     
     # Confidence breakdown
     conf = decision.confidence
-    print(f"\n📊 CONFIDENCE: {conf.composite:.0%}")
-    print(f"   ├─ Statistical:  {conf.statistical:.0%} (signal strength)")
-    print(f"   ├─ Behavioral:   {conf.behavioral:.0%} (your history)")
-    print(f"   ├─ Regime:       {conf.regime:.0%} (market context)")
-    print(f"   ├─ Data Quality: {conf.data_quality:.0%}")
-    print(f"   └─ Uncertainty:  {conf.uncertainty:.0%} (penalty)")
-    
+    print(f"\nCONFIDENCE: {conf.composite:.0%}")
+    print(f"   - Statistical:  {conf.statistical:.0%} (signal strength)")
+    print(f"   - Behavioral:   {conf.behavioral:.0%} (your history)")
+    print(f"   - Regime:       {conf.regime:.0%} (market context)")
+    print(f"   - Data Quality: {conf.data_quality:.0%}")
+    print(f"   - Uncertainty:  {conf.uncertainty:.0%} (penalty)")
+
     # Reason
-    print(f"\n💡 REASON: {decision.reason}")
+    print(f"\nREASON: {decision.reason}")
     
     # Authority actions
     if decision.rejected:
-        print(f"\n⛔ REJECTED: {decision.rejection_reason.value if decision.rejection_reason else 'unknown'}")
+        print(f"\n[REJECTED]: {decision.rejection_reason.value if decision.rejection_reason else 'unknown'}")
     if decision.escalated:
-        print(f"\n⬆️  ESCALATED: {decision.escalation_reason.value if decision.escalation_reason else 'unknown'}")
+        print(f"\n[ESCALATED]: {decision.escalation_reason.value if decision.escalation_reason else 'unknown'}")
     if decision.requested_more_data:
-        print(f"\n📭 REQUESTED MORE DATA")
+        print(f"\n[REQUESTED MORE DATA]")
     
     # Risk assessment
-    print(f"\n⚠️  RISK: {decision.risk_assessment}")
+    print(f"\nRISK: {decision.risk_assessment}")
     
     # Invalidation
-    print(f"\n❌ INVALID IF: {decision.invalidation}")
+    print(f"\nINVALID IF: {decision.invalidation}")
     
     # Signal story
     if decision.story:
-        print(f"\n📖 SIGNAL STORY:")
+        print(f"\nSIGNAL STORY:")
         print(f"   Context: {decision.story.get('context', 'N/A')}")
         print(f"   Trigger: {decision.story.get('trigger', 'N/A')}")
     
@@ -200,7 +195,7 @@ def print_decision(decision: EnhancedDecision, anomaly: dict):
 
 async def test_connections():
     """Test all connections including enhanced components."""
-    print("\n🔌 Testing connections...\n")
+    print("\nTesting connections...\n")
     
     # Database
     print("1. Database...")
@@ -208,66 +203,66 @@ async def test_connections():
         db = Database()
         await db.connect()
         await db.close()
-        print("   ✓ PostgreSQL connected")
+        print("   [OK] PostgreSQL connected")
     except Exception as e:
-        print(f"   ✗ Database failed: {e}")
+        print(f"   [FAIL] Database failed: {e}")
     
     # Enhanced Agent
     print("\n2. Enhanced Agent...")
     causal = CausalLearner()
     agent = get_enhanced_agent(causal_learner=causal)
     if agent.is_available():
-        print("   ✓ LM Studio connected")
+        print("   [OK] LM Studio connected")
     else:
-        print("   ⚠ LM Studio not running (will use rule-based decisions)")
+        print("   [WARN] LM Studio not running (will use rule-based decisions)")
     
     # Regime Detector
     print("\n3. Regime Detector...")
     detector = RegimeDetector()
-    print("   ✓ Regime detector initialized")
+    print("   [OK] Regime detector initialized")
     
     # Data Fetcher
     print("\n4. Data sources...")
     fetcher = SmartDataFetcher()
     df = fetcher.fetch("AAPL", period="5d", interval="5m")
     if df is not None and not df.empty:
-        print(f"   ✓ Market data OK ({len(df)} rows)")
+        print(f"   [OK] Market data OK ({len(df)} rows)")
         
         # Test regime detection
         regime = detector.detect(df)
-        print(f"   ✓ Current regime: {regime.regime.value}")
-        print(f"   ✓ Volatility: {regime.volatility_percentile:.0f}th percentile")
-        print(f"   ✓ Volume: {regime.volume_regime}")
+        print(f"   [OK] Current regime: {regime.regime.value}")
+        print(f"   [OK] Volatility: {regime.volatility_percentile:.0f}th percentile")
+        print(f"   [OK] Volume: {regime.volume_regime}")
     else:
-        print("   ⚠ Market data unavailable")
+        print("   [WARN] Market data unavailable")
     
     # Backtester
     print("\n5. Backtester...")
     backtester = Backtester()
-    print("   ✓ Backtester initialized")
+    print("   [OK] Backtester initialized")
     
-    print("\n✅ Enhanced connection test complete!\n")
+    print("\n[OK] Enhanced connection test complete!\n")
 
 
 async def generate_report(db: Database, backtester: Backtester):
     """Generate comprehensive performance report."""
-    print("\n📊 GENERATING PERFORMANCE REPORT...")
+    print("\n[GENERATING PERFORMANCE REPORT...]")
     print("=" * 70)
     
     # Backtesting report
     report = backtester.generate_report()
     
-    print("\n📈 SUMMARY")
+    print("\nSUMMARY")
     print("-" * 40)
     for key, value in report["summary"].items():
         print(f"   {key.replace('_', ' ').title()}: {value}")
-    
-    print("\n🤖 AGENT ATTRIBUTION")
+
+    print("\nAGENT ATTRIBUTION")
     print("-" * 40)
     for key, value in report["agent_attribution"].items():
         print(f"   {key.replace('_', ' ').title()}: {value}")
-    
-    print("\n📋 PERFORMANCE BY PATTERN")
+
+    print("\nPERFORMANCE BY PATTERN")
     print("-" * 40)
     for pattern_key, metrics in report["performance_by_pattern"].items():
         print(f"\n   {pattern_key}:")
@@ -290,10 +285,10 @@ async def generate_report(db: Database, backtester: Backtester):
 async def run_once():
     """Run detection cycle once with enhanced components."""
     print_banner()
-    print(f"⏰ Started: {datetime.now()}")
-    print(f"🌍 Market: {config.MARKET}")
-    print(f"🎯 Tracking: {len(config.SYMBOLS)} symbols")
-    print(f"👤 User: {config.USER_ID}\n")
+    print(f"Started: {datetime.now()}")
+    print(f"Market: {config.MARKET}")
+    print(f"Tracking: {len(config.SYMBOLS)} symbols")
+    print(f"User: {config.USER_ID}\n")
 
     # Print Indian market summary if in India mode
     if config.MARKET == "INDIA":
@@ -322,7 +317,7 @@ async def run_once():
         for symbol in config.SYMBOLS:
             # Display cleaner symbol name for Indian stocks
             display_symbol = symbol.replace(".NS", "").replace(".BO", "")
-            print(f"\n📈 Checking {display_symbol}...")
+            print(f"\nChecking {display_symbol}...")
 
             # Fetch data (async to avoid blocking event loop)
             if config.MARKET == "INDIA":
@@ -331,7 +326,7 @@ async def run_once():
                 data = await fetcher.fetch_async(symbol, period="5d", interval="5m")
 
             if data is None or data.empty:
-                print(f"   ⚠ No data for {display_symbol}")
+                print(f"   [WARN] No data for {display_symbol}")
                 continue
             
             # Detect market regime
@@ -344,7 +339,7 @@ async def run_once():
             anomalies = await detector.detect(symbol, data)
             
             if not anomalies:
-                print(f"   ✓ No anomalies")
+                print(f"   [OK] No anomalies")
                 continue
             
             for anomaly in anomalies:
@@ -400,7 +395,7 @@ async def run_once():
         
         # Wait for outcome tracking if any
         if tracker.tracking_tasks:
-            print(f"\n📊 Tracking {len(tracker.tracking_tasks)} outcomes...")
+            print(f"\nTracking {len(tracker.tracking_tasks)} outcomes...")
             # Enable outcome tracking - critical for learning loop
             await asyncio.gather(*tracker.tracking_tasks.values(), return_exceptions=True)
     
@@ -412,12 +407,12 @@ async def run_once():
         if config.MARKET == "INDIA" and hasattr(fetcher, 'close'):
             await fetcher.close()
 
-    print(f"\n✅ Complete: {datetime.now()}")
+    print(f"\nComplete: {datetime.now()}")
 
 
 async def run_continuous(interval_minutes: int = 5):
     """Run continuously with learning."""
-    print(f"\n🔄 Running continuously (every {interval_minutes} minutes)")
+    print(f"\nRunning continuously (every {interval_minutes} minutes)")
     print("   Learning is active - agent will improve over time")
     print("   Press Ctrl+C to stop\n")
     
@@ -432,7 +427,7 @@ async def run_continuous(interval_minutes: int = 5):
             
             await run_once()
             
-            print(f"\n⏳ Sleeping {interval_minutes} minutes...")
+            print(f"\nSleeping {interval_minutes} minutes...")
             await asyncio.sleep(interval_minutes * 60)
             
         except KeyboardInterrupt:

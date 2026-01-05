@@ -6,7 +6,9 @@
       "Bash(pip install:*)",
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmNlZTNjMy1mYjAyLTQ0OGItOWRjYS1hN2JmYzQ4NTVhNTAiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJleHAiOjE3Njc3MjgwODF9.6G-JLcQS-4LfNda7wbaW-U3PV-tPGqB9aOX28mf1Lg4\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmNlZTNjMy1mYjAyLTQ0OGItOWRjYS1hN2JmYzQ4NTVhNTAiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJleHAiOjE3Njc3MjgwODF9.6G-JLcQS-4LfNda7wbaW-U3PV-tPGqB9aOX28mf1Lg4\")",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
     ]
   }
 }

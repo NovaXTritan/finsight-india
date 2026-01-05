@@ -584,19 +584,19 @@ class EnhancedAgent:
     def print_stats(self):
         """Print agent decision statistics."""
         print("""
-╔══════════════════════════════════════════════════════════════╗
-║           ENHANCED AGENT STATISTICS                          ║
-╠══════════════════════════════════════════════════════════════╣""")
-        print(f"║ Total Decisions:      {self.stats['total_decisions']:>6}                            ║")
-        print(f"║ Rejected (authority): {self.stats['rejected']:>6} ({self.stats['rejected']/max(1,self.stats['total_decisions'])*100:>5.1f}%)               ║")
-        print(f"║ Escalated to human:   {self.stats['escalated']:>6} ({self.stats['escalated']/max(1,self.stats['total_decisions'])*100:>5.1f}%)               ║")
-        print("╠──────────────────────────────────────────────────────────────╣")
-        print("║ Decision Distribution:                                       ║")
++==============================================================+
+|           ENHANCED AGENT STATISTICS                          |
++==============================================================+""")
+        print(f"| Total Decisions:      {self.stats['total_decisions']:>6}                            |")
+        print(f"| Rejected (authority): {self.stats['rejected']:>6} ({self.stats['rejected']/max(1,self.stats['total_decisions'])*100:>5.1f}%)               |")
+        print(f"| Escalated to human:   {self.stats['escalated']:>6} ({self.stats['escalated']/max(1,self.stats['total_decisions'])*100:>5.1f}%)               |")
+        print("+--------------------------------------------------------------+")
+        print("| Decision Distribution:                                       |")
         for state, count in self.stats["by_state"].items():
             pct = count / max(1, self.stats["total_decisions"]) * 100
-            bar = "█" * int(pct / 5)
-            print(f"║   {state:<8}: {count:>4} ({pct:>5.1f}%) {bar:<20}      ║")
-        print("╚══════════════════════════════════════════════════════════════╝")
+            bar = "#" * int(pct / 5)
+            print(f"|   {state:<8}: {count:>4} ({pct:>5.1f}%) {bar:<20}      |")
+        print("+==============================================================+")
 
 
 def get_enhanced_agent(
