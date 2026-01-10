@@ -70,20 +70,24 @@ class Settings(BaseSettings):
         "serious": {"symbols": 100, "history_days": 365}
     }
 
-    # CORS - explicitly list allowed origins (no wildcards)
-    cors_origins: list = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-        # Add your production domains here:
-        # "https://finsight.example.com",
-        # "https://app.finsight.in",
-    ]
+    # CORS - allowed origins from environment or defaults
+    @property
+    def cors_origins(self) -> list:
+        """Get CORS origins from environment or use defaults."""
+        env_origins = os.getenv("CORS_ORIGINS", "")
+        if env_origins:
+            return [o.strip() for o in env_origins.split(",")]
+        return [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:8080",
+        ]
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 @lru_cache()

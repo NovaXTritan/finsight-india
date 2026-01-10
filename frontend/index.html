@@ -7,16 +7,397 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .pulse { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        /* ================================================================= */
+        /* CSS CUSTOM PROPERTIES                                             */
+        /* ================================================================= */
+        :root {
+            /* Brand Colors */
+            --emerald-400: #34d399;
+            --emerald-500: #10b981;
+            --emerald-600: #059669;
+
+            /* Severity Colors */
+            --severity-critical: #ef4444;
+            --severity-critical-glow: rgba(239, 68, 68, 0.3);
+            --severity-high: #f97316;
+            --severity-high-glow: rgba(249, 115, 22, 0.25);
+            --severity-medium: #eab308;
+            --severity-medium-glow: rgba(234, 179, 8, 0.2);
+            --severity-low: #6b7280;
+
+            /* Glass Effect */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 30px rgba(16, 185, 129, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
+            min-height: 100vh;
+        }
+
+        /* ================================================================= */
+        /* TYPOGRAPHY                                                        */
+        /* ================================================================= */
+        .text-gradient {
+            background: linear-gradient(135deg, var(--emerald-400) 0%, var(--emerald-500) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ================================================================= */
+        /* GLASSMORPHISM CARDS                                               */
+        /* ================================================================= */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: var(--glass-highlight);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .glass-card-interactive:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Severity Glows */
+        .glow-critical { box-shadow: 0 0 40px var(--severity-critical-glow), var(--shadow-md); border-color: rgba(239, 68, 68, 0.3); }
+        .glow-high { box-shadow: 0 0 30px var(--severity-high-glow), var(--shadow-md); border-color: rgba(249, 115, 22, 0.25); }
+        .glow-medium { box-shadow: 0 0 25px var(--severity-medium-glow), var(--shadow-md); border-color: rgba(234, 179, 8, 0.2); }
+
+        /* ================================================================= */
+        /* BUTTON STYLES                                                     */
+        /* ================================================================= */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--emerald-400);
+            outline-offset: 2px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--emerald-500) 0%, var(--emerald-600) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, var(--emerald-400) 0%, var(--emerald-500) 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+        }
+
+        /* ================================================================= */
+        /* INPUT STYLES                                                      */
+        /* ================================================================= */
+        .input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--emerald-500);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ================================================================= */
+        /* ANIMATIONS                                                        */
+        /* ================================================================= */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s ease-in-out infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Stagger Animation */
+        .stagger-in > *:nth-child(1) { animation-delay: 0.05s; }
+        .stagger-in > *:nth-child(2) { animation-delay: 0.1s; }
+        .stagger-in > *:nth-child(3) { animation-delay: 0.15s; }
+        .stagger-in > *:nth-child(4) { animation-delay: 0.2s; }
+        .stagger-in > *:nth-child(5) { animation-delay: 0.25s; }
+
+        /* Toast Animations */
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100px); } }
+
+        /* Modal Animations */
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalFadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes modalScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes modalScaleOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+
+        /* Spin */
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* ================================================================= */
+        /* TOAST STYLES                                                      */
+        /* ================================================================= */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: var(--shadow-lg);
+            pointer-events: auto;
+            animation: toastIn 0.3s ease-out;
+            max-width: 400px;
+        }
+
+        .toast-success { border-left: 4px solid var(--emerald-500); }
+        .toast-error { border-left: 4px solid var(--severity-critical); }
+        .toast-warning { border-left: 4px solid var(--severity-medium); }
+        .toast-info { border-left: 4px solid #3b82f6; }
+        .toast-exit { animation: toastOut 0.3s ease-in forwards; }
+
+        /* ================================================================= */
+        /* MODAL STYLES                                                      */
+        /* ================================================================= */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        .modal-overlay.closing { animation: modalFadeOut 0.2s ease-in forwards; }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 28px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: modalScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.closing .modal-content { animation: modalScaleOut 0.2s ease-in forwards; }
+
+        /* ================================================================= */
+        /* RESPONSIVE                                                        */
+        /* ================================================================= */
+        @media (max-width: 768px) {
+            #toast-container {
+                left: 1rem;
+                right: 1rem;
+                top: auto;
+                bottom: 1rem;
+            }
+            .toast { max-width: 100%; }
+
+            /* Mobile signal cards */
+            .glass-card-interactive:active {
+                transform: scale(0.98);
+            }
+
+            /* Mobile-friendly dropdowns */
+            select {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            /* Full width filter bar on mobile */
+            .filter-dropdown {
+                flex: 1;
+                min-width: 0;
+            }
+        }
+
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Touch-friendly targets */
+        @media (pointer: coarse) {
+            .btn {
+                min-height: 44px;
+            }
+            .glass-card-interactive {
+                cursor: pointer;
+            }
+        }
+
+        /* Swipe hint animation */
+        @keyframes swipeHint {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-8px); }
+        }
+        .swipe-hint {
+            animation: swipeHint 2s ease-in-out infinite;
+        }
+
+        /* Mobile menu animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Improve select dropdown appearance */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23ffffff50'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.25rem;
+            padding-right: 2.5rem;
+        }
+
+        /* Focus states for accessibility */
+        :focus-visible {
+            outline: 2px solid var(--emerald-400);
+            outline-offset: 2px;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .glass-card {
+                border-width: 2px;
+            }
+            .text-white\/40, .text-white\/50, .text-white\/60 {
+                color: rgba(255, 255, 255, 0.8);
+            }
+        }
     </style>
 </head>
-<body class="bg-black text-white min-h-screen">
+<body class="text-white min-h-screen">
     <div id="app"></div>
+    <div id="toast-container"></div>
 
     <script>
         // =================================================================
@@ -25,12 +406,19 @@
         const API_URL = localStorage.getItem('api_url') || 'http://localhost:8000';
 
         // =================================================================
+        // ICONS
+        // =================================================================
+        const ICONS = {
+            volume_spike: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20V10M6 20V14M18 20V4"/><circle cx="18" cy="4" r="2" fill="currentColor" stroke="none"/></svg>`,
+            price_momentum: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>`,
+            price_breakout: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>`,
+            volatility_expansion: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 4 18 3-9h4"/></svg>`,
+            default: `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
+        };
+
+        // =================================================================
         // SECURITY UTILITIES
         // =================================================================
-        /**
-         * Escape HTML special characters to prevent XSS attacks.
-         * ALWAYS use this when inserting user-controlled data into HTML.
-         */
         function escapeHtml(text) {
             if (text === null || text === undefined) return '';
             const div = document.createElement('div');
@@ -38,10 +426,6 @@
             return div.innerHTML;
         }
 
-        /**
-         * Escape string for use in JavaScript string literals (e.g., onclick handlers).
-         * Prevents injection via quotes and special characters.
-         */
         function escapeJs(text) {
             if (text === null || text === undefined) return '';
             return String(text)
@@ -53,16 +437,226 @@
         }
 
         // =================================================================
+        // HELPER FUNCTIONS
+        // =================================================================
+        function getRelativeTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function formatPrice(price) {
+            if (typeof price !== 'number') return '$0.00';
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
+        }
+
+        function formatVolume(volume) {
+            if (typeof volume !== 'number') return '0';
+            return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(volume);
+        }
+
+        // =================================================================
+        // FILTER & SORT HELPERS
+        // =================================================================
+        function getFilteredSignals() {
+            let filtered = [...state.signals];
+
+            // Apply severity filter
+            if (state.filters.severity !== 'all') {
+                filtered = filtered.filter(s => s.severity === state.filters.severity);
+            }
+
+            // Apply pattern type filter
+            if (state.filters.patternType !== 'all') {
+                filtered = filtered.filter(s => s.pattern_type === state.filters.patternType);
+            }
+
+            // Apply decision filter
+            if (state.filters.decision !== 'all') {
+                filtered = filtered.filter(s => s.agent_decision === state.filters.decision);
+            }
+
+            // Apply search
+            if (state.filters.search) {
+                const search = state.filters.search.toLowerCase();
+                filtered = filtered.filter(s =>
+                    s.symbol.toLowerCase().includes(search) ||
+                    (s.agent_reason && s.agent_reason.toLowerCase().includes(search))
+                );
+            }
+
+            // Apply sorting
+            switch (state.sortBy) {
+                case 'newest':
+                    filtered.sort((a, b) => new Date(b.detected_at) - new Date(a.detected_at));
+                    break;
+                case 'oldest':
+                    filtered.sort((a, b) => new Date(a.detected_at) - new Date(b.detected_at));
+                    break;
+                case 'severity':
+                    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+                    filtered.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3));
+                    break;
+                case 'zscore':
+                    filtered.sort((a, b) => (b.z_score || 0) - (a.z_score || 0));
+                    break;
+            }
+
+            return filtered;
+        }
+
+        function getFilteredWatchlist() {
+            if (!state.watchlistSearch) return state.watchlist;
+            const search = state.watchlistSearch.toLowerCase();
+            return state.watchlist.filter(s => s.toLowerCase().includes(search));
+        }
+
+        function setFilter(key, value) {
+            state.filters[key] = value;
+            render();
+        }
+
+        function setSort(value) {
+            state.sortBy = value;
+            render();
+        }
+
+        function setWatchlistSearch(value) {
+            state.watchlistSearch = value;
+            render();
+        }
+
+        function getNewSignalCount() {
+            return Math.max(0, state.signals.length - state.lastSeenCount);
+        }
+
+        function markSignalsSeen() {
+            state.lastSeenCount = state.signals.length;
+            localStorage.setItem('lastSeenCount', state.signals.length.toString());
+        }
+
+        // Generate sparkline SVG path
+        function generateSparkline(data, width = 60, height = 20) {
+            if (!data || data.length < 2) return '';
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const range = max - min || 1;
+
+            const points = data.map((val, i) => {
+                const x = (i / (data.length - 1)) * width;
+                const y = height - ((val - min) / range) * height;
+                return `${x},${y}`;
+            });
+
+            const isUp = data[data.length - 1] >= data[0];
+            const color = isUp ? '#10b981' : '#ef4444';
+
+            return `
+                <svg width="${width}" height="${height}" class="sparkline">
+                    <polyline fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="${points.join(' ')}"/>
+                </svg>
+            `;
+        }
+
+        // =================================================================
+        // TOAST SYSTEM
+        // =================================================================
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icons = {
+                success: '<svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+                error: '<svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+                warning: '<svg class="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+                info: '<svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+            };
+
+            toast.innerHTML = `
+                ${icons[type] || icons.info}
+                <span class="text-white text-sm flex-1">${escapeHtml(message)}</span>
+                <button onclick="this.parentElement.classList.add('toast-exit'); setTimeout(() => this.parentElement.remove(), 300)" class="text-white/40 hover:text-white/70 transition">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // =================================================================
+        // MODAL SYSTEM
+        // =================================================================
+        function showConfirmModal(title, message, confirmText, onConfirm, isDanger = false) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) closeModal(overlay); };
+
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <h3 class="text-xl font-semibold text-white mb-3">${escapeHtml(title)}</h3>
+                    <p class="text-white/60 mb-6">${escapeHtml(message)}</p>
+                    <div class="flex gap-3 justify-end">
+                        <button onclick="closeModal(this.closest('.modal-overlay'))" class="btn btn-ghost px-5 py-2.5">Cancel</button>
+                        <button id="modal-confirm-btn" class="btn ${isDanger ? 'btn-danger' : 'btn-primary'} px-5 py-2.5">${escapeHtml(confirmText)}</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+
+            overlay.querySelector('#modal-confirm-btn').onclick = () => {
+                onConfirm();
+                closeModal(overlay);
+            };
+        }
+
+        function closeModal(overlay) {
+            overlay.classList.add('closing');
+            setTimeout(() => {
+                overlay.remove();
+                document.body.style.overflow = '';
+            }, 200);
+        }
+
+        // =================================================================
         // STATE MANAGEMENT
         // =================================================================
         const state = {
             token: localStorage.getItem('token'),
             user: JSON.parse(localStorage.getItem('user') || 'null'),
-            page: 'landing', // landing, login, register, dashboard
+            page: 'landing',
             signals: [],
             watchlist: [],
             loading: false,
-            error: null
+            error: null,
+            lastUpdated: null,
+            // Filters & sorting
+            filters: {
+                severity: 'all',
+                patternType: 'all',
+                decision: 'all',
+                search: ''
+            },
+            sortBy: 'newest',
+            // New signals tracking
+            lastSeenCount: parseInt(localStorage.getItem('lastSeenCount') || '0'),
+            watchlistSearch: ''
         };
 
         function setState(updates) {
@@ -78,24 +672,24 @@
             if (state.token) {
                 headers['Authorization'] = `Bearer ${state.token}`;
             }
-            
+
             try {
                 const res = await fetch(`${API_URL}${endpoint}`, {
                     ...options,
                     headers: { ...headers, ...options.headers }
                 });
-                
+
                 if (res.status === 401) {
                     logout();
                     throw new Error('Session expired');
                 }
-                
+
                 const data = await res.json();
-                
+
                 if (!res.ok) {
                     throw new Error(data.detail || 'Request failed');
                 }
-                
+
                 return data;
             } catch (err) {
                 if (err.message === 'Failed to fetch') {
@@ -115,8 +709,10 @@
                 localStorage.setItem('token', data.access_token);
                 state.token = data.access_token;
                 await loadUser();
+                showToast('Account created successfully!', 'success');
                 setState({ page: 'dashboard', loading: false });
             } catch (err) {
+                showToast(err.message, 'error');
                 setState({ error: err.message, loading: false });
             }
         }
@@ -131,8 +727,10 @@
                 localStorage.setItem('token', data.access_token);
                 state.token = data.access_token;
                 await loadUser();
+                showToast('Welcome back!', 'success');
                 setState({ page: 'dashboard', loading: false });
             } catch (err) {
+                showToast(err.message, 'error');
                 setState({ error: err.message, loading: false });
             }
         }
@@ -140,6 +738,7 @@
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            showToast('Logged out successfully', 'info');
             setState({ token: null, user: null, page: 'landing', signals: [], watchlist: [] });
         }
 
@@ -151,12 +750,13 @@
 
         async function loadWatchlist() {
             const data = await api('/api/watchlist');
-            setState({ watchlist: data.symbols });
+            state.watchlist = data.symbols;
         }
 
         async function loadSignals() {
             const data = await api('/api/signals/latest?limit=10');
-            setState({ signals: data });
+            state.signals = data;
+            state.lastUpdated = new Date();
         }
 
         async function addSymbol(symbol) {
@@ -168,8 +768,10 @@
                 });
                 await loadWatchlist();
                 await loadSignals();
+                showToast(`${symbol} added to watchlist`, 'success');
                 setState({ loading: false });
             } catch (err) {
+                showToast(err.message, 'error');
                 setState({ error: err.message, loading: false });
             }
         }
@@ -178,207 +780,706 @@
             try {
                 await api(`/api/watchlist/${symbol}`, { method: 'DELETE' });
                 await loadWatchlist();
+                showToast(`${symbol} removed from watchlist`, 'success');
+                render();
             } catch (err) {
-                setState({ error: err.message });
+                showToast(err.message, 'error');
             }
         }
 
-        async function recordAction(signalId, action) {
+        function confirmRemoveSymbol(symbol) {
+            showConfirmModal(
+                'Remove from Watchlist',
+                `Are you sure you want to remove ${symbol} from your watchlist?`,
+                'Remove',
+                () => removeSymbol(symbol),
+                true
+            );
+        }
+
+        async function handleSignalAction(signalId, action) {
+            const el = document.querySelector(`[data-signal="${signalId}"]`);
+            if (!el) return;
+
+            el.style.opacity = '0.5';
+            el.style.pointerEvents = 'none';
+
             try {
                 await api(`/api/signals/${signalId}/action`, {
                     method: 'POST',
                     body: JSON.stringify({ action })
                 });
-                // Visual feedback
-                const el = document.querySelector(`[data-signal="${signalId}"]`);
-                if (el) el.classList.add('opacity-50');
+
+                el.style.transform = 'translateX(50px)';
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    state.signals = state.signals.filter(s => s.id !== signalId);
+                    render();
+                }, 300);
+
+                const labels = { traded: 'Marked as traded', reviewed: 'Marked as reviewed', ignored: 'Signal ignored' };
+                showToast(labels[action], 'success');
             } catch (err) {
-                console.error(err);
+                el.style.opacity = '1';
+                el.style.pointerEvents = 'auto';
+                showToast('Failed to record action', 'error');
+            }
+        }
+
+        async function refreshData() {
+            const btn = event.currentTarget;
+            const icon = btn.querySelector('svg');
+            icon.classList.add('animate-spin');
+
+            try {
+                await loadSignals();
+                showToast('Data refreshed', 'success');
+                render();
+            } catch (err) {
+                showToast('Failed to refresh', 'error');
+            } finally {
+                icon.classList.remove('animate-spin');
             }
         }
 
         // =================================================================
         // COMPONENTS
         // =================================================================
-        function Landing() {
+        function Header(isLoggedIn = false) {
+            const user = state.user || {};
+            const time = state.lastUpdated ? state.lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+            const newCount = getNewSignalCount();
+
             return `
-                <nav class="fixed top-0 w-full z-50 bg-black/80 backdrop-blur border-b border-white/10">
-                    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-                        <div class="text-xl font-bold">
-                            <span class="text-emerald-400">Fin</span>Sight
-                        </div>
-                        <div class="flex gap-4">
-                            <button onclick="setState({page:'login'})" class="text-white/70 hover:text-white">
-                                Login
-                            </button>
-                            <button onclick="setState({page:'register'})" class="bg-emerald-500 hover:bg-emerald-400 px-4 py-2 rounded-lg font-medium">
-                                Start Free
-                            </button>
+                <header class="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-xl">
+                    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+                        <div class="flex justify-between items-center">
+                            <a href="#" onclick="setState({page: state.token ? 'dashboard' : 'landing'}); return false;" class="flex items-center gap-2 sm:gap-3 group">
+                                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg group-hover:shadow-emerald-500/30 transition-shadow relative">
+                                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    ${isLoggedIn && newCount > 0 ? `<span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center">${newCount > 9 ? '9+' : newCount}</span>` : ''}
+                                </div>
+                                <span class="text-lg sm:text-xl font-bold"><span class="text-gradient">Fin</span><span class="text-white">Sight</span></span>
+                            </a>
+
+                            ${isLoggedIn ? `
+                                <div class="flex items-center gap-2 sm:gap-6">
+                                    <!-- Mobile refresh button -->
+                                    <button onclick="refreshData()" class="sm:hidden p-2 rounded-lg hover:bg-white/10 transition text-white/50" title="Refresh">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                    </button>
+
+                                    <!-- Desktop status -->
+                                    <div class="hidden sm:flex items-center gap-2 text-white/40 text-sm">
+                                        <span class="w-2 h-2 bg-emerald-400 rounded-full pulse-dot"></span>
+                                        <span>Updated ${time}</span>
+                                        <button onclick="refreshData()" class="ml-1 p-1.5 rounded-lg hover:bg-white/10 transition" title="Refresh (R)">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        </button>
+                                    </div>
+                                    <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
+
+                                    <!-- User info & logout -->
+                                    <div class="flex items-center gap-2 sm:gap-3">
+                                        <div class="text-right hidden sm:block">
+                                            <div class="text-sm font-medium text-white">${escapeHtml(user.name || 'User')}</div>
+                                            <div class="text-xs text-white/40 capitalize">${escapeHtml(user.tier || 'free')} plan</div>
+                                        </div>
+                                        <button onclick="logout()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition" title="Logout">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="flex items-center gap-2 sm:gap-4">
+                                    <button onclick="setState({page:'login'})" class="text-white/70 hover:text-white font-medium transition text-sm sm:text-base px-2 sm:px-0">Login</button>
+                                    <button onclick="setState({page:'register'})" class="btn btn-primary px-3 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base">Start Free</button>
+                                </div>
+                            `}
                         </div>
                     </div>
-                </nav>
+                </header>
+            `;
+        }
 
-                <section class="pt-32 pb-20 px-6">
-                    <div class="max-w-4xl mx-auto text-center">
-                        <h1 class="text-5xl md:text-7xl font-bold mb-6">
-                            Stop Chasing Noise.<br>
-                            <span class="text-emerald-400">Start Catching Signals.</span>
-                        </h1>
-                        <p class="text-xl text-white/60 mb-8 max-w-2xl mx-auto">
-                            AI-powered anomaly detection that tells you when something 
-                            statistically unusual happens—so you can research what matters.
-                        </p>
-                        <button onclick="setState({page:'register'})" class="bg-emerald-500 hover:bg-emerald-400 px-8 py-4 rounded-lg font-semibold text-lg">
-                            Try Free for 14 Days →
+        function StatsOverview() {
+            const alertCount = state.signals.filter(s => s.agent_decision === 'ALERT').length;
+            const reviewCount = state.signals.filter(s => s.agent_decision === 'REVIEW').length;
+            const totalSignals = state.signals.length;
+
+            return `
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white">${totalSignals}</div>
+                        <div class="text-sm text-white/50">Total Signals</div>
+                    </div>
+
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            ${alertCount > 0 ? '<span class="w-2 h-2 bg-red-400 rounded-full pulse-dot"></span>' : ''}
+                        </div>
+                        <div class="text-2xl font-bold text-white">${alertCount}</div>
+                        <div class="text-sm text-white/50">Alerts</div>
+                    </div>
+
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-yellow-500/15 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white">${reviewCount}</div>
+                        <div class="text-sm text-white/50">To Review</div>
+                    </div>
+
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-bold text-white">${state.watchlist.length}</div>
+                        <div class="text-sm text-white/50">Watchlist</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function SignalCard(signal) {
+            const relativeTime = getRelativeTime(signal.detected_at);
+            const confidence = signal.agent_confidence ? (signal.agent_confidence * 100).toFixed(0) + '%' : 'N/A';
+            const zScore = typeof signal.z_score === 'number' ? signal.z_score.toFixed(1) : '0.0';
+            const price = formatPrice(signal.price);
+            const volume = formatVolume(signal.volume);
+
+            const severityConfig = {
+                critical: { bg: 'bg-red-500/15', text: 'text-red-400', glow: 'glow-critical' },
+                high: { bg: 'bg-orange-500/15', text: 'text-orange-400', glow: 'glow-high' },
+                medium: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', glow: 'glow-medium' },
+                low: { bg: 'bg-white/10', text: 'text-white/60', glow: '' }
+            };
+            const severity = severityConfig[signal.severity] || severityConfig.low;
+
+            const decisionConfig = {
+                ALERT: { bg: 'bg-red-500/20', text: 'text-red-400', dot: 'bg-red-400' },
+                REVIEW: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', dot: 'bg-yellow-400' },
+                IGNORE: { bg: 'bg-white/10', text: 'text-white/50', dot: 'bg-white/50' }
+            };
+            const decision = decisionConfig[signal.agent_decision] || decisionConfig.REVIEW;
+
+            const typeColors = {
+                volume_spike: 'text-purple-400',
+                price_momentum: 'text-cyan-400',
+                price_breakout: 'text-emerald-400',
+                volatility_expansion: 'text-amber-400'
+            };
+            const typeColor = typeColors[signal.pattern_type] || 'text-white/60';
+            const icon = ICONS[signal.pattern_type] || ICONS.default;
+
+            return `
+                <div data-signal="${escapeHtml(signal.id)}" class="fade-in glass-card glass-card-interactive ${severity.glow} p-6 transition-all duration-300">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-xl ${severity.bg} flex items-center justify-center ${typeColor}">${icon}</div>
+                            <div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl font-bold text-white">${escapeHtml(signal.symbol)}</span>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${severity.bg} ${severity.text} uppercase tracking-wide">${escapeHtml(signal.severity)}</span>
+                                </div>
+                                <div class="text-white/40 text-sm mt-1 flex items-center gap-2">
+                                    <span>${escapeHtml(signal.pattern_type.replace(/_/g, ' '))}</span>
+                                    <span class="w-1 h-1 rounded-full bg-white/30"></span>
+                                    <span>${escapeHtml(relativeTime)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${decision.bg}">
+                                <span class="w-2 h-2 rounded-full ${decision.dot} pulse-dot"></span>
+                                <span class="text-sm font-semibold ${decision.text}">${escapeHtml(signal.agent_decision)}</span>
+                            </div>
+                            <div class="text-emerald-400 font-semibold mt-2">${escapeHtml(confidence)}</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-white/5 mb-4">
+                        <div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide mb-1">Z-Score</div>
+                            <div class="text-lg font-semibold text-white">${escapeHtml(zScore)}σ</div>
+                        </div>
+                        <div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide mb-1">Price</div>
+                            <div class="text-lg font-semibold text-white">${escapeHtml(price)}</div>
+                        </div>
+                        <div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide mb-1">Volume</div>
+                            <div class="text-lg font-semibold text-white">${escapeHtml(volume)}</div>
+                        </div>
+                        <div>
+                            <div class="text-white/40 text-xs uppercase tracking-wide mb-1">Trend</div>
+                            <div class="flex items-center gap-2">
+                                ${signal.price_history ? generateSparkline(signal.price_history) : generateSparkline([signal.price * 0.98, signal.price * 0.99, signal.price * 0.995, signal.price * 1.01, signal.price])}
+                                <span class="text-xs ${signal.price_change >= 0 ? 'text-emerald-400' : 'text-red-400'}">${signal.price_change ? (signal.price_change >= 0 ? '+' : '') + signal.price_change.toFixed(1) + '%' : ''}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${signal.agent_reason ? `
+                        <div class="bg-white/[0.02] rounded-xl p-4 mb-4 border border-white/5">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                <p class="text-white/60 text-sm leading-relaxed">${escapeHtml(signal.agent_reason)}</p>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="flex gap-3">
+                        <button onclick="handleSignalAction('${escapeJs(signal.id)}', 'traded')" class="btn btn-primary flex-1 py-2.5 text-sm">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            Traded
                         </button>
+                        <button onclick="handleSignalAction('${escapeJs(signal.id)}', 'reviewed')" class="btn btn-secondary flex-1 py-2.5 text-sm">Reviewed</button>
+                        <button onclick="handleSignalAction('${escapeJs(signal.id)}', 'ignored')" class="btn btn-ghost px-4 py-2.5 text-sm">Ignore</button>
                     </div>
-                </section>
+                </div>
+            `;
+        }
 
-                <section class="py-20 px-6 bg-white/5">
-                    <div class="max-w-6xl mx-auto">
-                        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
-                        <div class="grid md:grid-cols-3 gap-8">
-                            <div class="bg-black border border-white/10 rounded-xl p-6">
-                                <div class="text-emerald-400 text-2xl mb-4">1</div>
-                                <h3 class="font-semibold text-lg mb-2">Add Your Watchlist</h3>
-                                <p class="text-white/50">Pick the stocks you want to track. Free tier gets 5 symbols.</p>
+        function WatchlistItem(symbol) {
+            return `
+                <div class="glass-card p-4 flex items-center justify-between group hover:border-emerald-500/30 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 flex items-center justify-center">
+                            <span class="text-sm font-bold text-emerald-400">${escapeHtml(symbol.substring(0, 2))}</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-white">${escapeHtml(symbol)}</div>
+                            <div class="text-xs text-white/40">Tracking</div>
+                        </div>
+                    </div>
+                    <button onclick="confirmRemoveSymbol('${escapeJs(symbol)}')" class="w-8 h-8 rounded-lg hover:bg-red-500/20 flex items-center justify-center text-white/30 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            `;
+        }
+
+        function EmptyState(type, hasFilters = false) {
+            if (type === 'signals') {
+                if (hasFilters) {
+                    return `
+                        <div class="glass-card p-12 text-center">
+                            <div class="text-white/20 mb-6 flex justify-center">
+                                <svg class="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </div>
-                            <div class="bg-black border border-white/10 rounded-xl p-6">
-                                <div class="text-emerald-400 text-2xl mb-4">2</div>
-                                <h3 class="font-semibold text-lg mb-2">AI Monitors 24/7</h3>
-                                <p class="text-white/50">Our detection engine watches for statistically unusual activity.</p>
+                            <h3 class="text-xl font-semibold text-white mb-2">No Matching Signals</h3>
+                            <p class="text-white/50 max-w-sm mx-auto mb-4">Try adjusting your filters to see more signals.</p>
+                            <button onclick="state.filters = {severity:'all',patternType:'all',decision:'all',search:''}; state.sortBy='newest'; render();" class="btn btn-secondary px-4 py-2 text-sm">Clear Filters</button>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="glass-card p-12 text-center">
+                        <div class="text-white/20 mb-6 flex justify-center">
+                            <svg class="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-white mb-2">No Signals Yet</h3>
+                        <p class="text-white/50 max-w-sm mx-auto">Add symbols to your watchlist to start receiving AI-powered market anomaly signals.</p>
+                    </div>
+                `;
+            }
+            return `
+                <div class="glass-card p-8 text-center">
+                    <div class="text-white/20 mb-4 flex justify-center">
+                        <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Watchlist Empty</h3>
+                    <p class="text-white/50 text-sm">Add your first symbol above</p>
+                </div>
+            `;
+        }
+
+        function SignalFilterBar() {
+            const hasActiveFilters = state.filters.severity !== 'all' ||
+                state.filters.patternType !== 'all' ||
+                state.filters.decision !== 'all' ||
+                state.filters.search;
+
+            const patternTypes = [...new Set(state.signals.map(s => s.pattern_type))];
+
+            return `
+                <div class="glass-card p-4 mb-6">
+                    <div class="flex flex-col lg:flex-row gap-4">
+                        <!-- Search -->
+                        <div class="relative flex-1 min-w-0">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <input
+                                type="text"
+                                placeholder="Search signals..."
+                                value="${escapeHtml(state.filters.search)}"
+                                oninput="setFilter('search', this.value)"
+                                class="input pl-10 py-2.5 text-sm"
+                            >
+                        </div>
+
+                        <!-- Filter dropdowns -->
+                        <div class="flex flex-wrap gap-2">
+                            <select onchange="setFilter('severity', this.value)" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer min-w-[120px]">
+                                <option value="all" ${state.filters.severity === 'all' ? 'selected' : ''}>All Severity</option>
+                                <option value="critical" ${state.filters.severity === 'critical' ? 'selected' : ''}>Critical</option>
+                                <option value="high" ${state.filters.severity === 'high' ? 'selected' : ''}>High</option>
+                                <option value="medium" ${state.filters.severity === 'medium' ? 'selected' : ''}>Medium</option>
+                                <option value="low" ${state.filters.severity === 'low' ? 'selected' : ''}>Low</option>
+                            </select>
+
+                            <select onchange="setFilter('patternType', this.value)" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer min-w-[140px]">
+                                <option value="all" ${state.filters.patternType === 'all' ? 'selected' : ''}>All Patterns</option>
+                                ${patternTypes.map(p => `<option value="${escapeHtml(p)}" ${state.filters.patternType === p ? 'selected' : ''}>${escapeHtml(p.replace(/_/g, ' '))}</option>`).join('')}
+                            </select>
+
+                            <select onchange="setFilter('decision', this.value)" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer min-w-[120px]">
+                                <option value="all" ${state.filters.decision === 'all' ? 'selected' : ''}>All Decisions</option>
+                                <option value="ALERT" ${state.filters.decision === 'ALERT' ? 'selected' : ''}>Alert</option>
+                                <option value="REVIEW" ${state.filters.decision === 'REVIEW' ? 'selected' : ''}>Review</option>
+                                <option value="IGNORE" ${state.filters.decision === 'IGNORE' ? 'selected' : ''}>Ignore</option>
+                            </select>
+
+                            <select onchange="setSort(this.value)" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:outline-none cursor-pointer min-w-[120px]">
+                                <option value="newest" ${state.sortBy === 'newest' ? 'selected' : ''}>Newest First</option>
+                                <option value="oldest" ${state.sortBy === 'oldest' ? 'selected' : ''}>Oldest First</option>
+                                <option value="severity" ${state.sortBy === 'severity' ? 'selected' : ''}>By Severity</option>
+                                <option value="zscore" ${state.sortBy === 'zscore' ? 'selected' : ''}>By Z-Score</option>
+                            </select>
+
+                            ${hasActiveFilters ? `
+                                <button onclick="state.filters = {severity:'all',patternType:'all',decision:'all',search:''}; state.sortBy='newest'; render();" class="btn btn-ghost px-3 py-2.5 text-sm text-white/60 hover:text-red-400">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    Clear
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function SignalDistribution() {
+            if (state.signals.length === 0) return '';
+
+            const counts = {
+                critical: state.signals.filter(s => s.severity === 'critical').length,
+                high: state.signals.filter(s => s.severity === 'high').length,
+                medium: state.signals.filter(s => s.severity === 'medium').length,
+                low: state.signals.filter(s => s.severity === 'low').length
+            };
+            const total = state.signals.length;
+
+            const decisionCounts = {
+                ALERT: state.signals.filter(s => s.agent_decision === 'ALERT').length,
+                REVIEW: state.signals.filter(s => s.agent_decision === 'REVIEW').length,
+                IGNORE: state.signals.filter(s => s.agent_decision === 'IGNORE').length
+            };
+
+            return `
+                <div class="glass-card p-5 mb-6">
+                    <div class="flex flex-col sm:flex-row gap-6">
+                        <!-- Severity Distribution -->
+                        <div class="flex-1">
+                            <h4 class="text-xs uppercase tracking-wide text-white/40 mb-3">Severity Distribution</h4>
+                            <div class="flex h-2 rounded-full overflow-hidden bg-white/5 mb-3">
+                                ${counts.critical > 0 ? `<div class="bg-red-500 transition-all" style="width: ${(counts.critical/total)*100}%"></div>` : ''}
+                                ${counts.high > 0 ? `<div class="bg-orange-500 transition-all" style="width: ${(counts.high/total)*100}%"></div>` : ''}
+                                ${counts.medium > 0 ? `<div class="bg-yellow-500 transition-all" style="width: ${(counts.medium/total)*100}%"></div>` : ''}
+                                ${counts.low > 0 ? `<div class="bg-gray-500 transition-all" style="width: ${(counts.low/total)*100}%"></div>` : ''}
                             </div>
-                            <div class="bg-black border border-white/10 rounded-xl p-6">
-                                <div class="text-emerald-400 text-2xl mb-4">3</div>
-                                <h3 class="font-semibold text-lg mb-2">Get Actionable Signals</h3>
-                                <p class="text-white/50">Only see what matters. No noise, just anomalies worth researching.</p>
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-white/60">Critical: ${counts.critical}</span></span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-orange-500"></span><span class="text-white/60">High: ${counts.high}</span></span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-yellow-500"></span><span class="text-white/60">Medium: ${counts.medium}</span></span>
+                                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-gray-500"></span><span class="text-white/60">Low: ${counts.low}</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="hidden sm:block w-px bg-white/10"></div>
+
+                        <!-- Decision Distribution -->
+                        <div class="flex-1">
+                            <h4 class="text-xs uppercase tracking-wide text-white/40 mb-3">AI Decisions</h4>
+                            <div class="flex gap-4">
+                                <div class="flex-1 text-center p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                    <div class="text-2xl font-bold text-red-400">${decisionCounts.ALERT}</div>
+                                    <div class="text-xs text-white/40">Alert</div>
+                                </div>
+                                <div class="flex-1 text-center p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                                    <div class="text-2xl font-bold text-yellow-400">${decisionCounts.REVIEW}</div>
+                                    <div class="text-xs text-white/40">Review</div>
+                                </div>
+                                <div class="flex-1 text-center p-3 rounded-lg bg-white/5 border border-white/10">
+                                    <div class="text-2xl font-bold text-white/50">${decisionCounts.IGNORE}</div>
+                                    <div class="text-xs text-white/40">Ignore</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            `;
+        }
 
-                <section class="py-20 px-6">
-                    <div class="max-w-5xl mx-auto">
-                        <h2 class="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
-                        <p class="text-white/50 text-center mb-12">One good trade covers a year of Pro.</p>
-                        
-                        <div class="grid md:grid-cols-3 gap-8">
-                            <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
-                                <h3 class="text-xl font-semibold mb-2">Free</h3>
-                                <div class="mb-6">
-                                    <span class="text-4xl font-bold">₹0</span>
-                                    <span class="text-white/50">/forever</span>
+        function LoadingSkeleton(type) {
+            if (type === 'signals') {
+                return `
+                    <div class="space-y-4">
+                        ${[1,2,3].map(() => `
+                            <div class="glass-card p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-12 rounded-xl skeleton"></div>
+                                        <div>
+                                            <div class="h-7 w-24 skeleton mb-2"></div>
+                                            <div class="h-4 w-32 skeleton"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="h-8 w-20 skeleton mb-2"></div>
+                                        <div class="h-5 w-12 skeleton"></div>
+                                    </div>
                                 </div>
-                                <ul class="space-y-3 mb-8 text-sm">
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 5 symbols</li>
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Daily digest</li>
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 7-day history</li>
-                                </ul>
-                                <button onclick="setState({page:'register'})" class="w-full py-3 rounded-lg bg-white/10 hover:bg-white/20 font-semibold">
-                                    Start Free
-                                </button>
-                            </div>
-                            
-                            <div class="bg-emerald-500 text-black rounded-2xl p-8">
-                                <h3 class="text-xl font-semibold mb-2">Pro</h3>
-                                <div class="mb-6">
-                                    <span class="text-4xl font-bold">₹1,499</span>
-                                    <span class="text-black/60">/month</span>
+                                <div class="grid grid-cols-3 gap-4 py-4 border-y border-white/5 mb-4">
+                                    <div><div class="h-4 w-16 skeleton mb-2"></div><div class="h-6 w-12 skeleton"></div></div>
+                                    <div><div class="h-4 w-16 skeleton mb-2"></div><div class="h-6 w-16 skeleton"></div></div>
+                                    <div><div class="h-4 w-16 skeleton mb-2"></div><div class="h-6 w-14 skeleton"></div></div>
                                 </div>
-                                <ul class="space-y-3 mb-8 text-sm">
-                                    <li class="flex items-center gap-2"><span>✓</span> 25 symbols</li>
-                                    <li class="flex items-center gap-2"><span>✓</span> Real-time alerts</li>
-                                    <li class="flex items-center gap-2"><span>✓</span> AI explanations</li>
-                                    <li class="flex items-center gap-2"><span>✓</span> 90-day history</li>
-                                    <li class="flex items-center gap-2"><span>✓</span> Learning engine</li>
-                                </ul>
-                                <button onclick="setState({page:'register'})" class="w-full py-3 rounded-lg bg-black text-white font-semibold hover:bg-black/80">
-                                    Go Pro
-                                </button>
-                            </div>
-                            
-                            <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
-                                <h3 class="text-xl font-semibold mb-2">Serious</h3>
-                                <div class="mb-6">
-                                    <span class="text-4xl font-bold">₹4,999</span>
-                                    <span class="text-white/50">/month</span>
+                                <div class="h-16 skeleton mb-4"></div>
+                                <div class="flex gap-3">
+                                    <div class="h-10 flex-1 skeleton"></div>
+                                    <div class="h-10 flex-1 skeleton"></div>
+                                    <div class="h-10 w-20 skeleton"></div>
                                 </div>
-                                <ul class="space-y-3 mb-8 text-sm">
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 100 symbols</li>
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> API access</li>
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Webhooks</li>
-                                    <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 1-year history</li>
-                                </ul>
-                                <button class="w-full py-3 rounded-lg bg-white/10 hover:bg-white/20 font-semibold">
-                                    Contact Us
-                                </button>
                             </div>
-                        </div>
+                        `).join('')}
                     </div>
-                </section>
+                `;
+            }
+            if (type === 'stats') {
+                return `
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        ${[1,2,3,4].map(() => `
+                            <div class="glass-card p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="w-10 h-10 rounded-xl skeleton"></div>
+                                </div>
+                                <div class="h-8 w-12 skeleton mb-2"></div>
+                                <div class="h-4 w-20 skeleton"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            return '';
+        }
 
-                <footer class="py-12 px-6 border-t border-white/10">
-                    <div class="max-w-6xl mx-auto flex justify-between items-center">
-                        <div class="text-white/50 text-sm">© 2025 FinSight. Not financial advice.</div>
-                        <div class="flex gap-6 text-white/50 text-sm">
-                            <a href="#" class="hover:text-white">Privacy</a>
-                            <a href="#" class="hover:text-white">Terms</a>
+        function Footer() {
+            return `
+                <footer class="border-t border-white/10 mt-16">
+                    <div class="max-w-6xl mx-auto px-6 py-12">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </div>
+                                <span class="font-semibold text-white">FinSight</span>
+                            </div>
+                            <p class="text-white/40 text-sm text-center">&copy; ${new Date().getFullYear()} FinSight. Not financial advice. Made with <span class="text-red-400">&#10084;</span> in India</p>
+                            <div class="flex gap-6 text-white/40 text-sm">
+                                <a href="#" class="hover:text-white transition">Privacy</a>
+                                <a href="#" class="hover:text-white transition">Terms</a>
+                            </div>
                         </div>
                     </div>
                 </footer>
             `;
         }
 
+        // =================================================================
+        // PAGES
+        // =================================================================
+        function Landing() {
+            return `
+                ${Header(false)}
+
+                <section class="pt-32 pb-20 px-6">
+                    <div class="max-w-4xl mx-auto text-center">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-8">
+                            <span class="w-2 h-2 bg-emerald-400 rounded-full pulse-dot"></span>
+                            AI-Powered Market Intelligence
+                        </div>
+                        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
+                            Stop Chasing Noise.<br>
+                            <span class="text-gradient">Start Catching Signals.</span>
+                        </h1>
+                        <p class="text-xl text-white/60 mb-10 max-w-2xl mx-auto leading-relaxed">
+                            AI-powered anomaly detection that tells you when something
+                            statistically unusual happens—so you can research what matters.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button onclick="setState({page:'register'})" class="btn btn-primary px-8 py-4 text-lg">
+                                Try Free for 14 Days
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                            </button>
+                            <button onclick="setState({page:'login'})" class="btn btn-secondary px-8 py-4 text-lg">Sign In</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="py-20 px-6">
+                    <div class="max-w-6xl mx-auto">
+                        <h2 class="text-3xl font-bold text-center mb-4">How It Works</h2>
+                        <p class="text-white/50 text-center mb-12">Three simple steps to smarter trading</p>
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div class="glass-card glass-card-interactive p-8 text-center">
+                                <div class="w-14 h-14 rounded-2xl bg-emerald-500/15 flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                </div>
+                                <h3 class="font-semibold text-lg mb-3 text-white">Add Your Watchlist</h3>
+                                <p class="text-white/50 text-sm leading-relaxed">Pick the stocks you want to track. Free tier gets 5 symbols to start.</p>
+                            </div>
+                            <div class="glass-card glass-card-interactive p-8 text-center">
+                                <div class="w-14 h-14 rounded-2xl bg-purple-500/15 flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-7 h-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                </div>
+                                <h3 class="font-semibold text-lg mb-3 text-white">AI Monitors 24/7</h3>
+                                <p class="text-white/50 text-sm leading-relaxed">Our detection engine watches for statistically unusual market activity.</p>
+                            </div>
+                            <div class="glass-card glass-card-interactive p-8 text-center">
+                                <div class="w-14 h-14 rounded-2xl bg-cyan-500/15 flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-7 h-7 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </div>
+                                <h3 class="font-semibold text-lg mb-3 text-white">Get Actionable Signals</h3>
+                                <p class="text-white/50 text-sm leading-relaxed">Only see what matters. No noise, just anomalies worth researching.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="py-20 px-6 bg-white/[0.02]">
+                    <div class="max-w-5xl mx-auto">
+                        <h2 class="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
+                        <p class="text-white/50 text-center mb-12">One good trade covers a year of Pro.</p>
+
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div class="glass-card p-8">
+                                <h3 class="text-xl font-semibold mb-2 text-white">Free</h3>
+                                <div class="mb-6">
+                                    <span class="text-4xl font-bold text-white">$0</span>
+                                    <span class="text-white/50">/forever</span>
+                                </div>
+                                <ul class="space-y-3 mb-8 text-sm">
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 5 symbols</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Daily digest</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 7-day history</li>
+                                </ul>
+                                <button onclick="setState({page:'register'})" class="btn btn-secondary w-full py-3">Start Free</button>
+                            </div>
+
+                            <div class="glass-card p-8 border-emerald-500/30 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 bg-emerald-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+                                <h3 class="text-xl font-semibold mb-2 text-white">Pro</h3>
+                                <div class="mb-6">
+                                    <span class="text-4xl font-bold text-gradient">$29</span>
+                                    <span class="text-white/50">/month</span>
+                                </div>
+                                <ul class="space-y-3 mb-8 text-sm">
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 25 symbols</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Real-time alerts</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> AI explanations</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 90-day history</li>
+                                </ul>
+                                <button onclick="setState({page:'register'})" class="btn btn-primary w-full py-3">Go Pro</button>
+                            </div>
+
+                            <div class="glass-card p-8">
+                                <h3 class="text-xl font-semibold mb-2 text-white">Serious</h3>
+                                <div class="mb-6">
+                                    <span class="text-4xl font-bold text-white">$99</span>
+                                    <span class="text-white/50">/month</span>
+                                </div>
+                                <ul class="space-y-3 mb-8 text-sm">
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 100 symbols</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> API access</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Webhooks</li>
+                                    <li class="flex items-center gap-3 text-white/70"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 1-year history</li>
+                                </ul>
+                                <button class="btn btn-secondary w-full py-3">Contact Us</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                ${Footer()}
+            `;
+        }
+
         function AuthForm(isLogin) {
             return `
-                <div class="min-h-screen flex items-center justify-center px-6">
+                ${Header(false)}
+
+                <div class="min-h-screen flex items-center justify-center px-6 pt-20">
                     <div class="w-full max-w-md">
-                        <div class="text-center mb-8">
-                            <a href="#" onclick="setState({page:'landing'})" class="text-2xl font-bold">
-                                <span class="text-emerald-400">Fin</span>Sight
-                            </a>
-                            <h1 class="text-xl text-white/70 mt-2">${isLogin ? 'Welcome back' : 'Create account'}</h1>
-                        </div>
-
-                        ${state.error ? `
-                            <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
-                                ${escapeHtml(state.error)}
+                        <div class="glass-card p-8">
+                            <div class="text-center mb-8">
+                                <h1 class="text-2xl font-bold text-white mb-2">${isLogin ? 'Welcome back' : 'Create account'}</h1>
+                                <p class="text-white/50">${isLogin ? 'Sign in to your account' : 'Start your free trial today'}</p>
                             </div>
-                        ` : ''}
 
-                        <form onsubmit="handleAuth(event, ${isLogin})" class="space-y-4">
-                            ${!isLogin ? `
-                                <div>
-                                    <label class="block text-white/50 text-sm mb-2">Name</label>
-                                    <input type="text" name="name" required minlength="2"
-                                        class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
+                            ${state.error ? `
+                                <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm mb-6 flex items-center gap-3">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    ${escapeHtml(state.error)}
                                 </div>
                             ` : ''}
-                            
-                            <div>
-                                <label class="block text-white/50 text-sm mb-2">Email</label>
-                                <input type="email" name="email" required
-                                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
-                            </div>
 
-                            <div>
-                                <label class="block text-white/50 text-sm mb-2">Password</label>
-                                <input type="password" name="password" required minlength="8"
-                                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500">
-                            </div>
+                            <form onsubmit="handleAuth(event, ${isLogin})" class="space-y-5">
+                                ${!isLogin ? `
+                                    <div>
+                                        <label class="block text-white/70 text-sm font-medium mb-2">Name</label>
+                                        <input type="text" name="name" required minlength="2" class="input" placeholder="Your name">
+                                    </div>
+                                ` : ''}
 
-                            <button type="submit" ${state.loading ? 'disabled' : ''} 
-                                class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 py-3 rounded-lg font-semibold">
-                                ${state.loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-                            </button>
-                        </form>
+                                <div>
+                                    <label class="block text-white/70 text-sm font-medium mb-2">Email</label>
+                                    <input type="email" name="email" required class="input" placeholder="you@example.com">
+                                </div>
 
-                        <p class="text-center text-white/50 mt-6">
-                            ${isLogin ? "Don't have an account?" : "Already have an account?"}
-                            <button onclick="setState({page:'${isLogin ? 'register' : 'login'}', error: null})" class="text-emerald-400 hover:underline ml-1">
-                                ${isLogin ? 'Sign up' : 'Sign in'}
-                            </button>
-                        </p>
+                                <div>
+                                    <label class="block text-white/70 text-sm font-medium mb-2">Password</label>
+                                    <input type="password" name="password" required minlength="8" class="input" placeholder="Min 8 characters">
+                                </div>
+
+                                <button type="submit" ${state.loading ? 'disabled' : ''} class="btn btn-primary w-full py-3.5 text-base">
+                                    ${state.loading ? `
+                                        <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                                        Please wait...
+                                    ` : (isLogin ? 'Sign In' : 'Create Account')}
+                                </button>
+                            </form>
+
+                            <p class="text-center text-white/50 mt-6">
+                                ${isLogin ? "Don't have an account?" : "Already have an account?"}
+                                <button onclick="setState({page:'${isLogin ? 'register' : 'login'}', error: null})" class="text-emerald-400 hover:text-emerald-300 font-medium ml-1 transition">
+                                    ${isLogin ? 'Sign up' : 'Sign in'}
+                                </button>
+                            </p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -389,7 +1490,7 @@
             const form = e.target;
             const email = form.email.value;
             const password = form.password.value;
-            
+
             if (isLogin) {
                 login(email, password);
             } else {
@@ -402,141 +1503,96 @@
             const user = state.user || {};
             const tierLimits = { free: 5, pro: 25, serious: 100 };
             const limit = tierLimits[user.tier] || 5;
-            
+            const filteredSignals = getFilteredSignals();
+            const filteredWatchlist = getFilteredWatchlist();
+            const newSignalCount = getNewSignalCount();
+            const hasActiveFilters = state.filters.severity !== 'all' ||
+                state.filters.patternType !== 'all' ||
+                state.filters.decision !== 'all' ||
+                state.filters.search;
+
             return `
-                <header class="border-b border-white/10 px-6 py-4">
-                    <div class="max-w-6xl mx-auto flex justify-between items-center">
-                        <div class="text-xl font-bold">
-                            <span class="text-emerald-400">Fin</span>Sight
-                        </div>
-                        <div class="flex items-center gap-4">
-                            <span class="text-white/50 text-sm">
-                                ${user.name || 'User'} • <span class="capitalize">${user.tier || 'free'}</span>
-                            </span>
-                            <button onclick="logout()" class="text-white/50 hover:text-white" title="Logout">
-                                <i data-lucide="log-out" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-                </header>
+                ${Header(true)}
 
-                <main class="max-w-6xl mx-auto px-6 py-8">
-                    ${state.error ? `
-                        <div class="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-6">
-                            ${escapeHtml(state.error)}
-                            <button onclick="setState({error:null})" class="float-right">×</button>
-                        </div>
-                    ` : ''}
+                <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pt-20 sm:pt-24">
+                    ${state.loading ? LoadingSkeleton('stats') : StatsOverview()}
 
-                    <div class="grid lg:grid-cols-3 gap-8">
-                        <!-- Signals -->
+                    ${SignalDistribution()}
+
+                    <div class="grid lg:grid-cols-3 gap-6 lg:gap-8">
                         <div class="lg:col-span-2">
-                            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
-                                <i data-lucide="bell" class="w-6 h-6 text-emerald-400"></i>
-                                Latest Signals
-                            </h2>
-                            
-                            ${state.signals.length === 0 ? `
-                                <div class="bg-white/5 rounded-xl p-8 text-center text-white/50">
-                                    <i data-lucide="activity" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
-                                    <p>No signals yet. Add symbols to your watchlist to get started.</p>
-                                </div>
-                            ` : `
-                                <div class="space-y-4">
-                                    ${state.signals.map(signal => SignalCard(signal)).join('')}
-                                </div>
-                            `}
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                <h2 class="text-lg sm:text-xl font-semibold flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                    </div>
+                                    <span>Signals</span>
+                                    ${newSignalCount > 0 ? `
+                                        <span class="ml-2 px-2 py-0.5 text-xs font-bold bg-emerald-500 text-white rounded-full animate-pulse">${newSignalCount} new</span>
+                                    ` : ''}
+                                </h2>
+                                <span class="text-sm text-white/40">${filteredSignals.length} of ${state.signals.length} signals</span>
+                            </div>
+
+                            ${state.signals.length > 0 ? SignalFilterBar() : ''}
+
+                            ${state.loading ? LoadingSkeleton('signals') : (
+                                filteredSignals.length === 0 ? EmptyState('signals', hasActiveFilters) : `
+                                    <div class="space-y-4 stagger-in">
+                                        ${filteredSignals.map(signal => SignalCard(signal)).join('')}
+                                    </div>
+                                `
+                            )}
                         </div>
 
-                        <!-- Watchlist -->
-                        <div>
-                            <h2 class="text-xl font-semibold mb-6">
-                                Watchlist
-                                <span class="text-white/50 text-sm font-normal ml-2">
-                                    ${state.watchlist.length}/${limit}
-                                </span>
-                            </h2>
-                            
-                            <form onsubmit="handleAddSymbol(event)" class="flex gap-2 mb-6">
-                                <input type="text" name="symbol" placeholder="AAPL" maxlength="5"
-                                    class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white uppercase placeholder:text-white/30 focus:outline-none focus:border-emerald-500">
-                                <button type="submit" ${state.watchlist.length >= limit ? 'disabled' : ''}
-                                    class="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 p-2 rounded-lg">
-                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                        <div class="lg:sticky lg:top-24 lg:self-start">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-lg sm:text-xl font-semibold">Watchlist</h2>
+                                <span class="text-sm text-white/40">${state.watchlist.length}/${limit}</span>
+                            </div>
+
+                            <form onsubmit="handleAddSymbol(event)" class="flex gap-2 mb-4">
+                                <input type="text" name="symbol" placeholder="AAPL" maxlength="10" class="input flex-1 uppercase placeholder:normal-case text-sm sm:text-base">
+                                <button type="submit" ${state.watchlist.length >= limit ? 'disabled' : ''} class="btn btn-primary p-2.5 sm:p-3">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                                 </button>
                             </form>
 
-                            <div class="space-y-2">
-                                ${state.watchlist.map(symbol => `
-                                    <div class="flex justify-between items-center bg-white/5 rounded-lg px-4 py-3 group">
-                                        <span class="font-medium">${escapeHtml(symbol)}</span>
-                                        <button onclick="removeSymbol('${escapeJs(symbol)}')"
-                                            class="text-white/30 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
-                                            <i data-lucide="x" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-                                `).join('')}
-                            </div>
+                            ${state.watchlist.length > 5 ? `
+                                <div class="relative mb-4">
+                                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <input
+                                        type="text"
+                                        placeholder="Search watchlist..."
+                                        value="${escapeHtml(state.watchlistSearch)}"
+                                        oninput="setWatchlistSearch(this.value)"
+                                        class="input pl-10 py-2 text-sm"
+                                    >
+                                </div>
+                            ` : ''}
+
+                            ${filteredWatchlist.length === 0 ? (state.watchlist.length === 0 ? EmptyState('watchlist') : `
+                                <div class="glass-card p-6 text-center">
+                                    <p class="text-white/50 text-sm">No matching symbols</p>
+                                    <button onclick="state.watchlistSearch=''; render();" class="text-emerald-400 text-sm mt-2 hover:underline">Clear search</button>
+                                </div>
+                            `) : `
+                                <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                                    ${filteredWatchlist.map(symbol => WatchlistItem(symbol)).join('')}
+                                </div>
+                            `}
 
                             ${state.watchlist.length >= limit && user.tier === 'free' ? `
-                                <div class="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-                                    <p class="text-sm text-emerald-400">Watchlist full! Upgrade to Pro for 25 symbols.</p>
+                                <div class="mt-4 glass-card p-4 border-emerald-500/30">
+                                    <p class="text-sm text-emerald-400 mb-3">Watchlist full! Upgrade for more symbols.</p>
+                                    <button class="btn btn-primary w-full py-2.5 text-sm">Upgrade to Pro</button>
                                 </div>
                             ` : ''}
                         </div>
                     </div>
                 </main>
-            `;
-        }
 
-        function SignalCard(signal) {
-            const isBullish = signal.agent_decision === 'EXECUTE' || signal.agent_decision === 'REVIEW';
-            const date = new Date(signal.detected_at).toLocaleString();
-
-            // Safely format numeric values
-            const confidence = signal.agent_confidence ? (signal.agent_confidence * 100).toFixed(0) + '%' : 'N/A';
-            const zScore = typeof signal.z_score === 'number' ? signal.z_score.toFixed(1) : '0.0';
-            const price = typeof signal.price === 'number' ? signal.price.toFixed(2) : '0.00';
-
-            return `
-                <div data-signal="${escapeHtml(signal.id)}" class="fade-in bg-white/5 border border-white/10 rounded-xl p-6 hover:border-emerald-500/50 transition">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl font-bold">${escapeHtml(signal.symbol)}</span>
-                            <span class="px-2 py-1 rounded text-xs font-medium ${
-                                signal.severity === 'high' || signal.severity === 'critical'
-                                    ? 'bg-red-500/20 text-red-400'
-                                    : signal.severity === 'medium'
-                                        ? 'bg-yellow-500/20 text-yellow-400'
-                                        : 'bg-white/10 text-white/70'
-                            }">
-                                ${escapeHtml(signal.severity)}
-                            </span>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-emerald-400 font-semibold">${escapeHtml(confidence)}</div>
-                            <div class="text-white/40 text-sm">${escapeHtml(date)}</div>
-                        </div>
-                    </div>
-
-                    <div class="text-white/70 mb-2">
-                        <span class="text-white/50">${escapeHtml(signal.pattern_type)}:</span>
-                        Z-score ${escapeHtml(zScore)}σ at $${escapeHtml(price)}
-                    </div>
-
-                    ${signal.agent_reason ? `
-                        <p class="text-white/50 text-sm mb-4">${escapeHtml(signal.agent_reason)}</p>
-                    ` : ''}
-
-                    <div class="flex gap-3">
-                        <button onclick="recordAction('${escapeJs(signal.id)}', 'traded')"
-                            class="text-sm text-emerald-400 hover:underline">Mark as Traded</button>
-                        <button onclick="recordAction('${escapeJs(signal.id)}', 'reviewed')"
-                            class="text-sm text-white/50 hover:underline">Reviewed</button>
-                        <button onclick="recordAction('${escapeJs(signal.id)}', 'ignored')"
-                            class="text-sm text-white/30 hover:underline">Ignore</button>
-                    </div>
-                </div>
+                ${Footer()}
             `;
         }
 
@@ -554,7 +1610,7 @@
         // =================================================================
         function render() {
             const app = document.getElementById('app');
-            
+
             if (state.page === 'landing') {
                 app.innerHTML = Landing();
             } else if (state.page === 'login') {
@@ -564,24 +1620,112 @@
             } else if (state.page === 'dashboard') {
                 app.innerHTML = Dashboard();
             }
-            
-            // Initialize Lucide icons
+
             lucide.createIcons();
+        }
+
+        // =================================================================
+        // KEYBOARD SHORTCUTS
+        // =================================================================
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ignore if user is typing in an input
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                    return;
+                }
+
+                // Only work on dashboard
+                if (state.page !== 'dashboard') return;
+
+                switch (e.key.toLowerCase()) {
+                    case 'r':
+                        // Refresh data
+                        if (!e.ctrlKey && !e.metaKey) {
+                            e.preventDefault();
+                            const refreshBtn = document.querySelector('[title*="Refresh"]');
+                            if (refreshBtn) {
+                                refreshBtn.click();
+                            }
+                        }
+                        break;
+                    case '/':
+                        // Focus search
+                        e.preventDefault();
+                        const searchInput = document.querySelector('input[placeholder*="Search signals"]');
+                        if (searchInput) {
+                            searchInput.focus();
+                        }
+                        break;
+                    case 'escape':
+                        // Clear filters and search
+                        if (state.filters.search || state.filters.severity !== 'all' || state.filters.patternType !== 'all' || state.filters.decision !== 'all') {
+                            state.filters = { severity: 'all', patternType: 'all', decision: 'all', search: '' };
+                            state.sortBy = 'newest';
+                            render();
+                        }
+                        break;
+                    case '1':
+                        // Filter: Critical only
+                        setFilter('severity', state.filters.severity === 'critical' ? 'all' : 'critical');
+                        break;
+                    case '2':
+                        // Filter: High only
+                        setFilter('severity', state.filters.severity === 'high' ? 'all' : 'high');
+                        break;
+                    case '3':
+                        // Filter: Alerts only
+                        setFilter('decision', state.filters.decision === 'ALERT' ? 'all' : 'ALERT');
+                        break;
+                    case '?':
+                        // Show keyboard shortcuts help
+                        if (e.shiftKey) {
+                            showKeyboardHelp();
+                        }
+                        break;
+                }
+            });
+        }
+
+        function showKeyboardHelp() {
+            showConfirmModal(
+                'Keyboard Shortcuts',
+                `
+                <div class="text-left text-sm space-y-2 mt-2">
+                    <div class="flex justify-between"><span class="text-white/60">Refresh data</span><kbd class="bg-white/10 px-2 py-1 rounded text-xs">R</kbd></div>
+                    <div class="flex justify-between"><span class="text-white/60">Search signals</span><kbd class="bg-white/10 px-2 py-1 rounded text-xs">/</kbd></div>
+                    <div class="flex justify-between"><span class="text-white/60">Clear filters</span><kbd class="bg-white/10 px-2 py-1 rounded text-xs">Esc</kbd></div>
+                    <div class="flex justify-between"><span class="text-white/60">Toggle Critical</span><kbd class="bg-white/10 px-2 py-1 rounded text-xs">1</kbd></div>
+                    <div class="flex justify-between"><span class="text-white/60">Toggle High</span><kbd class="bg-white/10 px-2 py-1 rounded text-xs">2</kbd></div>
+                    <div class="flex justify-between"><span class="text-white/60">Toggle Alerts</span><kbd class="bg-white/10 px-2 py-1 rounded text-xs">3</kbd></div>
+                </div>
+                `.replace(/<[^>]*>/g, ''), // Strip HTML for escapeHtml safety
+                'Got it',
+                () => {},
+                false
+            );
         }
 
         // =================================================================
         // INIT
         // =================================================================
         async function init() {
-            // Check if logged in
+            // Initialize keyboard shortcuts
+            initKeyboardShortcuts();
+
             if (state.token) {
                 try {
+                    state.loading = true;
+                    render();
                     await loadUser();
                     await loadWatchlist();
                     await loadSignals();
                     state.page = 'dashboard';
+                    state.loading = false;
+                    // Mark signals as seen after initial load
+                    markSignalsSeen();
                 } catch (err) {
                     console.error('Session invalid:', err);
+                    state.loading = false;
                     logout();
                 }
             }
