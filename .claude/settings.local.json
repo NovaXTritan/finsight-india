@@ -8,7 +8,30 @@
       "Bash(python:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZmNlZTNjMy1mYjAyLTQ0OGItOWRjYS1hN2JmYzQ4NTVhNTAiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJleHAiOjE3Njc3MjgwODF9.6G-JLcQS-4LfNda7wbaW-U3PV-tPGqB9aOX28mf1Lg4\")",
       "Bash(git commit:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(dir:*)",
+      "Bash(copy .env.example .env)",
+      "Bash(cp:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker --version:*)",
+      "Bash(start \"\" \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(start \"\" \"$LOCALAPPDATA\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(docker ps:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(start http://localhost:3000/index.html)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZDJkNGRhMi00OGY4LTQ4YWYtYmU4ZS1iMTdjMWNjNjc5MmUiLCJlbWFpbCI6ImRpdnlhbnNodUBmaW5zaWdodC5pbiIsImV4cCI6MTc2Nzg1NTE1MH0.KeQV2649IN6xFbi7DUnj8XTRqtqJjeTo5VTQSlZeAMw\")",
+      "Bash(set PYTHONIOENCODING=utf-8:*)",
+      "Bash(PYTHONUTF8=1 python:*)",
+      "Bash(docker exec:*)",
+      "Bash(cmd //c start.bat)",
+      "Bash(cmd.exe /c \"cd /d C:\\\\Users\\\\Divyanshu\\\\Downloads\\\\finsight-india-v1\\\\finsight && start start.bat\")",
+      "Bash(timeout:*)",
+      "Bash(where:*)",
+      "Bash(gh:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)"
     ]
   }
 }
