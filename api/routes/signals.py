@@ -71,10 +71,11 @@ async def get_signal(
     """
     async with db.pool.acquire() as conn:
         row = await conn.fetchrow("""
-            SELECT 
+            SELECT
                 a.id, a.symbol, a.pattern_type, a.severity,
                 a.z_score, a.price, a.volume, a.detected_at,
-                a.agent_decision, a.agent_confidence, a.agent_reason
+                a.agent_decision, a.agent_confidence, a.agent_reason,
+                a.context, a.sources, a.thought_process
             FROM anomalies a
             INNER JOIN user_watchlist w ON a.symbol = w.symbol
             WHERE a.id = $1 AND w.user_id = $2
@@ -158,10 +159,11 @@ async def get_signals_by_symbol(
     
     async with db.pool.acquire() as conn:
         rows = await conn.fetch("""
-            SELECT 
+            SELECT
                 id, symbol, pattern_type, severity,
                 z_score, price, volume, detected_at,
-                agent_decision, agent_confidence, agent_reason
+                agent_decision, agent_confidence, agent_reason,
+                context, sources, thought_process
             FROM anomalies
             WHERE symbol = $1
             ORDER BY detected_at DESC
@@ -169,3 +171,53 @@ async def get_signals_by_symbol(
         """, symbol.upper(), limit)
         
         return [Signal(**dict(row)) for row in rows]
+
+
+@router.post("/detect", response_model=MessageResponse)
+async def run_detection(
+    user_id: str = Depends(get_current_user_id),
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Trigger real-time anomaly detection for your watchlist.
+
+    This analyzes all symbols in your watchlist using real market data
+    and generates signals only when genuine statistical anomalies are detected.
+
+    Note: Detection is based on Z-score analysis. Signals are rare and only
+    appear when unusual volume, price, or volatility patterns occur.
+    """
+    import asyncio
+    from detection.real_detector import RealAnomalyDetector
+    from api.core.config import get_settings
+
+    settings = get_settings()
+
+    # Get user's watchlist
+    watchlist = await db.get_watchlist(user_id)
+
+    if not watchlist:
+        return MessageResponse(
+            message="No symbols in watchlist. Add symbols first.",
+            success=False
+        )
+
+    # Run detection
+    detector = RealAnomalyDetector(settings.database_url)
+
+    try:
+        await detector.connect()
+        signals = await detector.run_detection(watchlist)
+
+        if signals:
+            return MessageResponse(
+                message=f"Detection complete. Found {len(signals)} anomalies: {', '.join(s['symbol'] for s in signals)}",
+                success=True
+            )
+        else:
+            return MessageResponse(
+                message="Detection complete. No anomalies detected - market activity is within normal parameters.",
+                success=True
+            )
+    finally:
+        await detector.close()

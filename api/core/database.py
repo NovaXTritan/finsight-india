@@ -186,7 +186,7 @@ class APIDatabase:
         """Get signals for user's watchlist symbols."""
         async with self.pool.acquire() as conn:
             rows = await conn.fetch("""
-                SELECT 
+                SELECT
                     a.id,
                     a.symbol,
                     a.pattern_type,
@@ -197,7 +197,10 @@ class APIDatabase:
                     a.detected_at,
                     a.agent_decision,
                     a.agent_confidence,
-                    a.agent_reason
+                    a.agent_reason,
+                    a.context,
+                    a.sources,
+                    a.thought_process
                 FROM anomalies a
                 INNER JOIN user_watchlist w ON a.symbol = w.symbol
                 WHERE w.user_id = $1

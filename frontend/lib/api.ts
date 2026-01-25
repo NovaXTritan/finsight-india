@@ -59,13 +59,24 @@ export interface Signal {
   agent_decision: string;
   agent_confidence: number;
   agent_reason: string;
+  context?: string;
+  sources?: string;
+  thought_process?: string;
 }
 
 export interface Index {
-  name: string;
+  name?: string;
   value: number;
   change: number;
   change_pct: number;
+  open?: number;
+  high?: number;
+  low?: number;
+}
+
+// Indices as returned by API (object with index names as keys)
+export interface IndicesMap {
+  [key: string]: Omit<Index, 'name'>;
 }
 
 export interface FiiDii {
@@ -89,14 +100,16 @@ export interface NewsItem {
 }
 
 export interface MarketSummary {
-  market_status: {
+  market_open?: boolean;
+  market_status?: {
     is_open: boolean;
     market: string;
   };
-  indices: Index[];
-  fii_dii: FiiDii;
-  top_gainers: any[];
-  top_losers: any[];
+  indices: IndicesMap;
+  fii_dii?: FiiDii;
+  top_gainers?: any[];
+  top_losers?: any[];
+  timestamp?: string;
 }
 
 // Auth APIs

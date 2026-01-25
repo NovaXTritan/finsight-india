@@ -129,7 +129,7 @@ class OutcomeTracker:
             row = await conn.fetchrow("""
                 SELECT action FROM user_actions
                 WHERE anomaly_id = $1 AND user_id = $2
-                ORDER BY timestamp DESC LIMIT 1
+                ORDER BY created_at DESC LIMIT 1
             """, anomaly_id, user_id)
             
             return row["action"] if row else "ignored"

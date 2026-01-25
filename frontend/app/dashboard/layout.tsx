@@ -38,10 +38,21 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for hydration
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     const initAuth = async () => {
-      if (!token) {
+      // Check localStorage directly for token (more reliable than zustand during hydration)
+      const storedToken = localStorage.getItem('token');
+
+      if (!storedToken) {
         router.push('/login');
         return;
       }
@@ -65,7 +76,7 @@ export default function DashboardLayout({
     };
 
     initAuth();
-  }, [token, fetchUser, router, setWatchlist]);
+  }, [isHydrated, fetchUser, router, setWatchlist]);
 
   const handleLogout = () => {
     logout();
@@ -99,11 +110,10 @@ export default function DashboardLayout({
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Logo */}
+        {/* Header */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center space-x-2">
             <TrendingUp className="h-8 w-8 text-primary-600" />
-            <span className="text-xl font-bold text-gray-900">FinSight</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -241,7 +251,33 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">{children}</main>
+        <main className="p-4 lg:p-6 pb-16">{children}</main>
+
+        {/* Footer */}
+        <footer className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-gray-200 py-2 px-4">
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>&copy; {new Date().getFullYear()} FinSight India</span>
+            <div className="flex items-center space-x-3">
+              <span>Built by Divyanshu Kumar</span>
+              <a
+                href="https://novaxtritan.github.io/novaxtritanxmetamorphosis/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-600 hover:text-primary-700"
+              >
+                Portfolio
+              </a>
+              <a
+                href="https://www.linkedin.com/in/divyanshukumar27"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-600 hover:text-primary-700"
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

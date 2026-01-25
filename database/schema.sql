@@ -1,6 +1,26 @@
 -- FinSight Database Schema
 -- Auto-loaded by Docker on first run
 
+-- Users table (for authentication)
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    tier TEXT NOT NULL DEFAULT 'free',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User watchlist
+CREATE TABLE IF NOT EXISTS user_watchlist (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    symbol TEXT NOT NULL,
+    added_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, symbol)
+);
+
 -- Anomalies table
 CREATE TABLE IF NOT EXISTS anomalies (
     id TEXT PRIMARY KEY,
@@ -24,7 +44,7 @@ CREATE TABLE IF NOT EXISTS user_actions (
     user_id TEXT NOT NULL,
     action TEXT NOT NULL,
     notes TEXT,
-    timestamp TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Outcome tracking
@@ -79,3 +99,5 @@ CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON anomalies(detected_at DESC)
 CREATE INDEX IF NOT EXISTS idx_outcomes_user ON anomaly_outcomes(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_quality_user ON pattern_quality(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_actions_anomaly ON user_actions(anomaly_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_user_watchlist_user ON user_watchlist(user_id);

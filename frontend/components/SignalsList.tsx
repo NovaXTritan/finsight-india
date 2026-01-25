@@ -190,8 +190,49 @@ function SignalCard({
             </div>
           </div>
 
-          {/* Agent Reason */}
-          {signal.agent_reason && (
+          {/* Context - What this signal means */}
+          {(signal as any).context && (
+            <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="flex items-center text-xs font-medium text-blue-700 mb-1">
+                <Eye className="h-3.5 w-3.5 mr-1" />
+                What This Means
+              </div>
+              <div className="text-sm text-gray-700">{(signal as any).context}</div>
+            </div>
+          )}
+
+          {/* Sources - Data points used */}
+          {(signal as any).sources && (
+            <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center text-xs font-medium text-gray-600 mb-1">
+                <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                Data Sources
+              </div>
+              <div className="text-xs text-gray-600 font-mono">
+                {(signal as any).sources.split(' | ').map((source: string, i: number) => (
+                  <span key={i} className="inline-block bg-white px-2 py-1 rounded mr-2 mb-1 border border-gray-200">
+                    {source}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Thought Process - AI reasoning */}
+          {(signal as any).thought_process && (
+            <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+              <div className="flex items-center text-xs font-medium text-purple-700 mb-2">
+                <Zap className="h-3.5 w-3.5 mr-1" />
+                AI Thought Process
+              </div>
+              <div className="text-sm text-gray-700 whitespace-pre-line font-mono text-xs leading-relaxed">
+                {(signal as any).thought_process}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Summary */}
+          {signal.agent_reason && !((signal as any).context) && (
             <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
               <div className="text-xs text-gray-500 mb-1">AI Analysis</div>
               <div className="text-sm text-gray-700">{signal.agent_reason}</div>

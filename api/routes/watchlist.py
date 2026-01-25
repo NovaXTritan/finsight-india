@@ -71,11 +71,18 @@ async def add_to_watchlist(
     
     symbol = data.symbol.upper().strip()
     
-    # Basic validation
-    if not symbol.isalpha() or len(symbol) > 5:
+    # Basic validation (allow up to 15 chars for Indian stocks like BHARTIARTL)
+    if len(symbol) > 15 or len(symbol) < 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid symbol format. Use 1-5 letter stock symbols."
+            detail="Invalid symbol format. Symbol must be 1-15 characters."
+        )
+
+    # Allow alphanumeric and common symbols (& for M&M)
+    if not all(c.isalnum() or c in '&-' for c in symbol):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid symbol format. Only letters, numbers, & and - allowed."
         )
     
     success = await db.add_to_watchlist(user_id, symbol)

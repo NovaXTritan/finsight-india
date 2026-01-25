@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
-import { TrendingUp, Shield, Zap, BarChart3, Bell, Brain } from 'lucide-react';
+import { TrendingUp, Shield, Zap, BarChart3, Bell, Brain, Github, Linkedin, ExternalLink } from 'lucide-react';
 
 export default function Home() {
   const { isAuthenticated, token, fetchUser } = useAuthStore();
@@ -177,14 +177,64 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-gray-800 mt-20">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <TrendingUp className="h-6 w-6 text-primary-500" />
-              <span className="text-lg font-bold text-white">FinSight India</span>
+        <div className="container mx-auto px-6 py-12">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <TrendingUp className="h-6 w-6 text-primary-500" />
+                <span className="text-lg font-bold text-white">FinSight India</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                AI-powered market intelligence platform for Indian retail investors.
+                Real-time anomaly detection, FII/DII tracking, and smart signals.
+              </p>
             </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><Link href="/login" className="hover:text-primary-500 transition-colors">Login</Link></li>
+                <li><Link href="/register" className="hover:text-primary-500 transition-colors">Register</Link></li>
+                <li><Link href="#features" className="hover:text-primary-500 transition-colors">Features</Link></li>
+              </ul>
+            </div>
+
+            {/* Developer */}
+            <div>
+              <h4 className="text-white font-semibold mb-4">Developer</h4>
+              <p className="text-gray-400 text-sm mb-3">Created by Divyanshu Kumar</p>
+              <div className="flex space-x-4">
+                <a
+                  href="https://novaxtritan.github.io/novaxtritanxmetamorphosis/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-gray-400 hover:text-primary-500 transition-colors"
+                >
+                  <ExternalLink className="h-5 w-5 mr-1" />
+                  <span className="text-sm">Portfolio</span>
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/divyanshukumar27"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-gray-400 hover:text-primary-500 transition-colors"
+                >
+                  <Linkedin className="h-5 w-5 mr-1" />
+                  <span className="text-sm">LinkedIn</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between">
             <p className="text-gray-500 text-sm">
-              Made for Indian retail investors
+              &copy; {new Date().getFullYear()} FinSight India. Built with AI.
+            </p>
+            <p className="text-gray-500 text-sm mt-2 md:mt-0">
+              Made with care for Indian retail investors
             </p>
           </div>
         </div>

@@ -70,17 +70,15 @@ export function MarketSummaryCard() {
         <div className="flex items-center space-x-3">
           <Activity className="h-5 w-5 text-primary-600" />
           <h2 className="text-lg font-semibold text-gray-900">Market Pulse</h2>
-          {data?.market_status && (
-            <span
-              className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                data.market_status.is_open
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              {data.market_status.is_open ? 'Market Open' : 'Market Closed'}
-            </span>
-          )}
+          <span
+            className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+              data?.market_open
+                ? 'bg-green-100 text-green-700'
+                : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            {data?.market_open ? 'Market Open' : 'Market Closed'}
+          </span>
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           {lastUpdated && (
@@ -102,8 +100,8 @@ export function MarketSummaryCard() {
       {/* Indices */}
       <div className="p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {data?.indices?.map((index) => (
-            <IndexCard key={index.name} index={index} />
+          {data?.indices && Object.entries(data.indices).map(([name, index]) => (
+            <IndexCard key={name} index={{ name, ...index }} />
           ))}
         </div>
       </div>

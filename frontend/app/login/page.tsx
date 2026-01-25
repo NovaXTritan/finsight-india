@@ -112,6 +112,21 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p>
+            Built by{' '}
+            <a
+              href="https://www.linkedin.com/in/divyanshukumar27"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-500 hover:text-primary-400"
+            >
+              Divyanshu Kumar
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

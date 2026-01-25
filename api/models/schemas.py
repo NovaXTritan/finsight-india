@@ -74,6 +74,9 @@ class Signal(BaseModel):
     agent_decision: Optional[str] = None
     agent_confidence: Optional[float] = None
     agent_reason: Optional[str] = None
+    context: Optional[str] = None
+    sources: Optional[str] = None
+    thought_process: Optional[str] = None
 
 
 class SignalList(BaseModel):
