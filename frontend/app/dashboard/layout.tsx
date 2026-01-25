@@ -17,10 +17,20 @@ import {
   X,
   ChevronDown,
   User,
+  Wallet,
+  Filter,
+  Activity,
+  History,
+  BarChart3,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Portfolio', href: '/dashboard/portfolio', icon: Wallet },
+  { name: 'Screener', href: '/dashboard/screener', icon: Filter },
+  { name: 'F&O', href: '/dashboard/fno', icon: Activity },
+  { name: 'Backtest', href: '/dashboard/backtest', icon: History },
+  { name: 'Macro', href: '/dashboard/macro', icon: BarChart3 },
   { name: 'Signals', href: '/dashboard/signals', icon: Bell },
   { name: 'Watchlist', href: '/dashboard/watchlist', icon: List },
   { name: 'News', href: '/dashboard/news', icon: Newspaper },

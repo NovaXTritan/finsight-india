@@ -227,7 +227,8 @@ async def get_nifty50_stocks(
 async def get_news(
     user_id: str = Depends(get_current_user_id),
     limit: int = Query(50, ge=1, le=200),
-    symbol: Optional[str] = None
+    symbol: Optional[str] = None,
+    category: Optional[str] = Query(None, pattern="^(all|markets|economy|stocks|ipo)$")
 ):
     """
     Get latest market news from Indian financial publications.
@@ -235,10 +236,11 @@ async def get_news(
     Args:
         limit: Maximum number of news items (default 50, max 200)
         symbol: Filter by stock symbol (optional)
+        category: Filter by category - all, markets, economy, stocks, ipo (optional)
 
     Returns list of news items with:
     - title, summary, url, source
-    - published_at, sentiment
+    - published_at, sentiment, category
     - symbols (mentioned stocks)
     """
     if config.MARKET != "INDIA":
@@ -255,12 +257,27 @@ async def get_news(
     else:
         items = await aggregator.fetch_all(max_age_hours=24)
 
+    # Filter by category if specified
+    if category and category != "all":
+        items = [item for item in items if item.category == category]
+
     # Convert to dict and limit
     news = [item.to_dict() for item in items[:limit]]
+
+    # Get category counts for tabs
+    all_items = await aggregator.fetch_all(max_age_hours=24)
+    category_counts = {
+        "all": len(all_items),
+        "markets": sum(1 for i in all_items if i.category == "markets"),
+        "economy": sum(1 for i in all_items if i.category == "economy"),
+        "stocks": sum(1 for i in all_items if i.category == "stocks"),
+        "ipo": sum(1 for i in all_items if i.category == "ipo"),
+    }
 
     return {
         "news": news,
         "count": len(news),
+        "category_counts": category_counts,
         "timestamp": datetime.now().isoformat()
     }
 

@@ -2,7 +2,8 @@
 Indian Market News Aggregator
 
 Fetches news from major Indian financial publications via RSS feeds.
-Tags news with relevant stock symbols.
+Also fetches news from Yahoo Finance for major stocks.
+Tags news with relevant stock symbols and categories.
 """
 import asyncio
 import aiohttp
@@ -14,6 +15,12 @@ from dataclasses import dataclass, field
 import logging
 from bs4 import BeautifulSoup
 import hashlib
+
+try:
+    import yfinance as yf
+    HAS_YFINANCE = True
+except ImportError:
+    HAS_YFINANCE = False
 
 import config
 
@@ -31,6 +38,7 @@ class NewsItem:
     published_at: datetime
     symbols: List[str] = field(default_factory=list)
     sentiment: Optional[str] = None  # positive, negative, neutral
+    category: str = "markets"  # markets, economy, stocks, ipo
     priority: int = 2
 
     def to_dict(self) -> Dict:
@@ -43,6 +51,7 @@ class NewsItem:
             "published_at": self.published_at.isoformat(),
             "symbols": self.symbols,
             "sentiment": self.sentiment,
+            "category": self.category,
             "priority": self.priority,
         }
 
@@ -122,6 +131,25 @@ class IndiaNewsAggregator:
         "miss", "disappoint", "slump", "sink", "tumble", "slide", "retreat"
     ]
 
+    # Category detection keywords
+    CATEGORY_KEYWORDS = {
+        "ipo": ["ipo", "initial public offering", "public issue", "listing",
+                "grey market", "gmp", "allotment", "subscription", "anchor"],
+        "economy": ["gdp", "inflation", "rbi", "repo rate", "monetary policy",
+                    "fiscal", "budget", "trade deficit", "cpi", "iip", "gst collection",
+                    "forex", "current account", "pmi", "manufacturing index",
+                    "economic growth", "economy", "macro"],
+        "stocks": ["buy", "sell", "target", "upgrade", "downgrade", "rating",
+                   "results", "earnings", "quarterly", "dividend", "bonus",
+                   "stock split", "buyback", "fy24", "fy25", "q1", "q2", "q3", "q4"],
+    }
+
+    # Major stocks for Yahoo Finance news
+    YAHOO_NEWS_SYMBOLS = [
+        "RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS",
+        "HINDUNILVR.NS", "SBIN.NS", "BHARTIARTL.NS", "ITC.NS", "LT.NS"
+    ]
+
     def __init__(self):
         self.feeds = config.INDIA_NEWS_FEEDS
         self.seen_ids: Set[str] = set()
@@ -167,6 +195,19 @@ class IndiaNewsAggregator:
         elif negative_count > positive_count + 1:
             return "negative"
         return "neutral"
+
+    def _detect_category(self, text: str) -> str:
+        """Detect news category based on keywords."""
+        text_lower = text.lower()
+
+        # Check categories in priority order
+        for category, keywords in self.CATEGORY_KEYWORDS.items():
+            for keyword in keywords:
+                if keyword in text_lower:
+                    return category
+
+        # Default to markets
+        return "markets"
 
     def _clean_html(self, text: str) -> str:
         """Remove HTML tags from text."""
@@ -253,10 +294,11 @@ class IndiaNewsAggregator:
                     continue
                 self.seen_ids.add(item_id)
 
-                # Extract symbols and sentiment
+                # Extract symbols, sentiment, and category
                 full_text = f"{title} {summary}"
                 symbols = self._extract_symbols(full_text)
                 sentiment = self._detect_sentiment(full_text)
+                category = self._detect_category(full_text)
 
                 news_item = NewsItem(
                     id=item_id,
@@ -267,6 +309,7 @@ class IndiaNewsAggregator:
                     published_at=self._parse_date(published),
                     symbols=symbols,
                     sentiment=sentiment,
+                    category=category,
                     priority=priority,
                 )
                 items.append(news_item)
@@ -278,12 +321,87 @@ class IndiaNewsAggregator:
         logger.info(f"Fetched {len(items)} items from {name}")
         return items
 
-    async def fetch_all(self, max_age_hours: int = 24) -> List[NewsItem]:
+    async def _fetch_yahoo_news(self) -> List[NewsItem]:
+        """Fetch news from Yahoo Finance for major Indian stocks."""
+        if not HAS_YFINANCE:
+            logger.warning("yfinance not installed, skipping Yahoo Finance news")
+            return []
+
+        items = []
+
+        def fetch_stock_news(symbol: str) -> List[Dict]:
+            """Fetch news for a single stock (runs in thread)."""
+            try:
+                ticker = yf.Ticker(symbol)
+                return ticker.news or []
+            except Exception as e:
+                logger.debug(f"Error fetching Yahoo news for {symbol}: {e}")
+                return []
+
+        # Run in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+
+        for symbol in self.YAHOO_NEWS_SYMBOLS[:5]:  # Limit to top 5 to avoid rate limits
+            try:
+                news_list = await loop.run_in_executor(None, fetch_stock_news, symbol)
+
+                for article in news_list[:3]:  # Max 3 per symbol
+                    try:
+                        title = article.get("title", "")
+                        link = article.get("link", "")
+                        publisher = article.get("publisher", "Yahoo Finance")
+                        publish_time = article.get("providerPublishTime", 0)
+
+                        # Generate ID
+                        item_id = self._generate_id(title, link)
+                        if item_id in self.seen_ids:
+                            continue
+                        self.seen_ids.add(item_id)
+
+                        # Parse timestamp
+                        if publish_time:
+                            published_at = datetime.fromtimestamp(publish_time)
+                        else:
+                            published_at = datetime.now()
+
+                        # Get symbol from ticker
+                        stock_symbol = symbol.replace(".NS", "").replace(".BO", "")
+                        symbols = [stock_symbol]
+
+                        # Detect sentiment and category
+                        sentiment = self._detect_sentiment(title)
+                        category = self._detect_category(title)
+
+                        news_item = NewsItem(
+                            id=item_id,
+                            title=title[:500],
+                            summary="",  # Yahoo doesn't provide summary in free tier
+                            url=link,
+                            source=f"Yahoo Finance ({publisher})",
+                            published_at=published_at,
+                            symbols=symbols,
+                            sentiment=sentiment,
+                            category=category if category != "markets" else "stocks",
+                            priority=1,  # High priority for Yahoo news
+                        )
+                        items.append(news_item)
+                    except Exception as e:
+                        logger.debug(f"Error parsing Yahoo article: {e}")
+                        continue
+            except Exception as e:
+                logger.debug(f"Error processing Yahoo news for {symbol}: {e}")
+                continue
+
+        logger.info(f"Fetched {len(items)} items from Yahoo Finance")
+        return items
+
+    async def fetch_all(self, max_age_hours: int = 24, include_yahoo: bool = True) -> List[NewsItem]:
         """
-        Fetch news from all configured feeds.
+        Fetch news from all configured feeds and Yahoo Finance.
 
         Args:
             max_age_hours: Only return news from last N hours
+            include_yahoo: Whether to include Yahoo Finance news
 
         Returns:
             List of NewsItem, sorted by published_at (newest first)
@@ -294,6 +412,14 @@ class IndiaNewsAggregator:
             # Fetch all feeds concurrently
             tasks = [self._fetch_feed(session, feed) for feed in self.feeds]
             results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Also fetch Yahoo Finance news
+        yahoo_items = []
+        if include_yahoo:
+            try:
+                yahoo_items = await self._fetch_yahoo_news()
+            except Exception as e:
+                logger.error(f"Yahoo Finance news error: {e}")
 
         # Flatten and filter
         all_items = []
@@ -306,6 +432,11 @@ class IndiaNewsAggregator:
             for item in result:
                 if item.published_at >= cutoff:
                     all_items.append(item)
+
+        # Add Yahoo items (already filtered by recency)
+        for item in yahoo_items:
+            if item.published_at >= cutoff:
+                all_items.append(item)
 
         # Sort by date (newest first), then by priority
         all_items.sort(key=lambda x: (x.published_at, -x.priority), reverse=True)

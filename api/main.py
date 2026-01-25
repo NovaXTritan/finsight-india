@@ -16,7 +16,7 @@ from slowapi.errors import RateLimitExceeded
 
 from api.core.config import get_settings
 from api.core.database import db
-from api.routes import auth, signals, watchlist, user, market
+from api.routes import auth, signals, watchlist, user, market, portfolio, screener, options, backtest, macro
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -139,6 +139,11 @@ app.include_router(signals.router, prefix="/api")
 app.include_router(watchlist.router, prefix="/api")
 app.include_router(user.router, prefix="/api")
 app.include_router(market.router, prefix="/api")
+app.include_router(portfolio.router, prefix="/api")
+app.include_router(screener.router, prefix="/api")
+app.include_router(options.router, prefix="/api")
+app.include_router(backtest.router, prefix="/api")
+app.include_router(macro.router)
 
 
 # Health check
@@ -186,3 +191,4 @@ if __name__ == "__main__":
         port=8000,
         reload=settings.debug
     )
+
