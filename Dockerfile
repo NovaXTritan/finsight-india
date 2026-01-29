@@ -22,6 +22,10 @@ COPY api/ ./api/
 COPY data/ ./data/
 COPY detection/ ./detection/
 COPY backtesting/ ./backtesting/
+COPY analysis/ ./analysis/
+COPY agents/ ./agents/
+COPY learning/ ./learning/
+COPY tracking/ ./tracking/
 
 # Create non-root user for security
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
