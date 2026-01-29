@@ -39,7 +39,6 @@ postgres_data/
 !package.json
 *.html
 *.zip
-*.txt
 
 # Docker
 Dockerfile*
