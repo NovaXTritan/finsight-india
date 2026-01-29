@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { Signal, signalsApi } from '@/lib/api';
 import {
   AlertTriangle,
@@ -20,11 +20,44 @@ interface SignalsListProps {
   showActions?: boolean;
 }
 
+const severityStyles = {
+  low: 'severity-low',
+  medium: 'severity-medium',
+  high: 'severity-high',
+  critical: 'severity-critical',
+} as const;
+
+const severityGlow = {
+  low: 'shadow-blue-200/50',
+  medium: 'shadow-yellow-200/50',
+  high: 'shadow-orange-200/50',
+  critical: 'shadow-red-200/50 animate-pulse',
+} as const;
+
+const decisionStyles = {
+  IGNORE: 'decision-ignore',
+  MONITOR: 'decision-monitor',
+  REVIEW: 'decision-review',
+  EXECUTE: 'decision-execute',
+  ALERT: 'bg-red-100 text-red-700',
+} as const;
+
+const decisionIcons = {
+  IGNORE: XCircle,
+  MONITOR: Eye,
+  REVIEW: AlertTriangle,
+  EXECUTE: CheckCircle,
+  ALERT: Zap,
+} as const;
+
 export function SignalsList({ signals, onActionRecorded, showActions = true }: SignalsListProps) {
   if (signals.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+        <div className="relative mx-auto w-16 h-16 mb-4">
+          <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+          <AlertTriangle className="relative h-16 w-16 mx-auto text-primary-300" />
+        </div>
         <p className="text-lg font-medium">No signals detected</p>
         <p className="text-sm mt-1">Add symbols to your watchlist to see signals</p>
       </div>
@@ -32,7 +65,7 @@ export function SignalsList({ signals, onActionRecorded, showActions = true }: S
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 stagger-children">
       {signals.map((signal) => (
         <SignalCard
           key={signal.id}
@@ -45,7 +78,7 @@ export function SignalsList({ signals, onActionRecorded, showActions = true }: S
   );
 }
 
-function SignalCard({
+const SignalCard = memo(function SignalCard({
   signal,
   onActionRecorded,
   showActions,
@@ -58,7 +91,7 @@ function SignalCard({
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAction, setRecordedAction] = useState<string | null>(null);
 
-  const handleAction = async (action: string) => {
+  const handleAction = useCallback(async (action: string) => {
     if (isRecording) return;
 
     setIsRecording(true);
@@ -71,44 +104,24 @@ function SignalCard({
     } finally {
       setIsRecording(false);
     }
-  };
-
-  const severityStyles = {
-    low: 'bg-blue-100 text-blue-800 border-blue-200',
-    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    high: 'bg-orange-100 text-orange-800 border-orange-200',
-    critical: 'bg-red-100 text-red-800 border-red-200',
-  };
-
-  const decisionStyles = {
-    IGNORE: 'bg-gray-100 text-gray-600',
-    MONITOR: 'bg-blue-100 text-blue-700',
-    REVIEW: 'bg-yellow-100 text-yellow-700',
-    EXECUTE: 'bg-green-100 text-green-700',
-    ALERT: 'bg-red-100 text-red-700',
-  };
-
-  const decisionIcons = {
-    IGNORE: XCircle,
-    MONITOR: Eye,
-    REVIEW: AlertTriangle,
-    EXECUTE: CheckCircle,
-    ALERT: Zap,
-  };
+  }, [isRecording, signal.id, onActionRecorded]);
 
   const DecisionIcon = decisionIcons[signal.agent_decision as keyof typeof decisionIcons] || Eye;
+  const glowClass = severityGlow[signal.severity as keyof typeof severityGlow] || '';
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+    <div className={`glass-card-dashboard overflow-hidden card-hover-lift shadow-lg ${glowClass}`}>
       <div
         className="p-4 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            {/* Symbol */}
+            {/* Symbol with gradient background */}
             <div className="min-w-[80px]">
-              <span className="font-bold text-gray-900 text-lg">{signal.symbol}</span>
+              <div className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-primary-100 to-purple-100 rounded-lg">
+                <span className="font-bold text-primary-700 text-lg">{signal.symbol}</span>
+              </div>
             </div>
 
             {/* Pattern Type */}
@@ -118,8 +131,8 @@ function SignalCard({
 
             {/* Severity Badge */}
             <span
-              className={`px-2 py-0.5 text-xs font-medium rounded-full border ${
-                severityStyles[signal.severity]
+              className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                severityStyles[signal.severity as keyof typeof severityStyles] || severityStyles.low
               }`}
             >
               {signal.severity}
@@ -129,7 +142,7 @@ function SignalCard({
           <div className="flex items-center space-x-4">
             {/* Agent Decision */}
             <div
-              className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
                 decisionStyles[signal.agent_decision as keyof typeof decisionStyles] || 'bg-gray-100'
               }`}
             >
@@ -139,14 +152,14 @@ function SignalCard({
 
             {/* Confidence */}
             <div className="hidden sm:block text-right">
-              <div className="text-sm font-medium text-gray-900">
+              <div className="text-sm font-bold text-primary-600">
                 {(signal.agent_confidence * 100).toFixed(0)}%
               </div>
               <div className="text-xs text-gray-500">confidence</div>
             </div>
 
             <ChevronRight
-              className={`h-5 w-5 text-gray-400 transition-transform ${
+              className={`h-5 w-5 text-primary-400 transition-transform duration-200 ${
                 isExpanded ? 'rotate-90' : ''
               }`}
             />
@@ -154,7 +167,7 @@ function SignalCard({
         </div>
 
         {/* Time */}
-        <div className="flex items-center mt-2 text-xs text-gray-500">
+        <div className="flex items-center mt-3 text-xs text-gray-500">
           <Clock className="h-3.5 w-3.5 mr-1" />
           {formatTime(signal.detected_at)}
         </div>
@@ -162,11 +175,11 @@ function SignalCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50 animate-slide-up">
+        <div className="px-4 pb-4 pt-2 border-t border-primary-100/50 bg-gradient-to-b from-primary-50/30 to-white animate-slide-down">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div>
+            <div className="bg-white/80 rounded-lg p-3 border border-primary-100/50">
               <div className="text-xs text-gray-500">Price</div>
-              <div className="font-medium">
+              <div className="font-semibold text-gray-900">
                 {signal.price?.toLocaleString('en-IN', {
                   style: 'currency',
                   currency: 'INR',
@@ -174,26 +187,26 @@ function SignalCard({
                 }) || '-'}
               </div>
             </div>
-            <div>
+            <div className="bg-white/80 rounded-lg p-3 border border-primary-100/50">
               <div className="text-xs text-gray-500">Volume</div>
-              <div className="font-medium">
+              <div className="font-semibold text-gray-900">
                 {signal.volume?.toLocaleString('en-IN') || '-'}
               </div>
             </div>
-            <div>
+            <div className="bg-white/80 rounded-lg p-3 border border-primary-100/50">
               <div className="text-xs text-gray-500">Z-Score</div>
-              <div className="font-medium">{signal.z_score?.toFixed(2) || '-'}</div>
+              <div className="font-semibold text-gray-900">{signal.z_score?.toFixed(2) || '-'}</div>
             </div>
-            <div>
+            <div className="bg-white/80 rounded-lg p-3 border border-primary-100/50">
               <div className="text-xs text-gray-500">Pattern</div>
-              <div className="font-medium">{formatPatternType(signal.pattern_type)}</div>
+              <div className="font-semibold text-gray-900">{formatPatternType(signal.pattern_type)}</div>
             </div>
           </div>
 
-          {/* Context - What this signal means */}
+          {/* Context */}
           {(signal as any).context && (
-            <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-              <div className="flex items-center text-xs font-medium text-blue-700 mb-1">
+            <div className="mb-3 p-4 bg-blue-50/80 rounded-xl border border-blue-100">
+              <div className="flex items-center text-xs font-semibold text-blue-700 mb-2">
                 <Eye className="h-3.5 w-3.5 mr-1" />
                 What This Means
               </div>
@@ -201,16 +214,16 @@ function SignalCard({
             </div>
           )}
 
-          {/* Sources - Data points used */}
+          {/* Sources */}
           {(signal as any).sources && (
-            <div className="mb-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center text-xs font-medium text-gray-600 mb-1">
+            <div className="mb-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200">
+              <div className="flex items-center text-xs font-semibold text-gray-600 mb-2">
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
                 Data Sources
               </div>
-              <div className="text-xs text-gray-600 font-mono">
+              <div className="flex flex-wrap gap-2">
                 {(signal as any).sources.split(' | ').map((source: string, i: number) => (
-                  <span key={i} className="inline-block bg-white px-2 py-1 rounded mr-2 mb-1 border border-gray-200">
+                  <span key={i} className="badge-glass">
                     {source}
                   </span>
                 ))}
@@ -218,10 +231,10 @@ function SignalCard({
             </div>
           )}
 
-          {/* Thought Process - AI reasoning */}
+          {/* Thought Process */}
           {(signal as any).thought_process && (
-            <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-              <div className="flex items-center text-xs font-medium text-purple-700 mb-2">
+            <div className="mb-3 p-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl border border-primary-100">
+              <div className="flex items-center text-xs font-semibold text-primary-700 mb-2">
                 <Zap className="h-3.5 w-3.5 mr-1" />
                 AI Thought Process
               </div>
@@ -233,7 +246,7 @@ function SignalCard({
 
           {/* Quick Summary */}
           {signal.agent_reason && !((signal as any).context) && (
-            <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
+            <div className="mb-4 p-4 bg-white/80 rounded-xl border border-primary-100/50">
               <div className="text-xs text-gray-500 mb-1">AI Analysis</div>
               <div className="text-sm text-gray-700">{signal.agent_reason}</div>
             </div>
@@ -241,7 +254,7 @@ function SignalCard({
 
           {/* Actions */}
           {showActions && !recordedAction && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 pt-2">
               <span className="text-xs text-gray-500 mr-2">Your action:</span>
               <button
                 onClick={(e) => {
@@ -249,7 +262,7 @@ function SignalCard({
                   handleAction('ignored');
                 }}
                 disabled={isRecording}
-                className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all disabled:opacity-50"
               >
                 Ignored
               </button>
@@ -259,7 +272,7 @@ function SignalCard({
                   handleAction('reviewed');
                 }}
                 disabled={isRecording}
-                className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all disabled:opacity-50"
               >
                 Reviewed
               </button>
@@ -269,7 +282,7 @@ function SignalCard({
                   handleAction('traded');
                 }}
                 disabled={isRecording}
-                className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-all disabled:opacity-50"
               >
                 Traded
               </button>
@@ -277,7 +290,7 @@ function SignalCard({
           )}
 
           {recordedAction && (
-            <div className="flex items-center text-sm text-green-600">
+            <div className="flex items-center text-sm text-green-600 pt-2">
               <CheckCircle className="h-4 w-4 mr-1" />
               Action recorded: {recordedAction}
             </div>
@@ -286,7 +299,7 @@ function SignalCard({
       )}
     </div>
   );
-}
+});
 
 function formatPatternType(type: string): string {
   return type

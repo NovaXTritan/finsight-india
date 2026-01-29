@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   screenerApi,
   ScreenerFilters,
@@ -22,6 +22,7 @@ import {
   TrendingUp,
   TrendingDown,
   Star,
+  Sliders,
 } from 'lucide-react';
 
 export default function ScreenerPage() {
@@ -40,11 +41,7 @@ export default function ScreenerPage() {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [screenerName, setScreenerName] = useState('');
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     try {
       const [filtersData, presetsData, savedData] = await Promise.all([
         screenerApi.getFilters(),
@@ -57,9 +54,13 @@ export default function ScreenerPage() {
     } catch (error) {
       console.error('Failed to load initial data:', error);
     }
-  };
+  }, []);
 
-  const runScreener = async (newFilters?: ScreenerFilters, newPage = 1) => {
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  const runScreener = useCallback(async (newFilters?: ScreenerFilters, newPage = 1) => {
     setIsLoading(true);
     try {
       const filtersToUse = newFilters || filters;
@@ -73,9 +74,9 @@ export default function ScreenerPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters, perPage, sortBy, sortOrder]);
 
-  const handleSort = (column: string) => {
+  const handleSort = useCallback((column: string) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -83,38 +84,38 @@ export default function ScreenerPage() {
       setSortOrder('desc');
     }
     runScreener(filters, 1);
-  };
+  }, [sortBy, sortOrder, filters, runScreener]);
 
-  const loadPreset = (preset: ScreenerPreset) => {
+  const loadPreset = useCallback((preset: ScreenerPreset) => {
     runScreener(preset.filters);
-  };
+  }, [runScreener]);
 
-  const loadSavedScreener = (screener: SavedScreener) => {
+  const loadSavedScreener = useCallback((screener: SavedScreener) => {
     runScreener(screener.filters as ScreenerFilters);
-  };
+  }, [runScreener]);
 
-  const saveScreener = async () => {
+  const saveScreener = useCallback(async () => {
     if (!screenerName.trim()) return;
     try {
       const saved = await screenerApi.saveScreener(screenerName, filters);
-      setSavedScreeners([saved, ...savedScreeners]);
+      setSavedScreeners((prev) => [saved, ...prev]);
       setSaveModalOpen(false);
       setScreenerName('');
     } catch (error) {
       console.error('Failed to save screener:', error);
     }
-  };
+  }, [screenerName, filters]);
 
-  const deleteScreener = async (id: number) => {
+  const deleteScreener = useCallback(async (id: number) => {
     try {
       await screenerApi.deleteScreener(id);
-      setSavedScreeners(savedScreeners.filter((s) => s.id !== id));
+      setSavedScreeners((prev) => prev.filter((s) => s.id !== id));
     } catch (error) {
       console.error('Failed to delete screener:', error);
     }
-  };
+  }, []);
 
-  const exportToCsv = () => {
+  const exportToCsv = useCallback(() => {
     if (results.length === 0) return;
 
     const headers = [
@@ -145,86 +146,94 @@ export default function ScreenerPage() {
     a.href = url;
     a.download = `screener-results-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-  };
+    URL.revokeObjectURL(url);
+  }, [results]);
 
-  const formatMarketCap = (value?: number) => {
+  const formatMarketCap = useCallback((value?: number) => {
     if (!value) return '-';
     if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
     if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
     if (value >= 1e7) return `${(value / 1e7).toFixed(2)}Cr`;
     if (value >= 1e5) return `${(value / 1e5).toFixed(2)}L`;
     return value.toLocaleString();
-  };
+  }, []);
 
-  const formatNumber = (value?: number, decimals = 2) => {
+  const formatNumber = useCallback((value?: number, decimals = 2) => {
     if (value === null || value === undefined) return '-';
     return value.toFixed(decimals);
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setFilters({});
     setResults([]);
     setTotal(0);
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Stock Screener</h1>
-          <p className="text-gray-500">Filter stocks by fundamentals</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-          >
-            <Filter className="h-4 w-4" />
-            <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
-          </button>
-          {results.length > 0 && (
-            <>
-              <button
-                onClick={() => setSaveModalOpen(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-              >
-                <Save className="h-4 w-4" />
-                <span>Save</span>
-              </button>
-              <button
-                onClick={exportToCsv}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                <span>Export</span>
-              </button>
-            </>
-          )}
-          <button
-            onClick={() => runScreener()}
-            disabled={isLoading}
-            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-50"
-          >
-            {isLoading ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
+      <div className="glass-card-dashboard p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
+              <Sliders className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Stock Screener</h1>
+              <p className="text-gray-500">Filter stocks by fundamentals</p>
+            </div>
+          </div>
+          <div className="flex items-center flex-wrap gap-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 px-4 py-2 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+            >
+              <Filter className="h-4 w-4" />
+              <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
+            </button>
+            {results.length > 0 && (
+              <>
+                <button
+                  onClick={() => setSaveModalOpen(true)}
+                  className="flex items-center space-x-2 px-4 py-2 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Save</span>
+                </button>
+                <button
+                  onClick={exportToCsv}
+                  className="flex items-center space-x-2 px-4 py-2 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Export</span>
+                </button>
+              </>
             )}
-            <span>Run Screener</span>
-          </button>
+            <button
+              onClick={() => runScreener()}
+              disabled={isLoading}
+              className="btn-glass-primary px-5 py-2.5 flex items-center space-x-2 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              <span>Run Screener</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Presets & Saved Screeners */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-2">
+      <div className="glass-card-dashboard p-4">
+        <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm font-medium text-gray-500 mr-2">Quick Presets:</span>
           {presets.slice(0, 6).map((preset) => (
             <button
               key={preset.name}
               onClick={() => loadPreset(preset)}
-              className="px-3 py-1 text-sm bg-gray-100 hover:bg-primary-100 hover:text-primary-700 rounded-full transition-colors"
+              className="px-4 py-1.5 text-sm bg-gradient-to-r from-primary-50 to-purple-50 hover:from-primary-100 hover:to-purple-100 text-primary-700 rounded-full transition-all border border-primary-100/50"
               title={preset.description}
             >
               {preset.name}
@@ -238,7 +247,7 @@ export default function ScreenerPage() {
                 <button
                   key={screener.id}
                   onClick={() => loadSavedScreener(screener)}
-                  className="px-3 py-1 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-full transition-colors flex items-center space-x-1"
+                  className="px-4 py-1.5 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 hover:from-blue-100 hover:to-indigo-100 rounded-full transition-all flex items-center space-x-1.5 border border-blue-100/50"
                 >
                   <Bookmark className="h-3 w-3" />
                   <span>{screener.name}</span>
@@ -251,12 +260,15 @@ export default function ScreenerPage() {
 
       {/* Filters Panel */}
       {showFilters && filterOptions && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="glass-card-dashboard p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <Filter className="h-5 w-5 text-primary-600" />
+              <span>Filters</span>
+            </h2>
             <button
               onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
             >
               Clear All
             </button>
@@ -274,14 +286,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.pe_min || ''}
                   onChange={(e) => setFilters({ ...filters, pe_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.pe_max || ''}
                   onChange={(e) => setFilters({ ...filters, pe_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
               </div>
             </div>
@@ -297,14 +309,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.pb_min || ''}
                   onChange={(e) => setFilters({ ...filters, pb_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.pb_max || ''}
                   onChange={(e) => setFilters({ ...filters, pb_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
               </div>
             </div>
@@ -320,14 +332,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.roe_min || ''}
                   onChange={(e) => setFilters({ ...filters, roe_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.roe_max || ''}
                   onChange={(e) => setFilters({ ...filters, roe_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
               </div>
             </div>
@@ -343,14 +355,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.dividend_yield_min || ''}
                   onChange={(e) => setFilters({ ...filters, dividend_yield_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.dividend_yield_max || ''}
                   onChange={(e) => setFilters({ ...filters, dividend_yield_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
               </div>
             </div>
@@ -365,7 +377,7 @@ export default function ScreenerPage() {
                 placeholder="Max D/E"
                 value={filters.debt_to_equity_max || ''}
                 onChange={(e) => setFilters({ ...filters, debt_to_equity_max: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                className="input-glass-light text-sm"
               />
             </div>
 
@@ -379,7 +391,7 @@ export default function ScreenerPage() {
                 placeholder="Min"
                 value={filters.current_ratio_min || ''}
                 onChange={(e) => setFilters({ ...filters, current_ratio_min: e.target.value ? Number(e.target.value) : undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                className="input-glass-light text-sm"
               />
             </div>
 
@@ -394,14 +406,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.market_cap_min ? filters.market_cap_min / 1e7 : ''}
                   onChange={(e) => setFilters({ ...filters, market_cap_min: e.target.value ? Number(e.target.value) * 1e7 : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.market_cap_max ? filters.market_cap_max / 1e7 : ''}
                   onChange={(e) => setFilters({ ...filters, market_cap_max: e.target.value ? Number(e.target.value) * 1e7 : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
               </div>
             </div>
@@ -417,14 +429,14 @@ export default function ScreenerPage() {
                   placeholder="High %"
                   value={filters.near_52w_high || ''}
                   onChange={(e) => setFilters({ ...filters, near_52w_high: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
                 <input
                   type="number"
                   placeholder="Low %"
                   value={filters.near_52w_low || ''}
                   onChange={(e) => setFilters({ ...filters, near_52w_low: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light text-sm"
                 />
               </div>
             </div>
@@ -437,7 +449,7 @@ export default function ScreenerPage() {
               <select
                 value={filters.sectors?.[0] || ''}
                 onChange={(e) => setFilters({ ...filters, sectors: e.target.value ? [e.target.value] : undefined })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+                className="input-glass-light text-sm"
               >
                 <option value="">All Sectors</option>
                 {filterOptions.sectors.map((sector) => (
@@ -448,14 +460,14 @@ export default function ScreenerPage() {
 
             {/* FNO Only */}
             <div className="flex items-end">
-              <label className="flex items-center space-x-2 cursor-pointer">
+              <label className="flex items-center space-x-2 cursor-pointer px-4 py-2.5 glass-card-purple rounded-xl hover:bg-primary-100 transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.is_fno || false}
                   onChange={(e) => setFilters({ ...filters, is_fno: e.target.checked ? true : undefined })}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-600 border-primary-300 rounded focus:ring-primary-500"
                 />
-                <span className="text-sm font-medium text-gray-700">F&O Stocks Only</span>
+                <span className="text-sm font-medium text-primary-700">F&O Stocks Only</span>
               </label>
             </div>
           </div>
@@ -464,15 +476,16 @@ export default function ScreenerPage() {
 
       {/* Results Summary */}
       {results.length > 0 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between px-2">
           <p className="text-sm text-gray-500">
-            Showing {results.length} of {total} stocks
+            Showing <span className="font-semibold text-primary-600">{results.length}</span> of{' '}
+            <span className="font-semibold">{total}</span> stocks
           </p>
           <div className="flex items-center space-x-2">
             {page > 1 && (
               <button
                 onClick={() => runScreener(filters, page - 1)}
-                className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                className="px-4 py-1.5 text-sm glass-card-purple text-primary-700 rounded-lg hover:bg-primary-100 transition-colors"
               >
                 Previous
               </button>
@@ -480,7 +493,7 @@ export default function ScreenerPage() {
             {(page * perPage) < total && (
               <button
                 onClick={() => runScreener(filters, page + 1)}
-                className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                className="px-4 py-1.5 text-sm glass-card-purple text-primary-700 rounded-lg hover:bg-primary-100 transition-colors"
               >
                 Next
               </button>
@@ -490,22 +503,28 @@ export default function ScreenerPage() {
       )}
 
       {/* Results Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="glass-card-dashboard overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center">
-            <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto" />
-            <p className="mt-2 text-gray-500">Running screener...</p>
+          <div className="p-12 text-center">
+            <div className="relative mx-auto w-16 h-16 mb-4">
+              <div className="absolute inset-0 bg-primary-500/30 blur-xl rounded-full animate-pulse" />
+              <RefreshCw className="relative h-16 w-16 text-primary-500 animate-spin mx-auto" />
+            </div>
+            <p className="text-gray-500">Running screener...</p>
           </div>
         ) : results.length === 0 ? (
-          <div className="p-8 text-center">
-            <Search className="h-12 w-12 text-gray-300 mx-auto" />
-            <p className="mt-2 text-gray-500">Set filters and click "Run Screener"</p>
+          <div className="p-12 text-center">
+            <div className="relative mx-auto w-20 h-20 mb-4">
+              <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+              <Search className="relative h-20 w-20 text-primary-300 mx-auto" />
+            </div>
+            <p className="text-gray-600 font-medium">Set filters and click "Run Screener"</p>
             <p className="text-sm text-gray-400 mt-1">Or select a preset to get started</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+            <table className="table-glass w-full">
+              <thead>
                 <tr>
                   {[
                     { key: 'symbol', label: 'Symbol' },
@@ -523,7 +542,7 @@ export default function ScreenerPage() {
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
+                      className="cursor-pointer hover:bg-primary-100/50 transition-colors"
                     >
                       <div className="flex items-center space-x-1">
                         <span>{col.label}</span>
@@ -535,45 +554,47 @@ export default function ScreenerPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {results.map((stock) => (
-                  <tr key={stock.symbol} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                  <tr key={stock.symbol}>
+                    <td>
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900">{stock.symbol}</span>
+                        <span className="font-semibold text-gray-900">{stock.symbol}</span>
                         {stock.is_fno && (
-                          <Star className="h-3 w-3 text-yellow-500" title="F&O enabled" />
+                          <span title="F&O enabled">
+                            <Star className="h-3 w-3 text-yellow-500" />
+                          </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-sm max-w-[200px] truncate">
+                    <td className="text-gray-600 text-sm max-w-[200px] truncate">
                       {stock.name || '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-sm">{stock.sector || '-'}</td>
-                    <td className="px-4 py-3 text-gray-900 font-medium">
+                    <td className="text-gray-600 text-sm">{stock.sector || '-'}</td>
+                    <td className="font-medium text-gray-900">
                       {formatMarketCap(stock.market_cap)}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">
+                    <td className="text-gray-900">
                       {stock.current_price ? `₹${stock.current_price.toLocaleString()}` : '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{formatNumber(stock.pe_ratio)}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatNumber(stock.pb_ratio)}</td>
-                    <td className="px-4 py-3">
+                    <td className="text-gray-600">{formatNumber(stock.pe_ratio)}</td>
+                    <td className="text-gray-600">{formatNumber(stock.pb_ratio)}</td>
+                    <td>
                       <span className={stock.roe && stock.roe > 15 ? 'text-green-600 font-medium' : 'text-gray-600'}>
                         {formatNumber(stock.roe)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <span className={stock.dividend_yield && stock.dividend_yield > 2 ? 'text-green-600 font-medium' : 'text-gray-600'}>
                         {formatNumber(stock.dividend_yield)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <span className={stock.debt_to_equity && stock.debt_to_equity > 100 ? 'text-red-600' : 'text-gray-600'}>
                         {formatNumber(stock.debt_to_equity)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <div className="flex items-center space-x-1">
                         {stock.price_to_52w_high && stock.price_to_52w_high >= 95 ? (
                           <TrendingUp className="h-3 w-3 text-green-500" />
@@ -593,11 +614,11 @@ export default function ScreenerPage() {
 
       {/* Save Modal */}
       {saveModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-md p-6 mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card-dashboard w-full max-w-md p-6 mx-4 animate-slide-down">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Save Screener</h2>
-              <button onClick={() => setSaveModalOpen(false)} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={() => setSaveModalOpen(false)} className="p-2 hover:bg-primary-100 rounded-lg transition-colors">
                 <X className="h-5 w-5 text-gray-500" />
               </button>
             </div>
@@ -608,21 +629,21 @@ export default function ScreenerPage() {
                   type="text"
                   value={screenerName}
                   onChange={(e) => setScreenerName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="input-glass-light"
                   placeholder="My Value Screener"
                 />
               </div>
               <div className="flex space-x-3">
                 <button
                   onClick={() => setSaveModalOpen(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2.5 btn-glass-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveScreener}
                   disabled={!screenerName.trim()}
-                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                  className="flex-1 btn-glass-primary disabled:opacity-50"
                 >
                   Save
                 </button>

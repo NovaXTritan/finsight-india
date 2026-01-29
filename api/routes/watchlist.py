@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 router = APIRouter(prefix="/watchlist", tags=["Watchlist"])
 
+# Demo watchlist for development (when database is not available)
+DEMO_WATCHLIST = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK"]
+_demo_watchlist = list(DEMO_WATCHLIST)  # Mutable copy for session
+
 
 @router.get("", response_model=WatchlistResponse)
 async def get_watchlist(
@@ -24,19 +28,27 @@ async def get_watchlist(
 ):
     """
     Get your watchlist.
-    
+
     Returns all symbols you're currently tracking.
     """
+    # Demo mode - return demo watchlist when database unavailable
+    if db.pool is None:
+        return WatchlistResponse(
+            symbols=_demo_watchlist,
+            count=len(_demo_watchlist),
+            limit=25
+        )
+
     user = await db.get_user(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     symbols = await db.get_watchlist(user_id)
     tier_limit = settings.tier_limits.get(user["tier"], {}).get("symbols", 5)
-    
+
     return WatchlistResponse(
         symbols=symbols,
         count=len(symbols),
@@ -52,30 +64,13 @@ async def add_to_watchlist(
 ):
     """
     Add a symbol to your watchlist.
-    
+
     - Symbol will be uppercased automatically
     - Limited by your subscription tier
     - Free: 5 symbols, Pro: 25, Serious: 100
     """
-    user = await db.get_user(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    # Check if already at limit
-    current_count = await db.get_watchlist_count(user_id)
-    tier_limit = settings.tier_limits.get(user["tier"], {}).get("symbols", 5)
-    
-    if current_count >= tier_limit:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Watchlist limit reached ({tier_limit} symbols for {user['tier']} tier). Upgrade to add more."
-        )
-    
     symbol = data.symbol.upper().strip()
-    
+
     # Basic validation (allow up to 15 chars for Indian stocks like BHARTIARTL)
     if len(symbol) > 15 or len(symbol) < 1:
         raise HTTPException(
@@ -89,15 +84,50 @@ async def add_to_watchlist(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid symbol format. Only letters, numbers, & and - allowed."
         )
-    
+
+    # Demo mode - use in-memory watchlist
+    if db.pool is None:
+        if symbol in _demo_watchlist:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to add symbol. It may already be in your watchlist."
+            )
+        if len(_demo_watchlist) >= 25:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Watchlist limit reached (25 symbols for pro tier). Upgrade to add more."
+            )
+        _demo_watchlist.append(symbol)
+        return MessageResponse(
+            message=f"{symbol} added to watchlist",
+            success=True
+        )
+
+    user = await db.get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check if already at limit
+    current_count = await db.get_watchlist_count(user_id)
+    tier_limit = settings.tier_limits.get(user["tier"], {}).get("symbols", 5)
+
+    if current_count >= tier_limit:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Watchlist limit reached ({tier_limit} symbols for {user['tier']} tier). Upgrade to add more."
+        )
+
     success = await db.add_to_watchlist(user_id, symbol)
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to add symbol. It may already be in your watchlist."
         )
-    
+
     return MessageResponse(
         message=f"{symbol} added to watchlist",
         success=True
@@ -113,16 +143,31 @@ async def remove_from_watchlist(
     """
     Remove a symbol from your watchlist.
     """
-    success = await db.remove_from_watchlist(user_id, symbol.upper())
-    
+    symbol_upper = symbol.upper()
+
+    # Demo mode - use in-memory watchlist
+    if db.pool is None:
+        if symbol_upper not in _demo_watchlist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"{symbol_upper} not found in your watchlist"
+            )
+        _demo_watchlist.remove(symbol_upper)
+        return MessageResponse(
+            message=f"{symbol_upper} removed from watchlist",
+            success=True
+        )
+
+    success = await db.remove_from_watchlist(user_id, symbol_upper)
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"{symbol.upper()} not found in your watchlist"
+            detail=f"{symbol_upper} not found in your watchlist"
         )
-    
+
     return MessageResponse(
-        message=f"{symbol.upper()} removed from watchlist",
+        message=f"{symbol_upper} removed from watchlist",
         success=True
     )
 
@@ -136,6 +181,13 @@ async def check_symbol_in_watchlist(
     """
     Check if a symbol is in your watchlist.
     """
+    # Demo mode
+    if db.pool is None:
+        return {
+            "symbol": symbol.upper(),
+            "in_watchlist": symbol.upper() in _demo_watchlist
+        }
+
     symbols = await db.get_watchlist(user_id)
     is_watching = symbol.upper() in symbols
 
@@ -162,14 +214,18 @@ async def get_enriched_watchlist(
     import yfinance as yf
     from datetime import datetime, timedelta
 
-    user = await db.get_user(user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+    # Demo mode - use in-memory watchlist
+    if db.pool is None:
+        symbols = _demo_watchlist
+    else:
+        user = await db.get_user(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
 
-    symbols = await db.get_watchlist(user_id)
+        symbols = await db.get_watchlist(user_id)
     if not symbols:
         return {
             "symbols": [],

@@ -32,3 +32,21 @@ Thumbs.db
 
 # Database
 postgres_data/
+
+# Temp/test files
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vercel.json
+!railway.json
+!frontend/**/*.json
+*.html
+*.zip
+*.txt
+*.sql
+nul
+
+# Claude settings (local)
+.claude/settings.local.json
+api/.claude/

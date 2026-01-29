@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authApi, User } from './api';
+import { authApi, User, setAuthToken, clearAuthToken, getAuthToken } from './api';
 
 interface AuthState {
   token: string | null;
@@ -19,13 +19,13 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
+      token: getAuthToken(),
       user: null,
       isLoading: false,
-      isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
+      isAuthenticated: !!getAuthToken(),
 
       setToken: (token: string) => {
-        localStorage.setItem('token', token);
+        setAuthToken(token);
         set({ token, isAuthenticated: true });
       },
 
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        localStorage.removeItem('token');
+        clearAuthToken();
         set({ token: null, user: null, isAuthenticated: false });
       },
 
@@ -47,8 +47,8 @@ export const useAuthStore = create<AuthState>()(
           const user = await authApi.me();
           set({ user, isAuthenticated: true });
         } catch (error) {
+          clearAuthToken();
           set({ token: null, user: null, isAuthenticated: false });
-          localStorage.removeItem('token');
         } finally {
           set({ isLoading: false });
         }
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const data = await authApi.login(email, password);
-          localStorage.setItem('token', data.access_token);
+          setAuthToken(data.access_token);
           set({ token: data.access_token, isAuthenticated: true });
 
           // Fetch user data
@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const data = await authApi.register(email, password, name);
-          localStorage.setItem('token', data.access_token);
+          setAuthToken(data.access_token);
           set({ token: data.access_token, isAuthenticated: true });
 
           // Fetch user data

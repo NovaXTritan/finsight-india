@@ -28,6 +28,8 @@ import {
   Clock,
   Target,
   Percent,
+  FlaskConical,
+  Zap,
 } from 'lucide-react';
 
 // Nifty 50 symbols for selection
@@ -240,10 +242,10 @@ export default function BacktestPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-50';
-      case 'running': return 'text-blue-600 bg-blue-50';
-      case 'failed': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'completed': return 'text-green-600 bg-green-50 border-green-200';
+      case 'running': return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'failed': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
@@ -260,46 +262,51 @@ export default function BacktestPage() {
     s => s.toLowerCase().includes(symbolInput.toLowerCase()) && !formData.symbols.includes(s)
   );
 
+  const tabs = [
+    { id: 'builder', label: 'Strategy Builder', icon: Settings },
+    { id: 'history', label: 'History', icon: History },
+    { id: 'results', label: 'Results', icon: BarChart3 },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Backtesting</h1>
-          <p className="text-gray-500">Test trading strategies on historical data</p>
+      <div className="glass-card-dashboard p-6">
+        <div className="flex items-center space-x-3">
+          <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
+            <FlaskConical className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Backtesting</h1>
+            <p className="text-gray-500">Test trading strategies on historical data</p>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
-          {[
-            { id: 'builder', label: 'Strategy Builder', icon: Settings },
-            { id: 'history', label: 'History', icon: History },
-            { id: 'results', label: 'Results', icon: BarChart3 },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <tab.icon className="h-4 w-4" />
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </nav>
+      <div className="flex space-x-2">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+              activeTab === tab.id
+                ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
+                : 'glass-card-dashboard text-gray-600 hover:text-primary-600'
+            }`}
+          >
+            <tab.icon className="h-4 w-4" />
+            <span>{tab.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+        <div className="glass-card-dashboard border-l-4 border-l-red-500 p-4 flex items-center space-x-3">
           <AlertTriangle className="h-5 w-5 text-red-500" />
-          <span className="text-red-700">{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto">
+          <span className="text-red-700 flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="p-1 hover:bg-red-50 rounded-lg transition-colors">
             <X className="h-4 w-4 text-red-500" />
           </button>
         </div>
@@ -311,8 +318,11 @@ export default function BacktestPage() {
           {/* Left: Strategy Config */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Info</h3>
+            <div className="glass-card-dashboard p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Zap className="h-5 w-5 text-primary-500 mr-2" />
+                Basic Info
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -323,7 +333,7 @@ export default function BacktestPage() {
                     value={formData.name}
                     onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="My Strategy Backtest"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-glass-light"
                   />
                 </div>
                 <div>
@@ -334,7 +344,7 @@ export default function BacktestPage() {
                     type="number"
                     value={formData.initialCapital}
                     onChange={e => setFormData(prev => ({ ...prev, initialCapital: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-glass-light"
                   />
                 </div>
                 <div>
@@ -345,7 +355,7 @@ export default function BacktestPage() {
                     type="date"
                     value={formData.startDate}
                     onChange={e => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-glass-light"
                   />
                 </div>
                 <div>
@@ -356,15 +366,18 @@ export default function BacktestPage() {
                     type="date"
                     value={formData.endDate}
                     onChange={e => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-glass-light"
                   />
                 </div>
               </div>
             </div>
 
             {/* Symbols */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Symbols</h3>
+            <div className="glass-card-dashboard p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Target className="h-5 w-5 text-primary-500 mr-2" />
+                Symbols
+              </h3>
               <div className="relative mb-4">
                 <input
                   type="text"
@@ -375,15 +388,15 @@ export default function BacktestPage() {
                   }}
                   onFocus={() => setShowSymbolDropdown(true)}
                   placeholder="Search and add symbols..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-glass-light"
                 />
                 {showSymbolDropdown && filteredSymbols.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 glass-card-dashboard max-h-48 overflow-y-auto">
                     {filteredSymbols.slice(0, 10).map(symbol => (
                       <button
                         key={symbol}
                         onClick={() => handleAddSymbol(symbol)}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm"
+                        className="w-full px-4 py-2 text-left hover:bg-primary-50 text-sm transition-colors"
                       >
                         {symbol}
                       </button>
@@ -396,12 +409,12 @@ export default function BacktestPage() {
                 {formData.symbols.map(symbol => (
                   <span
                     key={symbol}
-                    className="inline-flex items-center px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm"
+                    className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-primary-50 to-purple-50 text-primary-700 rounded-full text-sm font-medium border border-primary-100"
                   >
                     {symbol}
                     <button
                       onClick={() => handleRemoveSymbol(symbol)}
-                      className="ml-2 hover:text-primary-900"
+                      className="ml-2 hover:text-primary-900 transition-colors"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -414,29 +427,35 @@ export default function BacktestPage() {
             </div>
 
             {/* Strategy */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Strategy</h3>
+            <div className="glass-card-dashboard p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <TrendingUp className="h-5 w-5 text-primary-500 mr-2" />
+                Strategy
+              </h3>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Strategy Type
                   </label>
-                  <select
-                    value={formData.strategyType}
-                    onChange={e => setFormData(prev => ({ ...prev, strategyType: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    {strategyTypes.map(st => (
-                      <option key={st.id} value={st.id}>{st.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.strategyType}
+                      onChange={e => setFormData(prev => ({ ...prev, strategyType: e.target.value }))}
+                      className="input-glass-light appearance-none pr-10"
+                    >
+                      {strategyTypes.map(st => (
+                        <option key={st.id} value={st.id}>{st.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
               {/* Strategy-specific params */}
               {formData.strategyType === 'sma_crossover' && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-xl border border-primary-100">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Fast SMA Period
@@ -445,7 +464,7 @@ export default function BacktestPage() {
                       type="number"
                       value={formData.fastPeriod}
                       onChange={e => setFormData(prev => ({ ...prev, fastPeriod: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="input-glass-light"
                     />
                   </div>
                   <div>
@@ -456,14 +475,14 @@ export default function BacktestPage() {
                       type="number"
                       value={formData.slowPeriod}
                       onChange={e => setFormData(prev => ({ ...prev, slowPeriod: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="input-glass-light"
                     />
                   </div>
                 </div>
               )}
 
               {formData.strategyType === 'rsi' && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-xl border border-primary-100">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Oversold Level
@@ -472,7 +491,7 @@ export default function BacktestPage() {
                       type="number"
                       value={formData.rsiOversold}
                       onChange={e => setFormData(prev => ({ ...prev, rsiOversold: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="input-glass-light"
                     />
                   </div>
                   <div>
@@ -483,14 +502,14 @@ export default function BacktestPage() {
                       type="number"
                       value={formData.rsiOverbought}
                       onChange={e => setFormData(prev => ({ ...prev, rsiOverbought: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="input-glass-light"
                     />
                   </div>
                 </div>
               )}
 
               {formData.strategyType === 'breakout' && (
-                <div>
+                <div className="p-4 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-xl border border-primary-100">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Breakout Period
                   </label>
@@ -498,29 +517,35 @@ export default function BacktestPage() {
                     type="number"
                     value={formData.breakoutPeriod}
                     onChange={e => setFormData(prev => ({ ...prev, breakoutPeriod: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="input-glass-light"
                   />
                 </div>
               )}
             </div>
 
             {/* Position & Risk */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Position & Risk Management</h3>
+            <div className="glass-card-dashboard p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <Percent className="h-5 w-5 text-primary-500 mr-2" />
+                Position & Risk Management
+              </h3>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Position Sizing
                   </label>
-                  <select
-                    value={formData.positionSize}
-                    onChange={e => setFormData(prev => ({ ...prev, positionSize: e.target.value as any }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    <option value="fixed">Fixed Amount</option>
-                    <option value="percent">% of Capital</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={formData.positionSize}
+                      onChange={e => setFormData(prev => ({ ...prev, positionSize: e.target.value as any }))}
+                      className="input-glass-light appearance-none pr-10"
+                    >
+                      <option value="fixed">Fixed Amount</option>
+                      <option value="percent">% of Capital</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 {formData.positionSize === 'fixed' ? (
@@ -532,7 +557,7 @@ export default function BacktestPage() {
                       type="number"
                       value={formData.capitalPerTrade}
                       onChange={e => setFormData(prev => ({ ...prev, capitalPerTrade: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="input-glass-light"
                     />
                   </div>
                 ) : (
@@ -544,7 +569,7 @@ export default function BacktestPage() {
                       type="number"
                       value={formData.capitalPercent}
                       onChange={e => setFormData(prev => ({ ...prev, capitalPercent: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="input-glass-light"
                     />
                   </div>
                 )}
@@ -557,7 +582,7 @@ export default function BacktestPage() {
                     type="number"
                     value={formData.stopLossPct}
                     onChange={e => setFormData(prev => ({ ...prev, stopLossPct: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="input-glass-light"
                   />
                 </div>
 
@@ -569,7 +594,7 @@ export default function BacktestPage() {
                     type="number"
                     value={formData.takeProfitPct}
                     onChange={e => setFormData(prev => ({ ...prev, takeProfitPct: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="input-glass-light"
                   />
                 </div>
               </div>
@@ -579,7 +604,7 @@ export default function BacktestPage() {
             <button
               onClick={handleRunBacktest}
               disabled={isRunning || formData.symbols.length === 0}
-              className="w-full py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full py-4 bg-gradient-to-r from-primary-500 to-purple-600 text-white rounded-xl font-semibold hover:from-primary-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-glow transition-all"
             >
               {isRunning ? (
                 <>
@@ -597,16 +622,16 @@ export default function BacktestPage() {
 
           {/* Right: Presets */}
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="glass-card-dashboard p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Presets</h3>
               <div className="space-y-2">
                 {presets.map(preset => (
                   <button
                     key={preset.id}
                     onClick={() => applyPreset(preset)}
-                    className="w-full p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full p-4 text-left glass-card-purple rounded-xl hover:shadow-md transition-all group"
                   >
-                    <div className="font-medium text-gray-900">{preset.name}</div>
+                    <div className="font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{preset.name}</div>
                     <div className="text-sm text-gray-500">{preset.type}</div>
                   </button>
                 ))}
@@ -614,12 +639,14 @@ export default function BacktestPage() {
             </div>
 
             {/* Strategy Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="glass-card-dashboard p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Strategy Info</h3>
               {strategyTypes.find(st => st.id === formData.strategyType) && (
-                <p className="text-sm text-gray-600">
-                  {strategyTypes.find(st => st.id === formData.strategyType)?.description}
-                </p>
+                <div className="p-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl border border-primary-100">
+                  <p className="text-sm text-gray-600">
+                    {strategyTypes.find(st => st.id === formData.strategyType)?.description}
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -628,53 +655,53 @@ export default function BacktestPage() {
 
       {/* History Tab */}
       {activeTab === 'history' && (
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="glass-card-dashboard overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="table-glass">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Strategy</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Period</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-600">Return</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-600">Sharpe</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-600">Status</th>
-                  <th className="text-center py-3 px-4 font-medium text-gray-600">Actions</th>
+                <tr>
+                  <th>Name</th>
+                  <th>Strategy</th>
+                  <th>Period</th>
+                  <th className="text-right">Return</th>
+                  <th className="text-right">Sharpe</th>
+                  <th className="text-center">Status</th>
+                  <th className="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {backtests.map(bt => (
                   <tr
                     key={bt.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() => loadBacktestDetails(bt)}
                   >
-                    <td className="py-3 px-4 font-medium text-gray-900">{bt.name}</td>
-                    <td className="py-3 px-4 text-gray-600">{bt.strategy.name || bt.strategy.type}</td>
-                    <td className="py-3 px-4 text-gray-600 text-sm">
+                    <td className="font-medium text-gray-900">{bt.name}</td>
+                    <td className="text-gray-600">{bt.strategy.name || bt.strategy.type}</td>
+                    <td className="text-gray-600 text-sm">
                       {bt.start_date} to {bt.end_date}
                     </td>
-                    <td className={`py-3 px-4 text-right font-medium ${
+                    <td className={`text-right font-medium ${
                       (bt.total_return || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {bt.total_return ? `${bt.total_return.toFixed(2)}%` : '-'}
                     </td>
-                    <td className="py-3 px-4 text-right text-gray-600">
+                    <td className="text-right text-gray-600">
                       {bt.sharpe_ratio?.toFixed(2) || '-'}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bt.status)}`}>
+                    <td className="text-center">
+                      <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(bt.status)}`}>
                         {getStatusIcon(bt.status)}
                         <span className="capitalize">{bt.status}</span>
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="text-center">
                       <button
                         onClick={e => {
                           e.stopPropagation();
                           handleDeleteBacktest(bt.id);
                         }}
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -683,7 +710,8 @@ export default function BacktestPage() {
                 ))}
                 {backtests.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-500">
+                    <td colSpan={7} className="py-12 text-center text-gray-500">
+                      <FlaskConical className="h-12 w-12 mx-auto mb-4 text-primary-300" />
                       No backtests yet. Create one in the Strategy Builder tab.
                     </td>
                   </tr>
@@ -698,8 +726,10 @@ export default function BacktestPage() {
       {activeTab === 'results' && selectedBacktest && (
         <div className="space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className={`glass-card-dashboard p-4 card-hover-lift border-l-4 ${
+              (selectedBacktest.total_return || 0) >= 0 ? 'border-l-green-500' : 'border-l-red-500'
+            }`}>
               <div className="text-sm text-gray-500">Total Return</div>
               <div className={`text-2xl font-bold ${
                 (selectedBacktest.total_return || 0) >= 0 ? 'text-green-600' : 'text-red-600'
@@ -707,31 +737,31 @@ export default function BacktestPage() {
                 {selectedBacktest.total_return?.toFixed(2) || 0}%
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="glass-card-dashboard p-4 card-hover-lift">
               <div className="text-sm text-gray-500">Final Capital</div>
               <div className="text-2xl font-bold text-gray-900">
                 {formatCurrency(selectedBacktest.final_capital)}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="glass-card-dashboard p-4 card-hover-lift border-l-4 border-l-primary-500">
               <div className="text-sm text-gray-500">Sharpe Ratio</div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-primary-600">
                 {selectedBacktest.sharpe_ratio?.toFixed(2) || '-'}
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="glass-card-dashboard p-4 card-hover-lift border-l-4 border-l-red-500">
               <div className="text-sm text-gray-500">Max Drawdown</div>
               <div className="text-2xl font-bold text-red-600">
                 {selectedBacktest.max_drawdown?.toFixed(2) || 0}%
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="glass-card-dashboard p-4 card-hover-lift border-l-4 border-l-purple-500">
               <div className="text-sm text-gray-500">Win Rate</div>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-2xl font-bold text-purple-600">
                 {selectedBacktest.win_rate?.toFixed(1) || 0}%
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="glass-card-dashboard p-4 card-hover-lift">
               <div className="text-sm text-gray-500">Total Trades</div>
               <div className="text-2xl font-bold text-gray-900">
                 {selectedBacktest.total_trades}
@@ -741,40 +771,46 @@ export default function BacktestPage() {
 
           {/* Additional Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h3>
+            <div className="glass-card-dashboard p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <BarChart3 className="h-5 w-5 text-primary-500 mr-2" />
+                Performance Metrics
+              </h3>
               <div className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-lg">
                   <span className="text-gray-600">CAGR</span>
                   <span className="font-medium">{selectedBacktest.cagr?.toFixed(2) || '-'}%</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-lg">
                   <span className="text-gray-600">Sortino Ratio</span>
                   <span className="font-medium">{selectedBacktest.sortino_ratio?.toFixed(2) || '-'}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-lg">
                   <span className="text-gray-600">Profit Factor</span>
                   <span className="font-medium">{selectedBacktest.profit_factor?.toFixed(2) || '-'}</span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Trade Statistics</h3>
+            <div className="glass-card-dashboard p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <TrendingUp className="h-5 w-5 text-primary-500 mr-2" />
+                Trade Statistics
+              </h3>
               <div className="space-y-3">
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-green-50/50 rounded-lg">
                   <span className="text-gray-600">Winning Trades</span>
                   <span className="font-medium text-green-600">{selectedBacktest.winning_trades}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-red-50/50 rounded-lg">
                   <span className="text-gray-600">Losing Trades</span>
                   <span className="font-medium text-red-600">{selectedBacktest.losing_trades}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-green-50/50 rounded-lg">
                   <span className="text-gray-600">Avg Win</span>
                   <span className="font-medium text-green-600">{formatCurrency(selectedBacktest.avg_win)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between p-3 bg-red-50/50 rounded-lg">
                   <span className="text-gray-600">Avg Loss</span>
                   <span className="font-medium text-red-600">{formatCurrency(selectedBacktest.avg_loss)}</span>
                 </div>
@@ -784,9 +820,9 @@ export default function BacktestPage() {
 
           {/* Equity Curve */}
           {equityCurve && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="glass-card-dashboard p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Equity Curve</h3>
-              <div className="h-64 flex items-end space-x-1">
+              <div className="h-64 flex items-end space-x-0.5">
                 {equityCurve.equity.slice(-100).map((eq, i) => {
                   const maxEq = Math.max(...equityCurve.equity);
                   const minEq = Math.min(...equityCurve.equity);
@@ -795,7 +831,11 @@ export default function BacktestPage() {
                   return (
                     <div
                       key={i}
-                      className={`flex-1 ${isUp ? 'bg-green-400' : 'bg-red-400'} rounded-t`}
+                      className={`flex-1 rounded-t transition-all ${
+                        isUp
+                          ? 'bg-gradient-to-t from-green-500 to-green-300'
+                          : 'bg-gradient-to-t from-red-500 to-red-300'
+                      }`}
                       style={{ height: `${Math.max(height, 5)}%` }}
                       title={`${equityCurve.dates.slice(-100)[i]}: ${formatCurrency(eq)}`}
                     />
@@ -810,51 +850,53 @@ export default function BacktestPage() {
           )}
 
           {/* Trades Table */}
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
+          <div className="glass-card-dashboard overflow-hidden">
+            <div className="px-6 py-4 border-b border-primary-100/50 bg-gradient-to-r from-primary-50/50 to-purple-50/50">
               <h3 className="text-lg font-semibold text-gray-900">Trade History</h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="table-glass">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Symbol</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Type</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Entry</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-600">Exit</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">Entry Price</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">Exit Price</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">Qty</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">P&L</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-600">Return</th>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Type</th>
+                    <th>Entry</th>
+                    <th>Exit</th>
+                    <th className="text-right">Entry Price</th>
+                    <th className="text-right">Exit Price</th>
+                    <th className="text-right">Qty</th>
+                    <th className="text-right">P&L</th>
+                    <th className="text-right">Return</th>
                   </tr>
                 </thead>
                 <tbody>
                   {trades.slice(0, 50).map(trade => (
-                    <tr key={trade.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gray-900">{trade.symbol}</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          trade.trade_type === 'LONG' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    <tr key={trade.id}>
+                      <td className="font-medium text-gray-900">{trade.symbol}</td>
+                      <td>
+                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                          trade.trade_type === 'LONG'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                         }`}>
                           {trade.trade_type}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
+                      <td className="text-gray-600 text-sm">
                         {new Date(trade.entry_date).toLocaleDateString()}
                       </td>
-                      <td className="py-3 px-4 text-gray-600 text-sm">
+                      <td className="text-gray-600 text-sm">
                         {trade.exit_date ? new Date(trade.exit_date).toLocaleDateString() : '-'}
                       </td>
-                      <td className="py-3 px-4 text-right">{formatNumber(trade.entry_price)}</td>
-                      <td className="py-3 px-4 text-right">{formatNumber(trade.exit_price)}</td>
-                      <td className="py-3 px-4 text-right">{trade.quantity}</td>
-                      <td className={`py-3 px-4 text-right font-medium ${
+                      <td className="text-right">{formatNumber(trade.entry_price)}</td>
+                      <td className="text-right">{formatNumber(trade.exit_price)}</td>
+                      <td className="text-right">{trade.quantity}</td>
+                      <td className={`text-right font-medium ${
                         (trade.pnl || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatCurrency(trade.pnl)}
                       </td>
-                      <td className={`py-3 px-4 text-right ${
+                      <td className={`text-right ${
                         (trade.return_pct || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {trade.return_pct ? `${(trade.return_pct * 100).toFixed(2)}%` : '-'}
@@ -863,7 +905,7 @@ export default function BacktestPage() {
                   ))}
                   {trades.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-gray-500">
+                      <td colSpan={9} className="py-12 text-center text-gray-500">
                         No trades found
                       </td>
                     </tr>
@@ -876,8 +918,11 @@ export default function BacktestPage() {
       )}
 
       {activeTab === 'results' && !selectedBacktest && (
-        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-          <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <div className="glass-card-dashboard p-12 text-center">
+          <div className="relative mx-auto w-16 h-16 mb-4">
+            <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+            <BarChart3 className="relative h-16 w-16 mx-auto text-primary-400" />
+          </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Backtest Selected</h3>
           <p className="text-gray-500">
             Run a backtest or select one from the History tab to view results.

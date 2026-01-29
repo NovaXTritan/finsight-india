@@ -118,23 +118,35 @@ async def get_signals(
 ):
     """
     Get signals for your watchlist symbols.
-    
+
     Signals are anomalies detected by FinSight's detection engine.
     Only shows signals for symbols in your watchlist.
-    
+
     - **page**: Page number (starts at 1)
     - **per_page**: Results per page (max 100)
     """
+    # Demo mode - return demo signals when database unavailable
+    if db.pool is None:
+        offset = (page - 1) * per_page
+        demo_page = DEMO_SIGNALS[offset:offset + per_page]
+        return SignalList(
+            signals=[Signal(**s) for s in demo_page],
+            total=len(DEMO_SIGNALS),
+            page=page,
+            per_page=per_page,
+            has_more=(offset + len(demo_page)) < len(DEMO_SIGNALS)
+        )
+
     offset = (page - 1) * per_page
-    
+
     signals = await db.get_signals_for_user(
         user_id=user_id,
         limit=per_page,
         offset=offset
     )
-    
+
     total = await db.get_signal_count_for_user(user_id)
-    
+
     return SignalList(
         signals=[Signal(**s) for s in signals],
         total=total,
@@ -152,9 +164,13 @@ async def get_latest_signals(
 ):
     """
     Get the latest signals for your watchlist.
-    
+
     Quick endpoint for dashboards and real-time updates.
     """
+    # Demo mode - return demo signals
+    if db.pool is None:
+        return [Signal(**s) for s in DEMO_SIGNALS[:limit]]
+
     signals = await db.get_latest_signals(user_id=user_id, limit=limit)
     return [Signal(**s) for s in signals]
 
@@ -168,6 +184,16 @@ async def get_signal(
     """
     Get details of a specific signal.
     """
+    # Demo mode - look in demo signals
+    if db.pool is None:
+        for signal in DEMO_SIGNALS:
+            if signal["id"] == signal_id:
+                return Signal(**signal)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Signal not found or not in your watchlist"
+        )
+
     async with db.pool.acquire() as conn:
         row = await conn.fetchrow("""
             SELECT
@@ -179,13 +205,13 @@ async def get_signal(
             INNER JOIN user_watchlist w ON a.symbol = w.symbol
             WHERE a.id = $1 AND w.user_id = $2
         """, signal_id, user_id)
-        
+
         if not row:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Signal not found or not in your watchlist"
             )
-        
+
         return Signal(**dict(row))
 
 
@@ -198,14 +224,21 @@ async def record_signal_action(
 ):
     """
     Record your action on a signal.
-    
+
     This helps FinSight learn your preferences.
-    
+
     Actions:
     - **ignored**: You saw it but didn't act
     - **reviewed**: You researched it further
     - **traded**: You made a trade based on this signal
     """
+    # Demo mode - just acknowledge without persisting
+    if db.pool is None:
+        return MessageResponse(
+            message=f"Action '{action.action}' recorded for signal (demo mode)",
+            success=True
+        )
+
     # Verify signal exists and is accessible
     async with db.pool.acquire() as conn:
         exists = await conn.fetchval("""
@@ -215,20 +248,20 @@ async def record_signal_action(
                 WHERE a.id = $1 AND w.user_id = $2
             )
         """, signal_id, user_id)
-        
+
         if not exists:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Signal not found or not in your watchlist"
             )
-    
+
     await db.record_user_action(
         user_id=user_id,
         anomaly_id=signal_id,
         action=action.action,
         notes=action.notes
     )
-    
+
     return MessageResponse(
         message=f"Action '{action.action}' recorded for signal",
         success=True
@@ -244,18 +277,23 @@ async def get_signals_by_symbol(
 ):
     """
     Get signals for a specific symbol.
-    
+
     Symbol must be in your watchlist.
     """
+    # Demo mode - filter demo signals by symbol
+    if db.pool is None:
+        filtered = [s for s in DEMO_SIGNALS if s["symbol"] == symbol.upper()][:limit]
+        return [Signal(**s) for s in filtered]
+
     # Check if symbol is in watchlist
     watchlist = await db.get_watchlist(user_id)
-    
+
     if symbol.upper() not in watchlist:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"{symbol.upper()} is not in your watchlist"
         )
-    
+
     async with db.pool.acquire() as conn:
         rows = await conn.fetch("""
             SELECT
@@ -268,7 +306,7 @@ async def get_signals_by_symbol(
             ORDER BY detected_at DESC
             LIMIT $2
         """, symbol.upper(), limit)
-        
+
         return [Signal(**dict(row)) for row in rows]
 
 
@@ -310,6 +348,13 @@ async def run_detection(
     Note: Detection is based on Z-score analysis. Signals are rare and only
     appear when unusual volume, price, or volatility patterns occur.
     """
+    # Demo mode - return demo message
+    if db.pool is None:
+        return MessageResponse(
+            message="Detection complete. Demo mode active - showing sample signals for demonstration.",
+            success=True
+        )
+
     import asyncio
     from detection.real_detector import RealAnomalyDetector
     from api.core.config import get_settings

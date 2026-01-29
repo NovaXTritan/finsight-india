@@ -90,73 +90,88 @@ export default function PortfolioPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Portfolio</h1>
-          <p className="text-gray-500">Track your holdings and P&L</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={fetchPortfolio}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className="h-5 w-5 text-gray-500" />
-          </button>
-          <button
-            onClick={() => setShowTransactionModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-          >
-            <History className="h-4 w-4" />
-            <span>Add Transaction</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Holding</span>
-          </button>
+      <div className="glass-card-dashboard p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
+              <Wallet className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Portfolio</h1>
+              <p className="text-gray-500">Track your holdings and P&L</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={fetchPortfolio}
+              className="p-2.5 hover:bg-primary-100 rounded-xl transition-colors"
+              title="Refresh"
+            >
+              <RefreshCw className="h-5 w-5 text-primary-600" />
+            </button>
+            <button
+              onClick={() => setShowTransactionModal(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+            >
+              <History className="h-4 w-4" />
+              <span>Add Transaction</span>
+            </button>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="btn-glass-primary px-5 py-2.5 flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Holding</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center space-x-2 text-gray-500 mb-1">
-              <Wallet className="h-4 w-4" />
-              <span className="text-sm">Invested</span>
+          <div className="glass-card-dashboard p-5 card-hover-lift">
+            <div className="flex items-center space-x-2 text-gray-500 mb-2">
+              <div className="p-2 bg-gradient-to-br from-primary-100 to-purple-100 rounded-lg">
+                <Wallet className="h-4 w-4 text-primary-600" />
+              </div>
+              <span className="text-sm font-medium">Invested</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(summary.total_invested)}
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center space-x-2 text-gray-500 mb-1">
-              <PieChart className="h-4 w-4" />
-              <span className="text-sm">Current Value</span>
+          <div className="glass-card-dashboard p-5 card-hover-lift">
+            <div className="flex items-center space-x-2 text-gray-500 mb-2">
+              <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                <PieChart className="h-4 w-4 text-blue-600" />
+              </div>
+              <span className="text-sm font-medium">Current Value</span>
             </div>
-            <p className="text-xl font-bold text-gray-900">
+            <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(summary.total_current_value)}
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center space-x-2 text-gray-500 mb-1">
-              {summary.total_gain_loss >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-red-500" />
-              )}
-              <span className="text-sm">Total P&L</span>
+          <div className={`glass-card-dashboard p-5 card-hover-lift border-l-4 ${
+            summary.total_gain_loss >= 0 ? 'border-l-green-500' : 'border-l-red-500'
+          }`}>
+            <div className="flex items-center space-x-2 text-gray-500 mb-2">
+              <div className={`p-2 rounded-lg ${
+                summary.total_gain_loss >= 0 ? 'bg-green-100' : 'bg-red-100'
+              }`}>
+                {summary.total_gain_loss >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                )}
+              </div>
+              <span className="text-sm font-medium">Total P&L</span>
             </div>
-            <p
-              className={`text-xl font-bold ${
-                summary.total_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
+            <p className={`text-2xl font-bold ${
+              summary.total_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
               {formatCurrency(summary.total_gain_loss)}
               <span className="text-sm ml-1">
                 ({formatPercent(summary.total_gain_loss_pct)})
@@ -164,20 +179,24 @@ export default function PortfolioPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center space-x-2 text-gray-500 mb-1">
-              {summary.day_change >= 0 ? (
-                <ArrowUpRight className="h-4 w-4 text-green-500" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 text-red-500" />
-              )}
-              <span className="text-sm">Today's Change</span>
+          <div className={`glass-card-dashboard p-5 card-hover-lift border-l-4 ${
+            summary.day_change >= 0 ? 'border-l-green-500' : 'border-l-red-500'
+          }`}>
+            <div className="flex items-center space-x-2 text-gray-500 mb-2">
+              <div className={`p-2 rounded-lg ${
+                summary.day_change >= 0 ? 'bg-green-100' : 'bg-red-100'
+              }`}>
+                {summary.day_change >= 0 ? (
+                  <ArrowUpRight className="h-4 w-4 text-green-600" />
+                ) : (
+                  <ArrowDownRight className="h-4 w-4 text-red-600" />
+                )}
+              </div>
+              <span className="text-sm font-medium">Today's Change</span>
             </div>
-            <p
-              className={`text-xl font-bold ${
-                summary.day_change >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
+            <p className={`text-2xl font-bold ${
+              summary.day_change >= 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
               {formatCurrency(summary.day_change)}
               <span className="text-sm ml-1">
                 ({formatPercent(summary.day_change_pct)})
@@ -188,140 +207,120 @@ export default function PortfolioPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('holdings')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors ${
-            activeTab === 'holdings'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Holdings ({holdings.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('transactions')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors ${
-            activeTab === 'transactions'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Transactions ({transactions.length})
-        </button>
+      <div className="glass-card-dashboard px-6 py-3">
+        <nav className="flex space-x-2">
+          <button
+            onClick={() => setActiveTab('holdings')}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              activeTab === 'holdings'
+                ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
+                : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'
+            }`}
+          >
+            Holdings ({holdings.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              activeTab === 'transactions'
+                ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
+                : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'
+            }`}
+          >
+            Transactions ({transactions.length})
+          </button>
+        </nav>
       </div>
 
       {/* Holdings Table */}
       {activeTab === 'holdings' && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="glass-card-dashboard overflow-hidden">
           {isLoading ? (
-            <div className="p-8 text-center">
-              <RefreshCw className="h-8 w-8 text-gray-400 animate-spin mx-auto" />
-              <p className="mt-2 text-gray-500">Loading portfolio...</p>
+            <div className="p-12 text-center">
+              <div className="relative mx-auto w-16 h-16 mb-4">
+                <div className="absolute inset-0 bg-primary-500/30 blur-xl rounded-full animate-pulse" />
+                <RefreshCw className="relative h-16 w-16 text-primary-500 animate-spin mx-auto" />
+              </div>
+              <p className="text-gray-500">Loading portfolio...</p>
             </div>
           ) : holdings.length === 0 ? (
-            <div className="p-8 text-center">
-              <Wallet className="h-12 w-12 text-gray-300 mx-auto" />
-              <p className="mt-2 text-gray-500">No holdings yet</p>
+            <div className="p-12 text-center">
+              <div className="relative mx-auto w-20 h-20 mb-4">
+                <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+                <Wallet className="relative h-20 w-20 text-primary-300 mx-auto" />
+              </div>
+              <p className="text-gray-600 font-medium">No holdings yet</p>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="mt-4 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                className="mt-4 btn-glass-primary px-6 py-2.5"
               >
                 Add your first holding
               </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+              <table className="table-glass w-full">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Symbol
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Qty
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Avg Price
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Invested
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      LTP
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Current Value
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      P&L
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Day Change
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                      Actions
-                    </th>
+                    <th>Symbol</th>
+                    <th className="text-right">Qty</th>
+                    <th className="text-right">Avg Price</th>
+                    <th className="text-right">Invested</th>
+                    <th className="text-right">LTP</th>
+                    <th className="text-right">Current Value</th>
+                    <th className="text-right">P&L</th>
+                    <th className="text-right">Day Change</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {holdings.map((holding) => (
-                    <tr key={holding.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <span className="font-medium text-gray-900">{holding.symbol}</span>
+                    <tr key={holding.id}>
+                      <td>
+                        <span className="font-semibold text-gray-900">{holding.symbol}</span>
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600">
-                        {holding.quantity}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600">
-                        {formatCurrency(holding.avg_price)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600">
-                        {formatCurrency(holding.invested_value)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-900 font-medium">
+                      <td className="text-right text-gray-600">{holding.quantity}</td>
+                      <td className="text-right text-gray-600">{formatCurrency(holding.avg_price)}</td>
+                      <td className="text-right text-gray-600">{formatCurrency(holding.invested_value)}</td>
+                      <td className="text-right font-medium text-gray-900">
                         {holding.current_price ? formatCurrency(holding.current_price) : '-'}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-900 font-medium">
+                      <td className="text-right font-medium text-gray-900">
                         {holding.current_value ? formatCurrency(holding.current_value) : '-'}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className={`font-medium ${
-                            (holding.gain_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
+                      <td className="text-right">
+                        <span className={`font-medium ${
+                          (holding.gain_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
                           {holding.gain_loss !== undefined
                             ? `${formatCurrency(holding.gain_loss)} (${formatPercent(holding.gain_loss_pct || 0)})`
                             : '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <span
-                          className={`text-sm ${
-                            (holding.day_change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
+                      <td className="text-right">
+                        <span className={`text-sm font-medium ${
+                          (holding.day_change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
                           {holding.day_change !== undefined
                             ? formatPercent(holding.day_change_pct || 0)
                             : '-'}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <div className="flex items-center justify-center space-x-2">
                           <button
                             onClick={() => {
                               setEditingHolding(holding);
                               setShowAddModal(true);
                             }}
-                            className="p-1 hover:bg-gray-100 rounded"
+                            className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
                             title="Edit"
                           >
-                            <Edit2 className="h-4 w-4 text-gray-500" />
+                            <Edit2 className="h-4 w-4 text-primary-600" />
                           </button>
                           <button
                             onClick={() => handleDeleteHolding(holding.symbol)}
-                            className="p-1 hover:bg-red-50 rounded"
+                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -339,68 +338,53 @@ export default function PortfolioPage() {
 
       {/* Transactions Table */}
       {activeTab === 'transactions' && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="glass-card-dashboard overflow-hidden">
           {transactions.length === 0 ? (
-            <div className="p-8 text-center">
-              <History className="h-12 w-12 text-gray-300 mx-auto" />
-              <p className="mt-2 text-gray-500">No transactions yet</p>
+            <div className="p-12 text-center">
+              <div className="relative mx-auto w-20 h-20 mb-4">
+                <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+                <History className="relative h-20 w-20 text-primary-300 mx-auto" />
+              </div>
+              <p className="text-gray-500">No transactions yet</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+              <table className="table-glass w-full">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Symbol
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Qty
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Price
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                      Amount
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Notes
-                    </th>
+                    <th>Date</th>
+                    <th>Symbol</th>
+                    <th>Type</th>
+                    <th className="text-right">Qty</th>
+                    <th className="text-right">Price</th>
+                    <th className="text-right">Amount</th>
+                    <th>Notes</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody>
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-600">{tx.transaction_date}</td>
-                      <td className="px-4 py-3 font-medium text-gray-900">{tx.symbol}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 text-xs font-medium rounded ${
-                            tx.type === 'BUY'
-                              ? 'bg-green-100 text-green-700'
-                              : tx.type === 'SELL'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}
-                        >
+                    <tr key={tx.id}>
+                      <td className="text-gray-600">{tx.transaction_date}</td>
+                      <td className="font-semibold text-gray-900">{tx.symbol}</td>
+                      <td>
+                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+                          tx.type === 'BUY'
+                            ? 'bg-green-100 text-green-700'
+                            : tx.type === 'SELL'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
                           {tx.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-600">
-                        {tx.quantity || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-600">
+                      <td className="text-right text-gray-600">{tx.quantity || '-'}</td>
+                      <td className="text-right text-gray-600">
                         {tx.price ? formatCurrency(tx.price) : '-'}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-gray-900">
+                      <td className="text-right font-medium text-gray-900">
                         {tx.amount ? formatCurrency(tx.amount) : '-'}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-sm truncate max-w-[200px]">
+                      <td className="text-gray-500 text-sm truncate max-w-[200px]">
                         {tx.notes || '-'}
                       </td>
                     </tr>
@@ -491,33 +475,31 @@ function HoldingModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-6 mx-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="glass-card-dashboard w-full max-w-md p-6 mx-4 animate-slide-down">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
             {isEdit ? 'Edit Holding' : 'Add Holding'}
           </h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-2 hover:bg-primary-100 rounded-lg transition-colors">
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm">
+            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Symbol
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
             <input
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="input-glass-light"
               placeholder="RELIANCE"
               required
               disabled={isEdit}
@@ -525,14 +507,12 @@ function HoldingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Quantity
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
             <input
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="input-glass-light"
               placeholder="100"
               required
               min="1"
@@ -540,16 +520,14 @@ function HoldingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Average Price
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Average Price</label>
             <div className="relative">
               <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="number"
                 value={avgPrice}
                 onChange={(e) => setAvgPrice(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="input-glass-light pl-10"
                 placeholder="2500.00"
                 required
                 min="0.01"
@@ -559,13 +537,11 @@ function HoldingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes (optional)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="input-glass-light"
               placeholder="Investment thesis..."
               rows={2}
             />
@@ -575,14 +551,14 @@ function HoldingModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 btn-glass-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-primary-400 transition-colors"
+              className="flex-1 btn-glass-primary disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : isEdit ? 'Update' : 'Add'}
             </button>
@@ -637,18 +613,18 @@ function TransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-6 mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="glass-card-dashboard w-full max-w-md p-6 mx-4 max-h-[90vh] overflow-y-auto animate-slide-down">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Add Transaction</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-2 hover:bg-primary-100 rounded-lg transition-colors">
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm">
+            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100">
               {error}
             </div>
           )}
@@ -661,13 +637,13 @@ function TransactionModal({
                   key={t}
                   type="button"
                   onClick={() => setType(t)}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
                     type === t
                       ? t === 'BUY'
-                        ? 'bg-green-100 text-green-700 border-2 border-green-500'
+                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-2 border-green-500'
                         : t === 'SELL'
-                        ? 'bg-red-100 text-red-700 border-2 border-red-500'
-                        : 'bg-blue-100 text-blue-700 border-2 border-blue-500'
+                        ? 'bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border-2 border-red-500'
+                        : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border-2 border-blue-500'
                       : 'bg-gray-100 text-gray-600 border-2 border-transparent'
                   }`}
                 >
@@ -683,7 +659,7 @@ function TransactionModal({
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="input-glass-light"
               placeholder="RELIANCE"
               required
             />
@@ -695,7 +671,7 @@ function TransactionModal({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="input-glass-light"
               required
             />
           </div>
@@ -703,14 +679,12 @@ function TransactionModal({
           {type !== 'DIVIDEND' ? (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
                 <input
                   type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-glass-light"
                   placeholder="100"
                   required
                   min="1"
@@ -718,16 +692,14 @@ function TransactionModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Price per share
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price per share</label>
                 <div className="relative">
                   <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-glass-light pl-10"
                     placeholder="2500.00"
                     required
                     min="0.01"
@@ -738,16 +710,14 @@ function TransactionModal({
             </>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dividend Amount
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dividend Amount</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-glass-light pl-10"
                   placeholder="5000.00"
                   required
                   min="0.01"
@@ -758,16 +728,14 @@ function TransactionModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fees/Charges
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fees/Charges</label>
             <div className="relative">
               <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="number"
                 value={fees}
                 onChange={(e) => setFees(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="input-glass-light pl-10"
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -776,13 +744,11 @@ function TransactionModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes (optional)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="input-glass-light"
               placeholder="Transaction notes..."
               rows={2}
             />
@@ -792,14 +758,14 @@ function TransactionModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 btn-glass-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-primary-400 transition-colors"
+              className="flex-1 btn-glass-primary disabled:opacity-50"
             >
               {isSubmitting ? 'Adding...' : 'Add Transaction'}
             </button>

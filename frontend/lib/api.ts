@@ -5,6 +5,36 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL
   ? `${process.env.NEXT_PUBLIC_API_URL}/api`
   : '/api';
 
+// Cache token in memory to avoid localStorage reads on every request
+let cachedToken: string | null = null;
+
+// Token management functions
+export function setAuthToken(token: string | null): void {
+  cachedToken = token;
+  if (typeof window !== 'undefined') {
+    if (token) {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
+  }
+}
+
+export function getAuthToken(): string | null {
+  if (cachedToken) return cachedToken;
+  if (typeof window !== 'undefined') {
+    cachedToken = localStorage.getItem('token');
+  }
+  return cachedToken;
+}
+
+export function clearAuthToken(): void {
+  cachedToken = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+  }
+}
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
@@ -13,9 +43,9 @@ const api = axios.create({
   },
 });
 
-// Add auth token to requests
+// Add auth token to requests (uses cached token)
 api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token = getAuthToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -27,8 +57,8 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
+      clearAuthToken();
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
         window.location.href = '/login';
       }
     }

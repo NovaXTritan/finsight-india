@@ -2,7 +2,7 @@
 Auth Routes - Registration, login, token management
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -19,6 +19,16 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 # Stricter rate limiting for auth endpoints to prevent brute force
 limiter = Limiter(key_func=get_remote_address)
+
+# Demo user for development (when database is not available)
+DEMO_USER = {
+    "id": "demo-user-001",
+    "email": "demo@finsight.in",
+    "name": "Demo User",
+    "tier": "pro",
+    "created_at": datetime.utcnow()
+}
+DEMO_PASSWORD = "demo1234"
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -38,24 +48,37 @@ async def register(
     Returns JWT token on success.
 
     Rate limited to 5 requests per minute.
+
+    **Demo Mode**: When database is unavailable, registration creates a demo session.
     """
+    # Check if database is available
+    if db.pool is None:
+        # Demo mode - just return a token for the demo user
+        access_token = create_access_token(
+            data={"sub": DEMO_USER["id"], "email": user_data.email.lower()}
+        )
+        return Token(
+            access_token=access_token,
+            expires_in=settings.access_token_expire_minutes * 60
+        )
+
     user = await db.create_user(
         email=user_data.email,
         password=user_data.password,
         name=user_data.name
     )
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Create access token
     access_token = create_access_token(
         data={"sub": user["id"], "email": user["email"]}
     )
-    
+
     return Token(
         access_token=access_token,
         expires_in=settings.access_token_expire_minutes * 60
@@ -75,23 +98,35 @@ async def login(
     Returns JWT token on success.
 
     Rate limited to 10 requests per minute to prevent brute force attacks.
+
+    **Demo Mode**: When database is unavailable, use:
+    - Email: demo@finsight.in
+    - Password: demo1234
     """
-    user = await db.authenticate_user(
-        email=credentials.email,
-        password=credentials.password
-    )
-    
+    user = None
+
+    # Check if database is available
+    if db.pool is not None:
+        user = await db.authenticate_user(
+            email=credentials.email,
+            password=credentials.password
+        )
+    else:
+        # Demo mode - allow demo user login when database is unavailable
+        if credentials.email.lower() == DEMO_USER["email"] and credentials.password == DEMO_PASSWORD:
+            user = DEMO_USER
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-    
+
     # Create access token
     access_token = create_access_token(
         data={"sub": user["id"], "email": user["email"]}
     )
-    
+
     return Token(
         access_token=access_token,
         expires_in=settings.access_token_expire_minutes * 60
@@ -105,20 +140,33 @@ async def get_current_user_profile(
 ):
     """
     Get current user's profile.
-    
+
     Requires authentication.
     """
+    # Demo mode - return demo user if database unavailable
+    if db.pool is None or user_id == DEMO_USER["id"]:
+        tier_limit = settings.tier_limits.get(DEMO_USER["tier"], {}).get("symbols", 10)
+        return UserProfile(
+            id=DEMO_USER["id"],
+            email=DEMO_USER["email"],
+            name=DEMO_USER["name"],
+            tier=DEMO_USER["tier"],
+            created_at=DEMO_USER["created_at"],
+            watchlist_count=5,
+            tier_limit=tier_limit
+        )
+
     user = await db.get_user(user_id)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     watchlist_count = await db.get_watchlist_count(user_id)
     tier_limit = settings.tier_limits.get(user["tier"], {}).get("symbols", 5)
-    
+
     return UserProfile(
         id=user["id"],
         email=user["email"],
