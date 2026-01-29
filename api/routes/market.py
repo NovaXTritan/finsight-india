@@ -16,11 +16,9 @@ import asyncio
 from api.core.auth import get_current_user_id
 from api.core.config import get_settings
 
-# Import Indian market modules
-import config
-if config.MARKET == "INDIA":
-    from data.india_fetcher import IndiaDataFetcher, fetch_india_market_summary
-    from data.india_news import IndiaNewsAggregator, fetch_latest_news, fetch_news_for_watchlist
+# Import Indian market modules (this is India-specific app)
+from data.india_fetcher import IndiaDataFetcher, fetch_india_market_summary
+from data.india_news import IndiaNewsAggregator, fetch_latest_news, fetch_news_for_watchlist
 
 settings = get_settings()
 router = APIRouter(prefix="/market", tags=["Indian Market"])
@@ -39,12 +37,6 @@ async def get_market_summary(
     - FII/DII activity
     - Top gainers and losers
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Market summary only available for Indian market"
-        )
-
     try:
         summary = await fetch_india_market_summary()
         return summary
@@ -66,12 +58,6 @@ async def get_indices(
     - NIFTY IT
     - INDIA VIX
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Indices only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         indices = await fetcher.get_indices()
@@ -92,12 +78,6 @@ async def get_fii_dii(
     - DII buy/sell/net values (in Crores)
     - Date of data
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="FII/DII data only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         data = await fetcher.get_fii_dii()
@@ -118,12 +98,6 @@ async def get_bulk_deals(
     Bulk deals are transactions where total quantity traded is more than
     0.5% of the company's listed shares.
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Bulk deals only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         deals = await fetcher.get_bulk_deals()
@@ -142,12 +116,6 @@ async def get_block_deals(
     Block deals are single transactions of minimum 5 lakh shares
     or minimum value of Rs 10 crore.
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Block deals only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         deals = await fetcher.get_block_deals()
@@ -165,12 +133,6 @@ async def get_market_status(
 
     Market hours: 9:15 AM - 3:30 PM IST (Mon-Fri)
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Market status only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         is_open = await fetcher.is_market_open()
@@ -197,12 +159,6 @@ async def get_nifty50_stocks(
     - prev_close, change, change_pct
     - volume, value
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Nifty 50 data only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         df = await fetcher.get_nifty50_live()
@@ -243,12 +199,6 @@ async def get_news(
     - published_at, sentiment, category
     - symbols (mentioned stocks)
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="News aggregation only available for Indian market"
-        )
-
     aggregator = IndiaNewsAggregator()
 
     if symbol:
@@ -291,12 +241,6 @@ async def get_news_for_user_watchlist(
 
     Returns news items grouped by symbol.
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="News aggregation only available for Indian market"
-        )
-
     # Get user's watchlist
     from api.core.database import db
     watchlist = await db.get_watchlist(user_id)
@@ -335,12 +279,6 @@ async def get_stock_data(
 
     Returns OHLCV data as list of candles.
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Stock data only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         df = await fetcher.fetch_stock_data_async(symbol, period=period, interval=interval)
@@ -375,12 +313,6 @@ async def get_stock_price(
 
     Returns current market price.
     """
-    if config.MARKET != "INDIA":
-        raise HTTPException(
-            status_code=400,
-            detail="Stock price only available for Indian market"
-        )
-
     fetcher = IndiaDataFetcher()
     try:
         price = await fetcher.get_current_price_async(symbol)
