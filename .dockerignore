@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+env
+
+# Environment files
+.env
+.env.*
+
+# Frontend (separate deployment)
+frontend/
+node_modules/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Data and logs
+*.log
+logs/
+data_cache/
+*.db
+*.sqlite
+postgres_data/
+
+# Test files
+*.json
+!package.json
+*.html
+*.zip
+*.txt
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# Misc
+.DS_Store
+Thumbs.db
+.claude/
