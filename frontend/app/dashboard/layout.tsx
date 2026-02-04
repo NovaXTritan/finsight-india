@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuthStore, useWatchlistStore } from '@/lib/store';
+import { useAuthStore, useWatchlistStore, useThemeStore } from '@/lib/store';
 import { watchlistApi } from '@/lib/api';
 import {
   TrendingUp,
@@ -22,6 +22,8 @@ import {
   Activity,
   History,
   BarChart3,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 const navigation = [
@@ -45,6 +47,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const { user, isAuthenticated, token, fetchUser, logout } = useAuthStore();
   const { setWatchlist } = useWatchlistStore();
+  const { theme, toggleTheme } = useThemeStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,20 +101,20 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950 flex items-center justify-center">
         <div className="text-center">
           <div className="relative mx-auto w-16 h-16">
             <div className="absolute inset-0 bg-primary-500/30 blur-xl rounded-full animate-pulse" />
             <TrendingUp className="relative h-16 w-16 text-primary-600 animate-pulse" />
           </div>
-          <p className="mt-4 text-gray-500">Loading your dashboard...</p>
+          <p className="mt-4 text-gray-500 dark:text-gray-400">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950 transition-colors duration-300">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -128,7 +131,7 @@ export default function DashboardLayout({
       >
         <div className="h-full glass-card-dashboard border-r-0 rounded-none rounded-r-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-primary-100/50">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-primary-100/50 dark:border-primary-800/50">
             <Link href="/dashboard" className="flex items-center space-x-2 group">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary-500/20 blur-md rounded-full group-hover:bg-primary-500/30 transition-all" />
@@ -138,7 +141,7 @@ export default function DashboardLayout({
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-primary-100/50 transition-colors"
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-primary-100/50 dark:hover:bg-primary-900/30 transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
@@ -155,8 +158,8 @@ export default function DashboardLayout({
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'nav-item-active text-primary-700 bg-primary-100/60'
-                      : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'
+                      ? 'nav-item-active text-primary-700 bg-primary-100/60 dark:text-primary-400 dark:bg-primary-900/40'
+                      : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700 dark:text-gray-400 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
                   }`}
                 >
                   <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-600' : ''}`} />
@@ -183,7 +186,7 @@ export default function DashboardLayout({
                     </Link>
                   )}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   {user.watchlist_count} / {user.tier_limit} symbols
                 </div>
                 <div className="progress-gradient mt-2">
@@ -227,11 +230,25 @@ export default function DashboardLayout({
               {/* Page title placeholder */}
               <div className="hidden lg:block" />
 
+              <div className="flex items-center space-x-3">
+                {/* Theme toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-100/50 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:bg-primary-900/30 transition-all"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'light' ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5" />
+                  )}
+                </button>
+
               {/* User menu */}
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-700 transition-colors"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-700 dark:text-gray-300 dark:hover:text-primary-400 transition-colors"
                 >
                   <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center shadow-glow">
                     <User className="h-5 w-5 text-white" />
@@ -247,9 +264,9 @@ export default function DashboardLayout({
                       onClick={() => setUserMenuOpen(false)}
                     />
                     <div className="absolute right-0 mt-2 w-56 glass-card-dashboard py-1 z-50 animate-slide-down shadow-lg">
-                      <div className="px-4 py-3 border-b border-primary-100/50">
-                        <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                        <p className="text-xs text-gray-500">{user?.email}</p>
+                      <div className="px-4 py-3 border-b border-primary-100/50 dark:border-primary-800/50">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                         <div className="mt-2">
                           <span className="badge-glass">{user?.tier} Plan</span>
                         </div>
@@ -257,7 +274,7 @@ export default function DashboardLayout({
                       <Link
                         href="/dashboard/settings"
                         onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 dark:text-gray-300 dark:hover:bg-primary-900/30 transition-colors"
                       >
                         <Settings className="h-4 w-4" />
                         <span>Settings</span>
@@ -273,6 +290,7 @@ export default function DashboardLayout({
                   </>
                 )}
               </div>
+              </div>
             </div>
           </div>
         </header>
@@ -283,7 +301,7 @@ export default function DashboardLayout({
         {/* Footer */}
         <footer className="fixed bottom-0 right-0 left-0 lg:left-64 z-20">
           <div className="mx-4 mb-4 lg:mx-6 glass-card-dashboard px-4 py-2">
-            <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>&copy; {new Date().getFullYear()} FinSight India</span>
               <div className="flex items-center space-x-3">
                 <span>Built by Divyanshu Kumar</span>

@@ -2,6 +2,28 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi, User, setAuthToken, clearAuthToken, getAuthToken } from './api';
 
+// Theme store
+type Theme = 'light' | 'dark';
+
+interface ThemeState {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set, get) => ({
+      theme: 'light',
+      setTheme: (theme: Theme) => set({ theme }),
+      toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
+    }),
+    {
+      name: 'theme-storage',
+    }
+  )
+);
+
 interface AuthState {
   token: string | null;
   user: User | null;
