@@ -60,15 +60,22 @@ class Settings(BaseSettings):
     rate_limits: dict = {
         "free": 60,
         "pro": 300,
-        "serious": 1000
+        "serious": 1000,
+        "unlimited": 10000
     }
 
     # Tier limits
     tier_limits: dict = {
         "free": {"symbols": 5, "history_days": 7},
         "pro": {"symbols": 25, "history_days": 90},
-        "serious": {"symbols": 100, "history_days": 365}
+        "serious": {"symbols": 100, "history_days": 365},
+        "unlimited": {"symbols": 999999, "history_days": 999999}
     }
+
+    # Emails that automatically get unlimited tier access
+    premium_emails: list = [
+        "divyanshukumar0163@gmail.com",
+    ]
 
     # CORS - allowed origins from environment or defaults
     @property
@@ -79,8 +86,10 @@ class Settings(BaseSettings):
             return [o.strip() for o in env_origins.split(",")]
         return [
             "http://localhost:3000",
+            "http://localhost:3001",
             "http://localhost:5173",
             "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
         ]

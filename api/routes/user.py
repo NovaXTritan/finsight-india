@@ -150,6 +150,13 @@ async def get_tier_info(
             "symbols": 100,
             "history_days": 365,
             "features": ["API access", "Webhooks", "Custom thresholds", "SLA support"]
+        },
+        "unlimited": {
+            "name": "Unlimited",
+            "price": 0,
+            "symbols": 999999,
+            "history_days": 999999,
+            "features": ["All features", "Unlimited symbols", "Unlimited history", "API access", "Priority support"]
         }
     }
     

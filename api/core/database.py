@@ -58,16 +58,19 @@ class APIDatabase:
             user_id = str(uuid.uuid4())
             hashed = hash_password(password)
             
+            # Auto-assign unlimited tier for premium emails
+            tier = "unlimited" if email.lower() in settings.premium_emails else "free"
+
             await conn.execute("""
                 INSERT INTO users (id, email, password_hash, name, tier, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6)
-            """, user_id, email.lower(), hashed, name, "free", datetime.utcnow())
-            
+            """, user_id, email.lower(), hashed, name, tier, datetime.utcnow())
+
             return {
                 "id": user_id,
                 "email": email.lower(),
                 "name": name,
-                "tier": "free"
+                "tier": tier
             }
     
     async def authenticate_user(
@@ -87,12 +90,21 @@ class APIDatabase:
             
             if not verify_password(password, row["password_hash"]):
                 return None
-            
+
+            tier = row["tier"]
+            # Auto-upgrade premium emails to unlimited tier
+            if email.lower() in settings.premium_emails and tier != "unlimited":
+                await conn.execute(
+                    "UPDATE users SET tier = $1, updated_at = $2 WHERE id = $3",
+                    "unlimited", datetime.utcnow(), row["id"]
+                )
+                tier = "unlimited"
+
             return {
                 "id": row["id"],
                 "email": row["email"],
                 "name": row["name"],
-                "tier": row["tier"],
+                "tier": tier,
                 "created_at": row["created_at"]
             }
     
@@ -1374,15 +1386,26 @@ class APIDatabase:
                 LIMIT ${param_idx} OFFSET ${param_idx + 1}
             """, *params)
 
+            import json as json_lib
             from api.models.schemas import BacktestRun
             runs = []
             for row in rows:
+                # Parse strategy JSON if it's a string
+                strategy = row['strategy']
+                if isinstance(strategy, str):
+                    strategy = json_lib.loads(strategy)
+
+                # Parse symbols if it's a string
+                symbols = row['symbols']
+                if isinstance(symbols, str):
+                    symbols = json_lib.loads(symbols)
+
                 runs.append(BacktestRun(
                     id=str(row['id']),
                     user_id=row['user_id'],
                     name=row['name'],
-                    strategy=row['strategy'],
-                    symbols=row['symbols'],
+                    strategy=strategy,
+                    symbols=symbols,
                     start_date=row['start_date'].isoformat(),
                     end_date=row['end_date'].isoformat(),
                     initial_capital=float(row['initial_capital']),
