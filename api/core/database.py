@@ -27,7 +27,9 @@ class APIDatabase:
         self.pool = await asyncpg.create_pool(
             settings.database_url,
             min_size=2,
-            max_size=10
+            max_size=20,
+            command_timeout=30,
+            statement_cache_size=100,
         )
     
     async def close(self):
@@ -147,27 +149,29 @@ class APIDatabase:
     async def add_to_watchlist(self, user_id: str, symbol: str) -> bool:
         """Add symbol to user's watchlist."""
         async with self.pool.acquire() as conn:
-            # Check tier limit
-            user = await self.get_user(user_id)
-            if not user:
+            # Check tier limit using the same connection
+            user_row = await conn.fetchrow("""
+                SELECT tier FROM users WHERE id = $1
+            """, user_id)
+            if not user_row:
                 return False
-            
-            tier_limit = settings.tier_limits.get(user["tier"], {}).get("symbols", 5)
-            
+
+            tier_limit = settings.tier_limits.get(user_row["tier"], {}).get("symbols", 5)
+
             current_count = await conn.fetchval("""
                 SELECT COUNT(*) FROM user_watchlist WHERE user_id = $1
             """, user_id)
-            
+
             if current_count >= tier_limit:
                 return False  # Limit reached
-            
+
             # Add symbol
             await conn.execute("""
                 INSERT INTO user_watchlist (user_id, symbol, added_at)
                 VALUES ($1, $2, $3)
                 ON CONFLICT (user_id, symbol) DO NOTHING
             """, user_id, symbol.upper(), datetime.utcnow())
-            
+
             return True
     
     async def remove_from_watchlist(self, user_id: str, symbol: str) -> bool:
