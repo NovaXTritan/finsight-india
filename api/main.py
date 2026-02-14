@@ -6,6 +6,7 @@ Run with: uvicorn api.main:app --reload
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 import time
 import logging
@@ -76,14 +77,17 @@ app = FastAPI(
     """,
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None,
 )
 
 # Add rate limiter to app state and exception handler
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
+# GZip middleware - compress responses > 1KB for 60-70% smaller payloads
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # CORS middleware
 app.add_middleware(

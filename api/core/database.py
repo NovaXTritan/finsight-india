@@ -2,6 +2,7 @@
 API Database - Extends existing database with user management
 """
 import asyncpg
+import asyncio
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uuid
@@ -305,11 +306,17 @@ class APIDatabase:
                 ORDER BY invested_value DESC
             """, user_id)
 
+            if not rows:
+                return []
+
+            # Batch fetch all prices concurrently instead of one-by-one
+            holding_dicts = [dict(row) for row in rows]
+            prices = await asyncio.gather(*[
+                self._get_current_price(h["symbol"]) for h in holding_dicts
+            ])
+
             holdings = []
-            for row in rows:
-                h = dict(row)
-                # Fetch current price from market data
-                current_price = await self._get_current_price(h["symbol"])
+            for h, current_price in zip(holding_dicts, prices):
                 if current_price:
                     h["current_price"] = current_price["price"]
                     h["current_value"] = h["quantity"] * current_price["price"]
@@ -331,8 +338,8 @@ class APIDatabase:
 
             return holdings
 
-    async def _get_current_price(self, symbol: str) -> Optional[Dict[str, float]]:
-        """Get current price for a symbol using yfinance."""
+    def _get_current_price_sync(self, symbol: str) -> Optional[Dict[str, float]]:
+        """Get current price for a symbol using yfinance (blocking)."""
         try:
             import yfinance as yf
             ticker = yf.Ticker(f"{symbol}.NS")
@@ -346,6 +353,10 @@ class APIDatabase:
         except Exception:
             pass
         return None
+
+    async def _get_current_price(self, symbol: str) -> Optional[Dict[str, float]]:
+        """Get current price without blocking the event loop."""
+        return await asyncio.to_thread(self._get_current_price_sync, symbol)
 
     async def get_holding(self, user_id: str, symbol: str) -> Optional[Dict[str, Any]]:
         """Get a specific holding."""
@@ -927,6 +938,54 @@ class APIDatabase:
 
             return stocks, total
 
+    def _fetch_fundamentals_sync(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Fetch stock fundamentals from Yahoo Finance (blocking)."""
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker(f"{symbol}.NS")
+            info = ticker.info
+
+            if not info or info.get("regularMarketPrice") is None:
+                ticker = yf.Ticker(f"{symbol}.BO")
+                info = ticker.info
+
+            if not info or info.get("regularMarketPrice") is None:
+                return None
+
+            current_price = info.get("currentPrice") or info.get("regularMarketPrice")
+            high_52w = info.get("fiftyTwoWeekHigh")
+            low_52w = info.get("fiftyTwoWeekLow")
+
+            price_to_52w_high = round((current_price / high_52w) * 100, 2) if current_price and high_52w else None
+            price_to_52w_low = round((current_price / low_52w) * 100, 2) if current_price and low_52w else None
+
+            return {
+                "symbol": symbol,
+                "name": info.get("shortName") or info.get("longName") or symbol,
+                "sector": info.get("sector"),
+                "industry": info.get("industry"),
+                "market_cap": info.get("marketCap"),
+                "pe_ratio": info.get("trailingPE"),
+                "pb_ratio": info.get("priceToBook"),
+                "ps_ratio": info.get("priceToSalesTrailing12Months"),
+                "dividend_yield": (info.get("dividendYield") or 0) * 100 if info.get("dividendYield") else 0,
+                "roe": (info.get("returnOnEquity") or 0) * 100 if info.get("returnOnEquity") else None,
+                "debt_to_equity": info.get("debtToEquity"),
+                "current_ratio": info.get("currentRatio"),
+                "eps": info.get("trailingEps"),
+                "book_value": info.get("bookValue"),
+                "high_52w": high_52w,
+                "low_52w": low_52w,
+                "current_price": current_price,
+                "price_to_52w_high": price_to_52w_high,
+                "price_to_52w_low": price_to_52w_low,
+                "avg_volume_30d": info.get("averageVolume"),
+                "beta": info.get("beta"),
+                "is_fno": False,
+            }
+        except Exception:
+            return None
+
     async def get_stock_fundamentals(
         self,
         symbol: str,
@@ -948,79 +1007,37 @@ class APIDatabase:
                         stock[key] = float(stock[key])
                 return stock
 
-            # Fetch from Yahoo Finance
-            try:
-                import yfinance as yf
-                ticker = yf.Ticker(f"{symbol}.NS")
-                info = ticker.info
+            # Fetch from Yahoo Finance in a thread to avoid blocking the event loop
+            fundamentals = await asyncio.to_thread(self._fetch_fundamentals_sync, symbol)
 
-                if not info or info.get("regularMarketPrice") is None:
-                    ticker = yf.Ticker(f"{symbol}.BO")
-                    info = ticker.info
-
-                if not info or info.get("regularMarketPrice") is None:
-                    return dict(row) if row else None
-
-                current_price = info.get("currentPrice") or info.get("regularMarketPrice")
-                high_52w = info.get("fiftyTwoWeekHigh")
-                low_52w = info.get("fiftyTwoWeekLow")
-
-                price_to_52w_high = round((current_price / high_52w) * 100, 2) if current_price and high_52w else None
-                price_to_52w_low = round((current_price / low_52w) * 100, 2) if current_price and low_52w else None
-
-                fundamentals = {
-                    "symbol": symbol,
-                    "name": info.get("shortName") or info.get("longName") or symbol,
-                    "sector": info.get("sector"),
-                    "industry": info.get("industry"),
-                    "market_cap": info.get("marketCap"),
-                    "pe_ratio": info.get("trailingPE"),
-                    "pb_ratio": info.get("priceToBook"),
-                    "ps_ratio": info.get("priceToSalesTrailing12Months"),
-                    "dividend_yield": (info.get("dividendYield") or 0) * 100 if info.get("dividendYield") else 0,
-                    "roe": (info.get("returnOnEquity") or 0) * 100 if info.get("returnOnEquity") else None,
-                    "debt_to_equity": info.get("debtToEquity"),
-                    "current_ratio": info.get("currentRatio"),
-                    "eps": info.get("trailingEps"),
-                    "book_value": info.get("bookValue"),
-                    "high_52w": high_52w,
-                    "low_52w": low_52w,
-                    "current_price": current_price,
-                    "price_to_52w_high": price_to_52w_high,
-                    "price_to_52w_low": price_to_52w_low,
-                    "avg_volume_30d": info.get("averageVolume"),
-                    "beta": info.get("beta"),
-                    "is_fno": False,
-                }
-
-                # Save to database
-                await conn.execute("""
-                    INSERT INTO stock_fundamentals (
-                        symbol, name, sector, industry, market_cap, pe_ratio, pb_ratio,
-                        ps_ratio, dividend_yield, roe, debt_to_equity, current_ratio,
-                        eps, book_value, high_52w, low_52w, current_price,
-                        price_to_52w_high, price_to_52w_low, avg_volume_30d, beta, is_fno, updated_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, NOW())
-                    ON CONFLICT (symbol) DO UPDATE SET
-                        name = EXCLUDED.name, sector = EXCLUDED.sector, industry = EXCLUDED.industry,
-                        market_cap = EXCLUDED.market_cap, pe_ratio = EXCLUDED.pe_ratio, pb_ratio = EXCLUDED.pb_ratio,
-                        ps_ratio = EXCLUDED.ps_ratio, dividend_yield = EXCLUDED.dividend_yield, roe = EXCLUDED.roe,
-                        debt_to_equity = EXCLUDED.debt_to_equity, current_ratio = EXCLUDED.current_ratio,
-                        eps = EXCLUDED.eps, book_value = EXCLUDED.book_value, high_52w = EXCLUDED.high_52w,
-                        low_52w = EXCLUDED.low_52w, current_price = EXCLUDED.current_price,
-                        price_to_52w_high = EXCLUDED.price_to_52w_high, price_to_52w_low = EXCLUDED.price_to_52w_low,
-                        avg_volume_30d = EXCLUDED.avg_volume_30d, beta = EXCLUDED.beta, updated_at = NOW()
-                """, *[fundamentals.get(k) for k in [
-                    "symbol", "name", "sector", "industry", "market_cap", "pe_ratio", "pb_ratio",
-                    "ps_ratio", "dividend_yield", "roe", "debt_to_equity", "current_ratio",
-                    "eps", "book_value", "high_52w", "low_52w", "current_price",
-                    "price_to_52w_high", "price_to_52w_low", "avg_volume_30d", "beta", "is_fno"
-                ]])
-
-                return fundamentals
-
-            except Exception as e:
+            if not fundamentals:
                 return dict(row) if row else None
+
+            # Save to database
+            await conn.execute("""
+                INSERT INTO stock_fundamentals (
+                    symbol, name, sector, industry, market_cap, pe_ratio, pb_ratio,
+                    ps_ratio, dividend_yield, roe, debt_to_equity, current_ratio,
+                    eps, book_value, high_52w, low_52w, current_price,
+                    price_to_52w_high, price_to_52w_low, avg_volume_30d, beta, is_fno, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, NOW())
+                ON CONFLICT (symbol) DO UPDATE SET
+                    name = EXCLUDED.name, sector = EXCLUDED.sector, industry = EXCLUDED.industry,
+                    market_cap = EXCLUDED.market_cap, pe_ratio = EXCLUDED.pe_ratio, pb_ratio = EXCLUDED.pb_ratio,
+                    ps_ratio = EXCLUDED.ps_ratio, dividend_yield = EXCLUDED.dividend_yield, roe = EXCLUDED.roe,
+                    debt_to_equity = EXCLUDED.debt_to_equity, current_ratio = EXCLUDED.current_ratio,
+                    eps = EXCLUDED.eps, book_value = EXCLUDED.book_value, high_52w = EXCLUDED.high_52w,
+                    low_52w = EXCLUDED.low_52w, current_price = EXCLUDED.current_price,
+                    price_to_52w_high = EXCLUDED.price_to_52w_high, price_to_52w_low = EXCLUDED.price_to_52w_low,
+                    avg_volume_30d = EXCLUDED.avg_volume_30d, beta = EXCLUDED.beta, updated_at = NOW()
+            """, *[fundamentals.get(k) for k in [
+                "symbol", "name", "sector", "industry", "market_cap", "pe_ratio", "pb_ratio",
+                "ps_ratio", "dividend_yield", "roe", "debt_to_equity", "current_ratio",
+                "eps", "book_value", "high_52w", "low_52w", "current_price",
+                "price_to_52w_high", "price_to_52w_low", "avg_volume_30d", "beta", "is_fno"
+            ]])
+
+            return fundamentals
 
     async def refresh_fundamentals(self, symbols: List[str] = None):
         """Refresh fundamentals for specified symbols or all."""
@@ -1232,43 +1249,38 @@ class APIDatabase:
                 metrics.get('avg_loss')
             )
 
-            # Save trades
-            for trade in trades:
-                # Convert pandas Timestamps to Python datetime if needed
-                entry_dt = trade.entry_date
-                exit_dt = trade.exit_date
-
-                # Handle pandas Timestamp conversion
-                if hasattr(entry_dt, 'to_pydatetime'):
-                    entry_dt = entry_dt.to_pydatetime()
-                if exit_dt is not None and hasattr(exit_dt, 'to_pydatetime'):
-                    exit_dt = exit_dt.to_pydatetime()
-
-                await conn.execute("""
+            # Save trades in batch
+            if trades:
+                trade_rows = []
+                for trade in trades:
+                    entry_dt = trade.entry_date
+                    exit_dt = trade.exit_date
+                    if hasattr(entry_dt, 'to_pydatetime'):
+                        entry_dt = entry_dt.to_pydatetime()
+                    if exit_dt is not None and hasattr(exit_dt, 'to_pydatetime'):
+                        exit_dt = exit_dt.to_pydatetime()
+                    trade_rows.append((
+                        backtest_id, trade.symbol, trade.trade_type,
+                        entry_dt, exit_dt, trade.entry_price, trade.exit_price,
+                        trade.quantity, trade.entry_signal, trade.exit_signal,
+                        trade.pnl, trade.return_pct, trade.fees, trade.exit_date is None
+                    ))
+                await conn.executemany("""
                     INSERT INTO backtest_trades
                     (backtest_id, symbol, trade_type, entry_date, exit_date, entry_price,
                      exit_price, quantity, entry_signal, exit_signal, pnl, return_pct, fees, is_open)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-                """,
-                    backtest_id,
-                    trade.symbol,
-                    trade.trade_type,
-                    entry_dt,
-                    exit_dt,
-                    trade.entry_price,
-                    trade.exit_price,
-                    trade.quantity,
-                    trade.entry_signal,
-                    trade.exit_signal,
-                    trade.pnl,
-                    trade.return_pct,
-                    trade.fees,
-                    trade.exit_date is None
-                )
+                """, trade_rows)
 
-            # Save equity curve
-            for point in equity_curve:
-                await conn.execute("""
+            # Save equity curve in batch
+            if equity_curve:
+                curve_rows = [(
+                    backtest_id,
+                    point.date.date() if hasattr(point.date, 'date') else point.date,
+                    point.equity, point.cash, point.positions_value,
+                    point.daily_return, point.drawdown
+                ) for point in equity_curve]
+                await conn.executemany("""
                     INSERT INTO backtest_equity_curve
                     (backtest_id, date, equity, cash, positions_value, daily_return, drawdown)
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -1278,15 +1290,7 @@ class APIDatabase:
                         positions_value = EXCLUDED.positions_value,
                         daily_return = EXCLUDED.daily_return,
                         drawdown = EXCLUDED.drawdown
-                """,
-                    backtest_id,
-                    point.date.date() if hasattr(point.date, 'date') else point.date,
-                    point.equity,
-                    point.cash,
-                    point.positions_value,
-                    point.daily_return,
-                    point.drawdown
-                )
+                """, curve_rows)
 
     async def get_backtest_run(self, backtest_id: str, user_id: str) -> Optional[Dict[str, Any]]:
         """Get a backtest run by ID."""

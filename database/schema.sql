@@ -99,8 +99,10 @@ CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON anomalies(detected_at DESC)
 CREATE INDEX IF NOT EXISTS idx_outcomes_user ON anomaly_outcomes(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_quality_user ON pattern_quality(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_actions_anomaly ON user_actions(anomaly_id);
+CREATE INDEX IF NOT EXISTS idx_user_actions_user ON user_actions(user_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_user_watchlist_user ON user_watchlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity) WHERE severity = 'HIGH';
 
 -- =============================================================================
 -- PHASE 2: PORTFOLIO TRACKER

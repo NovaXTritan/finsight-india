@@ -5,7 +5,12 @@ import { useWatchlistStore } from '@/lib/store';
 import { watchlistApi, signalsApi, Signal, EnrichedStock } from '@/lib/api';
 import { WatchlistManager } from '@/components/WatchlistManager';
 import { SignalsList } from '@/components/SignalsList';
-import { SparklineChart } from '@/components/SparklineChart';
+import dynamic from 'next/dynamic';
+
+const SparklineChart = dynamic(
+  () => import('@/components/SparklineChart').then(mod => mod.SparklineChart),
+  { ssr: false, loading: () => <div className="w-[100px] h-[36px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /> }
+);
 import {
   Star,
   TrendingUp,

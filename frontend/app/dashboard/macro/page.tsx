@@ -16,7 +16,12 @@ import {
   Lightbulb,
   ArrowRight,
 } from 'lucide-react';
-import { MacroTrendChart } from '@/components/MacroTrendChart';
+import dynamic from 'next/dynamic';
+
+const MacroTrendChart = dynamic(
+  () => import('@/components/MacroTrendChart').then(mod => mod.MacroTrendChart),
+  { ssr: false, loading: () => <div className="w-full h-[280px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /> }
+);
 import { HealthScorecard } from '@/components/HealthScorecard';
 
 interface MacroIndicator {
