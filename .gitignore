@@ -1,53 +1,71 @@
-# Environment
+# ============================================================
+# Environment & Secrets
+# ============================================================
 .env
-.venv/
-venv/
-env/
+.env.local
+.env.production
+*.pem
+*.key
 
+# ============================================================
 # Python
+# ============================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
 
-# Logs
-logs/
-*.log
+# ============================================================
+# Node.js / Next.js
+# ============================================================
+node_modules/
+.next/
+out/
+.vercel
 
-# Data
-data_cache/
-*.db
-*.sqlite
-
+# ============================================================
 # IDE
+# ============================================================
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
+*~
 .DS_Store
 Thumbs.db
 
+# ============================================================
 # Database
-postgres_data/
+# ============================================================
+*.db
+*.sqlite3
 
-# Temp/test files
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!vercel.json
-!railway.json
-!frontend/**/*.json
-*.html
-*.zip
-*.txt
-!runtime.txt
-*.sql
-nul
+# ============================================================
+# Logs
+# ============================================================
+*.log
+logs/
 
-# Claude settings (local)
-.claude/settings.local.json
-api/.claude/
+# ============================================================
+# Data (large files — not tracked)
+# ============================================================
+data/cache/
+data/raw/
+*.csv
+*.parquet
+!data/samples/*.csv
+
+# ============================================================
+# LM Studio models (too large for git)
+# ============================================================
+models/
+*.gguf
+*.bin

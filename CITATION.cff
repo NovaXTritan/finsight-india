@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this software in academic research, please cite the conference paper."
+type: software
+title: "FinSight India"
+abstract: >-
+  AI-powered market intelligence platform addressing processing asymmetry
+  in India's equity derivatives market. Developed as a Design Science Research
+  artifact for IMSICON 2026.
+authors:
+  - given-names: Divyanshu
+    affiliation: "Christ University, Delhi NCR"
+  - given-names: Sanjeev
+    family-names: Sharma
+    affiliation: "Christ University, Delhi NCR"
+keywords:
+  - processing asymmetry
+  - algorithmic trading
+  - anomaly detection
+  - Z-score
+  - retail traders
+  - Indian derivatives market
+  - design science research
+  - SEBI
+  - market intelligence
+license: MIT
+preferred-citation:
+  type: conference-paper
+  title: >-
+    Bridging the Algorithmic Divide: Processing Asymmetry, Technology Artifacts,
+    and Dual-Pillar Policy for India's Retail Derivatives Traders
+  authors:
+    - given-names: Divyanshu
+      affiliation: "Christ University, Delhi NCR"
+    - given-names: Sanjeev
+      family-names: Sharma
+      affiliation: "Christ University, Delhi NCR"
+  collection-title: "Proceedings of IMSICON 2026, International Management Conference"
+  year: 2026
+  institution:
+    name: "Christ University, Delhi NCR"

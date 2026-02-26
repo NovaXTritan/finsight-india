@@ -11,10 +11,12 @@ from config import Anomaly, Severity
 
 class AnomalyDetector:
     """
-    Multi-method anomaly detector using:
-    1. Z-Score (statistical deviation)
-    2. EWMA (exponential weighted moving average)
-    3. Ensemble voting
+    Statistical anomaly detector using Z-score methodology across three dimensions:
+    1. Volume spike detection
+    2. Price momentum detection
+    3. Volatility surge detection
+
+    Z-score is the primary detection method. See docs/METHODOLOGY.md for details.
     """
     
     def __init__(self, thresholds: dict = None):
