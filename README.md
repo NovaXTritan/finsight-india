@@ -9,10 +9,6 @@
 
 ---
 
-## Research Context
-
-This repository contains the technology artifact developed as part of an academic research paper presented at **IMSICON 2026** (International Management Conference, Christ University, Delhi NCR).
-
 **Paper:** *Bridging the Algorithmic Divide: Processing Asymmetry, Technology Artifacts, and Dual-Pillar Policy for India's Retail Derivatives Traders*
 
 **Authors:** Divyanshu & Prof. Sanjeev Sharma, Christ University, Delhi NCR
