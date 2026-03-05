@@ -2,7 +2,7 @@
 
 **AI-Powered Market Intelligence for India's Retail Derivatives Traders**
 
-[![IMSICON 2026](https://img.shields.io/badge/Conference-IMSICON%202026-blue)](https://github.com/NovaXTritan/finsight-india)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org)
