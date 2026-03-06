@@ -45,9 +45,17 @@ CREATE TABLE IF NOT EXISTS anomalies (
     agent_decision TEXT,
     agent_confidence FLOAT,
     agent_reason TEXT,
+    context TEXT,
+    sources JSONB,
+    thought_process TEXT,
     detected_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Backfill missing columns if upgrading from old schema
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS context TEXT;
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS sources JSONB;
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS thought_process TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_anomalies_symbol ON anomalies(symbol, detected_at);
 CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON anomalies(detected_at DESC);
@@ -130,6 +138,39 @@ CREATE TABLE IF NOT EXISTS detection_thresholds (
 CREATE INDEX IF NOT EXISTS idx_thresholds_user ON detection_thresholds(user_id);
 CREATE INDEX IF NOT EXISTS idx_thresholds_pattern ON detection_thresholds(pattern_type, symbol);
 CREATE INDEX IF NOT EXISTS idx_thresholds_lookup ON detection_thresholds(user_id, pattern_type, symbol);
+
+-- =============================================================================
+-- NEW: Market data (OHLCV from SmartAPI)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS market_data (
+    id SERIAL PRIMARY KEY,
+    symbol VARCHAR(20) NOT NULL,
+    trade_date DATE NOT NULL,
+    open DECIMAL(12,2),
+    high DECIMAL(12,2),
+    low DECIMAL(12,2),
+    close DECIMAL(12,2),
+    volume BIGINT,
+    fetched_at TIMESTAMPTZ DEFAULT NOW(),
+    source VARCHAR(20) DEFAULT 'smartapi',
+    UNIQUE(symbol, trade_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_market_data_symbol_date ON market_data(symbol, trade_date DESC);
+
+-- =============================================================================
+-- NEW: Password reset tokens
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token);
 
 -- =============================================================================
 -- MIGRATION: If upgrading from old schema

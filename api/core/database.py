@@ -3,8 +3,9 @@ API Database - Extends existing database with user management
 """
 import asyncpg
 import asyncio
+import secrets
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 from api.core.config import get_settings
@@ -23,14 +24,249 @@ class APIDatabase:
         self.pool: Optional[asyncpg.Pool] = None
     
     async def connect(self):
-        """Create connection pool."""
+        """Create connection pool and ensure tables exist."""
         self.pool = await asyncpg.create_pool(
             settings.database_url,
             min_size=2,
             max_size=20,
             command_timeout=30,
-            statement_cache_size=100,
+            statement_cache_size=0,  # Must be 0 for Neon PgBouncer pooler
         )
+        await self.ensure_tables()
+
+    async def ensure_tables(self):
+        """Create core tables if they don't exist (auto-migration)."""
+        async with self.pool.acquire() as conn:
+            await conn.execute("""
+                -- Users
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    tier TEXT NOT NULL DEFAULT 'free',
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+                -- User watchlist
+                CREATE TABLE IF NOT EXISTS user_watchlist (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    symbol TEXT NOT NULL,
+                    added_at TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE(user_id, symbol)
+                );
+                CREATE INDEX IF NOT EXISTS idx_watchlist_user ON user_watchlist(user_id);
+                CREATE INDEX IF NOT EXISTS idx_watchlist_symbol ON user_watchlist(symbol);
+
+                -- Anomalies
+                CREATE TABLE IF NOT EXISTS anomalies (
+                    id TEXT PRIMARY KEY,
+                    symbol TEXT NOT NULL,
+                    pattern_type TEXT NOT NULL,
+                    severity TEXT NOT NULL,
+                    z_score FLOAT NOT NULL,
+                    price FLOAT NOT NULL,
+                    volume BIGINT,
+                    agent_decision TEXT,
+                    agent_confidence FLOAT,
+                    agent_reason TEXT,
+                    context TEXT,
+                    sources JSONB,
+                    thought_process TEXT,
+                    detected_at TIMESTAMPTZ NOT NULL,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_anomalies_symbol ON anomalies(symbol, detected_at);
+                CREATE INDEX IF NOT EXISTS idx_anomalies_detected ON anomalies(detected_at DESC);
+
+                -- Backfill missing columns on existing anomalies table
+                ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS context TEXT;
+                ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS sources JSONB;
+                ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS thought_process TEXT;
+
+                -- User actions
+                CREATE TABLE IF NOT EXISTS user_actions (
+                    id SERIAL PRIMARY KEY,
+                    anomaly_id TEXT NOT NULL REFERENCES anomalies(id),
+                    user_id TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    notes TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    timestamp TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_user_actions_anomaly ON user_actions(anomaly_id);
+                CREATE INDEX IF NOT EXISTS idx_user_actions_user ON user_actions(user_id);
+
+                -- Outcome tracking
+                CREATE TABLE IF NOT EXISTS anomaly_outcomes (
+                    id SERIAL PRIMARY KEY,
+                    anomaly_id TEXT NOT NULL REFERENCES anomalies(id),
+                    user_id TEXT NOT NULL,
+                    agent_decision TEXT NOT NULL,
+                    agent_confidence FLOAT NOT NULL,
+                    user_action TEXT NOT NULL,
+                    return_15m FLOAT,
+                    return_1h FLOAT,
+                    return_4h FLOAT,
+                    return_1d FLOAT,
+                    was_profitable BOOLEAN,
+                    outcome_classification TEXT,
+                    agent_correct BOOLEAN,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_outcomes_user ON anomaly_outcomes(user_id, created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_outcomes_anomaly ON anomaly_outcomes(anomaly_id);
+
+                -- Pattern quality scores
+                CREATE TABLE IF NOT EXISTS pattern_quality (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    pattern_type TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    accuracy FLOAT NOT NULL DEFAULT 0,
+                    review_rate FLOAT NOT NULL DEFAULT 0,
+                    trade_rate FLOAT NOT NULL DEFAULT 0,
+                    avg_return FLOAT NOT NULL DEFAULT 0,
+                    sample_size INT NOT NULL DEFAULT 0,
+                    agent_accuracy FLOAT NOT NULL DEFAULT 0,
+                    updated_at TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE(user_id, pattern_type, symbol)
+                );
+                CREATE INDEX IF NOT EXISTS idx_quality_user ON pattern_quality(user_id);
+
+                -- Detection thresholds
+                CREATE TABLE IF NOT EXISTS detection_thresholds (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    pattern_type TEXT NOT NULL,
+                    symbol TEXT NOT NULL,
+                    z_score_threshold FLOAT NOT NULL,
+                    updated_at TIMESTAMPTZ DEFAULT NOW(),
+                    reason TEXT,
+                    UNIQUE(user_id, pattern_type, symbol)
+                );
+                CREATE INDEX IF NOT EXISTS idx_thresholds_user ON detection_thresholds(user_id);
+
+                -- Portfolio: Holdings
+                CREATE TABLE IF NOT EXISTS user_holdings (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                    symbol VARCHAR(20) NOT NULL,
+                    quantity INTEGER NOT NULL CHECK (quantity > 0),
+                    avg_price DECIMAL(12,2) NOT NULL CHECK (avg_price > 0),
+                    invested_value DECIMAL(14,2) GENERATED ALWAYS AS (quantity * avg_price) STORED,
+                    notes TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE(user_id, symbol)
+                );
+
+                -- Portfolio: Transactions
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                    symbol VARCHAR(20) NOT NULL,
+                    type VARCHAR(20) NOT NULL CHECK (type IN ('BUY', 'SELL', 'DIVIDEND', 'SPLIT', 'BONUS')),
+                    quantity INTEGER,
+                    price DECIMAL(12,2),
+                    amount DECIMAL(14,2),
+                    fees DECIMAL(10,2) DEFAULT 0,
+                    notes TEXT,
+                    transaction_date DATE NOT NULL,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+
+                -- Backtest runs
+                CREATE TABLE IF NOT EXISTS backtest_runs (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+                    name VARCHAR(255) NOT NULL,
+                    strategy JSONB NOT NULL,
+                    symbols TEXT[] NOT NULL,
+                    start_date DATE NOT NULL,
+                    end_date DATE NOT NULL,
+                    initial_capital DECIMAL(14,2) NOT NULL DEFAULT 100000,
+                    final_capital DECIMAL(14,2),
+                    total_return DECIMAL(10,4),
+                    cagr DECIMAL(10,4),
+                    sharpe_ratio DECIMAL(8,4),
+                    sortino_ratio DECIMAL(8,4),
+                    max_drawdown DECIMAL(8,4),
+                    win_rate DECIMAL(6,4),
+                    profit_factor DECIMAL(8,4),
+                    total_trades INTEGER DEFAULT 0,
+                    winning_trades INTEGER DEFAULT 0,
+                    losing_trades INTEGER DEFAULT 0,
+                    avg_win DECIMAL(14,2),
+                    avg_loss DECIMAL(14,2),
+                    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
+                    error_message TEXT,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    completed_at TIMESTAMPTZ
+                );
+
+                -- Backtest trades
+                CREATE TABLE IF NOT EXISTS backtest_trades (
+                    id SERIAL PRIMARY KEY,
+                    backtest_id UUID REFERENCES backtest_runs(id) ON DELETE CASCADE,
+                    symbol VARCHAR(20) NOT NULL,
+                    trade_type VARCHAR(10) NOT NULL CHECK (trade_type IN ('LONG', 'SHORT')),
+                    entry_date TIMESTAMPTZ NOT NULL,
+                    exit_date TIMESTAMPTZ,
+                    entry_price DECIMAL(12,2) NOT NULL,
+                    exit_price DECIMAL(12,2),
+                    quantity INTEGER NOT NULL,
+                    entry_signal VARCHAR(100),
+                    exit_signal VARCHAR(100),
+                    pnl DECIMAL(14,2),
+                    return_pct DECIMAL(8,4),
+                    fees DECIMAL(10,2) DEFAULT 0,
+                    is_open BOOLEAN DEFAULT TRUE
+                );
+
+                -- Password reset tokens
+                CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    token TEXT UNIQUE NOT NULL,
+                    expires_at TIMESTAMPTZ NOT NULL,
+                    used BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token);
+
+                -- Backtest equity curve
+                CREATE TABLE IF NOT EXISTS backtest_equity_curve (
+                    id SERIAL PRIMARY KEY,
+                    backtest_id UUID REFERENCES backtest_runs(id) ON DELETE CASCADE,
+                    date DATE NOT NULL,
+                    equity DECIMAL(14,2) NOT NULL,
+                    cash DECIMAL(14,2),
+                    positions_value DECIMAL(14,2),
+                    daily_return DECIMAL(8,4),
+                    drawdown DECIMAL(8,4),
+                    UNIQUE(backtest_id, date)
+                );
+
+                -- Market data (OHLCV from SmartAPI)
+                CREATE TABLE IF NOT EXISTS market_data (
+                    id SERIAL PRIMARY KEY,
+                    symbol VARCHAR(20) NOT NULL,
+                    trade_date DATE NOT NULL,
+                    open DECIMAL(12,2),
+                    high DECIMAL(12,2),
+                    low DECIMAL(12,2),
+                    close DECIMAL(12,2),
+                    volume BIGINT,
+                    fetched_at TIMESTAMPTZ DEFAULT NOW(),
+                    source VARCHAR(20) DEFAULT 'smartapi',
+                    UNIQUE(symbol, trade_date)
+                );
+                CREATE INDEX IF NOT EXISTS idx_market_data_symbol_date ON market_data(symbol, trade_date DESC);
+            """)
     
     async def close(self):
         """Close connection pool."""
@@ -131,7 +367,83 @@ class APIDatabase:
                 WHERE id = $3
             """, tier, datetime.utcnow(), user_id)
             return "UPDATE 1" in result
-    
+
+    async def create_password_reset_token(self, email: str) -> Optional[str]:
+        """Create a password reset token. Returns token string or None if email not found."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT id FROM users WHERE email = $1", email.lower()
+            )
+            if not row:
+                return None
+
+            # Invalidate any existing unused tokens for this user
+            await conn.execute(
+                "UPDATE password_reset_tokens SET used = TRUE WHERE user_id = $1 AND used = FALSE",
+                row["id"]
+            )
+
+            token = secrets.token_urlsafe(32)
+            expires_at = datetime.utcnow() + timedelta(hours=1)
+
+            await conn.execute("""
+                INSERT INTO password_reset_tokens (user_id, token, expires_at)
+                VALUES ($1, $2, $3)
+            """, row["id"], token, expires_at)
+
+            return token
+
+    async def validate_reset_token(self, token: str) -> Optional[str]:
+        """Validate a reset token. Returns user_id or None."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT user_id, expires_at, used
+                FROM password_reset_tokens WHERE token = $1
+            """, token)
+
+            if not row or row["used"] or row["expires_at"] < datetime.utcnow():
+                return None
+
+            return row["user_id"]
+
+    async def reset_password(self, token: str, new_password: str) -> bool:
+        """Reset password using a valid token."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow("""
+                SELECT user_id, expires_at, used
+                FROM password_reset_tokens WHERE token = $1
+            """, token)
+
+            if not row or row["used"] or row["expires_at"] < datetime.utcnow():
+                return False
+
+            hashed = hash_password(new_password)
+            await conn.execute(
+                "UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3",
+                hashed, datetime.utcnow(), row["user_id"]
+            )
+            await conn.execute(
+                "UPDATE password_reset_tokens SET used = TRUE WHERE token = $1",
+                token
+            )
+            return True
+
+    async def change_password(self, user_id: str, old_password: str, new_password: str) -> bool:
+        """Change password for authenticated user. Returns False if old password is wrong."""
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT password_hash FROM users WHERE id = $1", user_id
+            )
+            if not row or not verify_password(old_password, row["password_hash"]):
+                return False
+
+            hashed = hash_password(new_password)
+            await conn.execute(
+                "UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3",
+                hashed, datetime.utcnow(), user_id
+            )
+            return True
+
     # =========================================================================
     # WATCHLIST (NEW - Per User)
     # =========================================================================

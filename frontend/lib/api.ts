@@ -52,14 +52,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors
+// Handle auth errors — clear token from both localStorage and zustand persist
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       clearAuthToken();
+      // Also clear zustand persisted auth state to prevent desync
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        localStorage.removeItem('auth-storage');
       }
     }
     return Promise.reject(error);
@@ -403,6 +404,28 @@ export interface MarketSummary {
   top_gainers?: any[];
   top_losers?: any[];
   timestamp?: string;
+  data_source?: 'nse' | 'yahoo' | 'fallback' | 'error' | 'unknown';
+  is_live?: boolean;
+}
+
+export interface StockCandle {
+  datetime: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface StockChartData {
+  symbol: string;
+  period: string;
+  interval: string;
+  candles: StockCandle[];
+  count: number;
+  data_source: string;
+  is_live: boolean;
+  timestamp: string;
 }
 
 // Auth APIs
@@ -424,6 +447,21 @@ export const authApi = {
 
   refresh: async () => {
     const res = await api.post('/auth/refresh');
+    return res.data;
+  },
+
+  forgotPassword: async (email: string): Promise<{ message: string; success: boolean }> => {
+    const res = await api.post('/auth/forgot-password', { email });
+    return res.data;
+  },
+
+  resetPassword: async (token: string, new_password: string): Promise<{ message: string; success: boolean }> => {
+    const res = await api.post('/auth/reset-password', { token, new_password });
+    return res.data;
+  },
+
+  changePassword: async (current_password: string, new_password: string): Promise<{ message: string; success: boolean }> => {
+    const res = await api.post('/auth/change-password', { current_password, new_password });
     return res.data;
   },
 };
@@ -572,6 +610,11 @@ export const marketApi = {
 
   getStockPrice: async (symbol: string) => {
     const res = await api.get(`/market/stock/${symbol}/price`);
+    return res.data;
+  },
+
+  getStockChart: async (symbol: string, period = '1mo', interval = '1d'): Promise<StockChartData> => {
+    const res = await api.get(`/market/stock/${symbol}`, { params: { period, interval } });
     return res.data;
   },
 };

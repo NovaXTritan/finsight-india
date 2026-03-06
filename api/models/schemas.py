@@ -23,6 +23,23 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password with token."""
+    token: str
+    new_password: str = Field(..., min_length=8, description="Minimum 8 characters")
+
+
+class ChangePasswordRequest(BaseModel):
+    """Change password (authenticated)."""
+    current_password: str
+    new_password: str = Field(..., min_length=8, description="Minimum 8 characters")
+
+
 class Token(BaseModel):
     """JWT token response."""
     access_token: str

@@ -11,7 +11,8 @@ from api.core.config import get_settings
 from api.core.auth import create_access_token, get_current_user_id
 from api.core.database import APIDatabase, get_db
 from api.models.schemas import (
-    UserRegister, UserLogin, Token, UserProfile, MessageResponse
+    UserRegister, UserLogin, Token, UserProfile, MessageResponse,
+    ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest
 )
 
 settings = get_settings()
@@ -185,22 +186,108 @@ async def refresh_token(
 ):
     """
     Refresh access token.
-    
+
     Use before current token expires.
     """
     user = await db.get_user(user_id)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    
+
     access_token = create_access_token(
         data={"sub": user["id"], "email": user["email"]}
     )
-    
+
     return Token(
         access_token=access_token,
         expires_in=settings.access_token_expire_minutes * 60
     )
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+@limiter.limit("3/minute")
+async def forgot_password(
+    request: Request,
+    data: ForgotPasswordRequest,
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Request a password reset token.
+
+    In production, this would send an email. Currently returns the reset link directly.
+
+    Rate limited to 3 requests per minute.
+    """
+    if db.pool is None:
+        return MessageResponse(message="If an account with that email exists, a reset link has been generated.")
+
+    token = await db.create_password_reset_token(data.email)
+
+    if token:
+        # In production, send this via email instead of returning it
+        return MessageResponse(
+            message=f"Password reset link: /reset-password?token={token}"
+        )
+
+    # Always return success to prevent email enumeration
+    return MessageResponse(message="If an account with that email exists, a reset link has been generated.")
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+@limiter.limit("5/minute")
+async def reset_password(
+    request: Request,
+    data: ResetPasswordRequest,
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Reset password using a valid reset token.
+
+    Token expires after 1 hour and can only be used once.
+    """
+    if db.pool is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service unavailable"
+        )
+
+    success = await db.reset_password(data.token, data.new_password)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+
+    return MessageResponse(message="Password has been reset successfully.")
+
+
+@router.post("/change-password", response_model=MessageResponse)
+async def change_password(
+    data: ChangePasswordRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Change password for the currently authenticated user.
+
+    Requires the current password for verification.
+    """
+    if db.pool is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service unavailable"
+        )
+
+    success = await db.change_password(user_id, data.current_password, data.new_password)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+
+    return MessageResponse(message="Password changed successfully.")
