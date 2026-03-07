@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore, useWatchlistStore, useThemeStore } from '@/lib/store';
 import { watchlistApi } from '@/lib/api';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { CommandPalette } from '@/components/CommandPalette';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
   LayoutDashboard,
@@ -22,6 +25,8 @@ import {
   Activity,
   History,
   BarChart3,
+  Search,
+  Target,
   Sun,
   Moon,
 } from 'lucide-react';
@@ -34,6 +39,7 @@ const navigation = [
   { name: 'Backtest', href: '/dashboard/backtest', icon: History },
   { name: 'Macro', href: '/dashboard/macro', icon: BarChart3 },
   { name: 'Signals', href: '/dashboard/signals', icon: Bell },
+  { name: 'Track Record', href: '/dashboard/track-record', icon: Target },
   { name: 'Watchlist', href: '/dashboard/watchlist', icon: List },
   { name: 'News', href: '/dashboard/news', icon: Newspaper },
 ];
@@ -47,13 +53,12 @@ export default function DashboardLayout({
   const router = useRouter();
   const { user, isAuthenticated, token, fetchUser, logout } = useAuthStore();
   const { setWatchlist } = useWatchlistStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme } = useThemeStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Wait for hydration
   useEffect(() => {
     setIsHydrated(true);
   }, []);
@@ -62,7 +67,6 @@ export default function DashboardLayout({
     if (!isHydrated) return;
 
     const initAuth = async () => {
-      // Check localStorage directly for token (more reliable than zustand during hydration)
       const storedToken = localStorage.getItem('token');
 
       if (!storedToken) {
@@ -70,10 +74,11 @@ export default function DashboardLayout({
         return;
       }
 
-      // Fetch user and watchlist in parallel for faster initialization
+      const needsUserFetch = !useAuthStore.getState().user;
+
       const [, watchlistData] = await Promise.all([
-        fetchUser(),
-        watchlistApi.get().catch((error) => {
+        needsUserFetch ? fetchUser() : Promise.resolve(),
+        watchlistApi.get().catch(() => {
           console.error('Failed to fetch watchlist');
           return null;
         }),
@@ -101,54 +106,70 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative mx-auto w-16 h-16">
-            <div className="absolute inset-0 bg-primary-500/30 blur-xl rounded-full animate-pulse" />
-            <TrendingUp className="relative h-16 w-16 text-primary-600 animate-pulse" />
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-primary-500/20 flex items-center justify-center">
+            <TrendingUp className="h-6 w-6 text-primary-400" />
           </div>
-          <p className="mt-4 text-gray-500 dark:text-gray-400">Loading your dashboard...</p>
-        </div>
+          <div className="h-1 w-24 mx-auto rounded-full overflow-hidden bg-[var(--bg-muted)]">
+            <motion.div
+              className="h-full bg-primary-500 rounded-full"
+              initial={{ width: '0%' }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
+            />
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950 transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <CommandPalette />
       {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 transform transition-transform lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full w-[220px] transform transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-full glass-card-dashboard border-r-0 rounded-none rounded-r-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-primary-100/50 dark:border-primary-800/50">
-            <Link href="/dashboard" className="flex items-center space-x-2 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary-500/20 blur-md rounded-full group-hover:bg-primary-500/30 transition-all" />
-                <TrendingUp className="relative h-8 w-8 text-primary-600" />
+        <div className="h-full bg-[var(--bg-primary)] border-r border-[var(--border-default)] flex flex-col">
+          {/* Logo */}
+          <div className="flex items-center justify-between h-14 px-4 border-b border-[var(--border-default)]">
+            <Link href="/dashboard" className="flex items-center space-x-2.5">
+              <div className="w-7 h-7 rounded-lg bg-primary-500 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white" />
               </div>
-              <span className="text-xl font-bold gradient-text-static">FinSight</span>
+              <span className="text-base font-display font-bold text-[var(--text-primary)]">FinSight</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-primary-100/50 dark:hover:bg-primary-900/30 transition-colors"
+              className="lg:hidden text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1 rounded transition-colors"
             >
-              <X className="h-6 w-6" />
+              <X className="h-4 w-4" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="p-4 space-y-1">
+          <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -156,42 +177,42 @@ export default function DashboardLayout({
                   key={item.name}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all duration-100 ${
                     isActive
-                      ? 'nav-item-active text-primary-700 bg-primary-100/60 dark:text-primary-400 dark:bg-primary-900/40'
-                      : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700 dark:text-gray-400 dark:hover:bg-primary-900/30 dark:hover:text-primary-400'
+                      ? 'nav-item-active text-primary-400'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
-                  <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-600' : ''}`} />
-                  <span className="font-medium">{item.name}</span>
+                  <item.icon className={`h-4 w-4 ${isActive ? 'text-primary-400' : ''}`} />
+                  <span className="text-sm font-medium">{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* User tier info */}
+          {/* Tier info */}
           {user && (
-            <div className="absolute bottom-20 left-4 right-4">
-              <div className="glass-card-purple p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-primary-700 uppercase tracking-wide">
-                    {user.tier} Tier
+            <div className="p-3 border-t border-[var(--border-default)]">
+              <div className="bg-[var(--bg-muted)] rounded-lg p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-bold text-primary-400 uppercase tracking-wider">
+                    {user.tier} Plan
                   </span>
                   {user.tier === 'free' && (
                     <Link
                       href="/dashboard/settings"
-                      className="text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                      className="text-[10px] font-semibold text-primary-400 hover:text-primary-300 transition-colors"
                     >
                       Upgrade
                     </Link>
                   )}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {user.watchlist_count} / {user.tier_limit} symbols
+                <div className="text-xs text-[var(--text-muted)] font-mono mb-1.5">
+                  {user.watchlist_count}/{user.tier_limit} symbols
                 </div>
-                <div className="progress-gradient mt-2">
+                <div className="progress">
                   <div
-                    className="progress-gradient-bar"
+                    className="progress-bar"
                     style={{
                       width: `${Math.min((user.watchlist_count / user.tier_limit) * 100, 100)}%`,
                     }}
@@ -202,125 +223,134 @@ export default function DashboardLayout({
           )}
 
           {/* Logout */}
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="p-2 border-t border-[var(--border-default)]">
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-3 w-full px-3 py-2.5 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+              className="flex items-center space-x-2.5 w-full px-3 py-2 text-[var(--text-secondary)] hover:bg-red-500/8 hover:text-red-400 rounded-lg transition-all duration-100"
             >
-              <LogOut className="h-5 w-5" />
-              <span className="font-medium">Logout</span>
+              <LogOut className="h-4 w-4" />
+              <span className="text-sm font-medium">Logout</span>
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top navbar */}
-        <header className="sticky top-0 z-30 mx-4 mt-4 lg:mx-6">
-          <div className="glass-card-dashboard px-4 py-3">
+      <div className="lg:pl-[220px]">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-lg border-b border-[var(--border-default)]">
+          <div className="px-4 py-2 lg:px-6">
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-500 hover:text-primary-600 p-2 rounded-lg hover:bg-primary-100/50 transition-all"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
-
-              {/* Page title placeholder */}
-              <div className="hidden lg:block" />
-
               <div className="flex items-center space-x-3">
-                {/* Theme toggle */}
                 <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-lg text-gray-500 hover:text-primary-600 hover:bg-primary-100/50 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:bg-primary-900/30 transition-all"
-                  aria-label="Toggle theme"
+                  onClick={() => setSidebarOpen(true)}
+                  className="lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1.5 rounded-lg hover:bg-[var(--bg-muted)] transition-all"
                 >
-                  {theme === 'light' ? (
-                    <Moon className="h-5 w-5" />
-                  ) : (
-                    <Sun className="h-5 w-5" />
-                  )}
+                  <Menu className="h-5 w-5" />
                 </button>
 
-              {/* User menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-primary-700 dark:text-gray-300 dark:hover:text-primary-400 transition-colors"
-                >
-                  <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center shadow-glow">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                  <span className="hidden sm:block font-medium">{user?.name}</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {userMenuOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setUserMenuOpen(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-56 glass-card-dashboard py-1 z-50 animate-slide-down shadow-lg">
-                      <div className="px-4 py-3 border-b border-primary-100/50 dark:border-primary-800/50">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
-                        <div className="mt-2">
-                          <span className="badge-glass">{user?.tier} Plan</span>
-                        </div>
-                      </div>
-                      <Link
-                        href="/dashboard/settings"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 dark:text-gray-300 dark:hover:bg-primary-900/30 transition-colors"
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>Settings</span>
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  </>
-                )}
+                {/* Page title from pathname */}
+                <h2 className="hidden lg:block text-sm font-medium text-[var(--text-secondary)]">
+                  {navigation.find(n => n.href === pathname)?.name || 'Dashboard'}
+                </h2>
               </div>
+
+              <div className="flex items-center space-x-2">
+                {/* Cmd+K trigger */}
+                <button
+                  onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+                  className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-muted)] hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-all"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span className="text-xs">Search</span>
+                  <kbd className="text-[10px] font-mono px-1.5 py-0.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded">⌘K</kbd>
+                </button>
+                {/* User menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center space-x-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-2 py-1.5 rounded-lg hover:bg-[var(--bg-muted)]"
+                  >
+                    <div className="w-7 h-7 bg-primary-500/15 border border-primary-500/25 rounded-lg flex items-center justify-center">
+                      <span className="text-xs font-bold text-primary-400">
+                        {user?.name?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    </div>
+                    <span className="hidden sm:block text-sm font-medium">{user?.name}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-150 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setUserMenuOpen(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                          transition={{ duration: 0.12 }}
+                          className="absolute right-0 mt-1 w-52 bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl py-1 z-50 shadow-lg"
+                        >
+                          <div className="px-3 py-2.5 border-b border-[var(--border-default)]">
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">{user?.name}</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5">{user?.email}</p>
+                            <div className="mt-1.5">
+                              <span className="badge text-[10px]">{user?.tier} Plan</span>
+                            </div>
+                          </div>
+                          <Link
+                            href="/dashboard/settings"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center space-x-2 px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] transition-colors"
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                            <span>Settings</span>
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-500/8 transition-colors"
+                          >
+                            <LogOut className="h-3.5 w-3.5" />
+                            <span>Logout</span>
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="p-4 lg:p-6 pb-20 animate-page-enter">{children}</main>
+        {/* Page content with framer-motion */}
+        <main className="p-4 lg:p-6 pb-16">
+          <ErrorBoundary>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
+          </ErrorBoundary>
+        </main>
 
         {/* Footer */}
-        <footer className="fixed bottom-0 right-0 left-0 lg:left-64 z-20">
-          <div className="mx-4 mb-4 lg:mx-6 glass-card-dashboard px-4 py-2">
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+        <footer className="border-t border-[var(--border-default)] bg-[var(--bg-primary)]">
+          <div className="px-4 py-2 lg:px-6">
+            <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
               <span>&copy; {new Date().getFullYear()} FinSight India</span>
               <div className="flex items-center space-x-3">
+                <Link href="/terms" className="text-primary-500 hover:text-primary-400 transition-colors">Terms</Link>
+                <Link href="/privacy" className="text-primary-500 hover:text-primary-400 transition-colors">Privacy</Link>
+                <Link href="/disclaimer" className="text-primary-500 hover:text-primary-400 transition-colors">Disclaimer</Link>
+                <span className="text-[var(--border-primary)]">|</span>
                 <span>Built by Divyanshu Kumar</span>
-                <a
-                  href="https://novaxtritan.github.io/novaxtritanxmetamorphosis/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:text-primary-700 transition-colors"
-                >
-                  Portfolio
-                </a>
-                <a
-                  href="https://www.linkedin.com/in/divyanshukumar27"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 hover:text-primary-700 transition-colors"
-                >
-                  LinkedIn
-                </a>
               </div>
             </div>
           </div>

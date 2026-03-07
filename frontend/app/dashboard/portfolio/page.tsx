@@ -93,25 +93,25 @@ export default function PortfolioPage() {
       <div className="glass-card-dashboard p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
-              <Wallet className="h-6 w-6 text-white" />
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <Wallet className="h-6 w-6 text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Portfolio</h1>
-              <p className="text-gray-500">Track your holdings and P&L</p>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Portfolio</h1>
+              <p className="text-[var(--text-secondary)]">Track your holdings and P&L</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <button
               onClick={fetchPortfolio}
-              className="p-2.5 hover:bg-primary-100 rounded-xl transition-colors"
+              className="p-2.5 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
               title="Refresh"
             >
-              <RefreshCw className="h-5 w-5 text-primary-600" />
+              <RefreshCw className="h-5 w-5 text-primary-400" />
             </button>
             <button
               onClick={() => setShowTransactionModal(true)}
-              className="flex items-center space-x-2 px-4 py-2.5 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+              className="flex items-center space-x-2 px-4 py-2.5 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
             >
               <History className="h-4 w-4" />
               <span>Add Transaction</span>
@@ -131,25 +131,25 @@ export default function PortfolioPage() {
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="glass-card-dashboard p-5 card-hover-lift">
-            <div className="flex items-center space-x-2 text-gray-500 mb-2">
-              <div className="p-2 bg-gradient-to-br from-primary-100 to-purple-100 rounded-lg">
-                <Wallet className="h-4 w-4 text-primary-600" />
+            <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
+              <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+                <Wallet className="h-4 w-4 text-primary-400" />
               </div>
               <span className="text-sm font-medium">Invested</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-2xl font-bold font-mono text-[var(--text-primary)]">
               {formatCurrency(summary.total_invested)}
             </p>
           </div>
 
           <div className="glass-card-dashboard p-5 card-hover-lift">
-            <div className="flex items-center space-x-2 text-gray-500 mb-2">
-              <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
-                <PieChart className="h-4 w-4 text-blue-600" />
+            <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
+              <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <PieChart className="h-4 w-4 text-blue-400" />
               </div>
               <span className="text-sm font-medium">Current Value</span>
             </div>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className="text-2xl font-bold font-mono text-[var(--text-primary)]">
               {formatCurrency(summary.total_current_value)}
             </p>
           </div>
@@ -157,23 +157,23 @@ export default function PortfolioPage() {
           <div className={`glass-card-dashboard p-5 card-hover-lift border-l-4 ${
             summary.total_gain_loss >= 0 ? 'border-l-green-500' : 'border-l-red-500'
           }`}>
-            <div className="flex items-center space-x-2 text-gray-500 mb-2">
+            <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
               <div className={`p-2 rounded-lg ${
-                summary.total_gain_loss >= 0 ? 'bg-green-100' : 'bg-red-100'
+                summary.total_gain_loss >= 0 ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'
               }`}>
                 {summary.total_gain_loss >= 0 ? (
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <TrendingUp className="h-4 w-4 text-green-400" />
                 ) : (
-                  <TrendingDown className="h-4 w-4 text-red-600" />
+                  <TrendingDown className="h-4 w-4 text-red-400" />
                 )}
               </div>
               <span className="text-sm font-medium">Total P&L</span>
             </div>
-            <p className={`text-2xl font-bold ${
-              summary.total_gain_loss >= 0 ? 'text-green-600' : 'text-red-600'
+            <p className={`text-2xl font-bold font-mono ${
+              summary.total_gain_loss >= 0 ? 'text-green-400' : 'text-red-400'
             }`}>
               {formatCurrency(summary.total_gain_loss)}
-              <span className="text-sm ml-1">
+              <span className="text-sm font-mono ml-1">
                 ({formatPercent(summary.total_gain_loss_pct)})
               </span>
             </p>
@@ -182,23 +182,23 @@ export default function PortfolioPage() {
           <div className={`glass-card-dashboard p-5 card-hover-lift border-l-4 ${
             summary.day_change >= 0 ? 'border-l-green-500' : 'border-l-red-500'
           }`}>
-            <div className="flex items-center space-x-2 text-gray-500 mb-2">
+            <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
               <div className={`p-2 rounded-lg ${
-                summary.day_change >= 0 ? 'bg-green-100' : 'bg-red-100'
+                summary.day_change >= 0 ? 'bg-green-500/10 border border-green-500/20' : 'bg-red-500/10 border border-red-500/20'
               }`}>
                 {summary.day_change >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4 text-green-600" />
+                  <ArrowUpRight className="h-4 w-4 text-green-400" />
                 ) : (
-                  <ArrowDownRight className="h-4 w-4 text-red-600" />
+                  <ArrowDownRight className="h-4 w-4 text-red-400" />
                 )}
               </div>
               <span className="text-sm font-medium">Today's Change</span>
             </div>
-            <p className={`text-2xl font-bold ${
-              summary.day_change >= 0 ? 'text-green-600' : 'text-red-600'
+            <p className={`text-2xl font-bold font-mono ${
+              summary.day_change >= 0 ? 'text-green-400' : 'text-red-400'
             }`}>
               {formatCurrency(summary.day_change)}
-              <span className="text-sm ml-1">
+              <span className="text-sm font-mono ml-1">
                 ({formatPercent(summary.day_change_pct)})
               </span>
             </p>
@@ -211,20 +211,20 @@ export default function PortfolioPage() {
         <nav className="flex space-x-2">
           <button
             onClick={() => setActiveTab('holdings')}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeTab === 'holdings'
-                ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
-                : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'
+                ? 'bg-primary-500/10 text-primary-400'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
             }`}
           >
             Holdings ({holdings.length})
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeTab === 'transactions'
-                ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
-                : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'
+                ? 'bg-primary-500/10 text-primary-400'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
             }`}
           >
             Transactions ({transactions.length})
@@ -241,15 +241,15 @@ export default function PortfolioPage() {
                 <div className="absolute inset-0 bg-primary-500/30 blur-xl rounded-full animate-pulse" />
                 <RefreshCw className="relative h-16 w-16 text-primary-500 animate-spin mx-auto" />
               </div>
-              <p className="text-gray-500">Loading portfolio...</p>
+              <p className="text-[var(--text-secondary)]">Loading portfolio...</p>
             </div>
           ) : holdings.length === 0 ? (
             <div className="p-12 text-center">
               <div className="relative mx-auto w-20 h-20 mb-4">
-                <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+                <div className="absolute inset-0 bg-primary-500/20 blur-xl rounded-full" />
                 <Wallet className="relative h-20 w-20 text-primary-300 mx-auto" />
               </div>
-              <p className="text-gray-600 font-medium">No holdings yet</p>
+              <p className="text-[var(--text-secondary)] font-medium">No holdings yet</p>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="mt-4 btn-glass-primary px-6 py-2.5"
@@ -277,20 +277,20 @@ export default function PortfolioPage() {
                   {holdings.map((holding) => (
                     <tr key={holding.id}>
                       <td>
-                        <span className="font-semibold text-gray-900">{holding.symbol}</span>
+                        <span className="font-semibold text-[var(--text-primary)]">{holding.symbol}</span>
                       </td>
-                      <td className="text-right text-gray-600">{holding.quantity}</td>
-                      <td className="text-right text-gray-600">{formatCurrency(holding.avg_price)}</td>
-                      <td className="text-right text-gray-600">{formatCurrency(holding.invested_value)}</td>
-                      <td className="text-right font-medium text-gray-900">
+                      <td className="text-right font-mono text-[var(--text-secondary)]">{holding.quantity}</td>
+                      <td className="text-right font-mono text-[var(--text-secondary)]">{formatCurrency(holding.avg_price)}</td>
+                      <td className="text-right font-mono text-[var(--text-secondary)]">{formatCurrency(holding.invested_value)}</td>
+                      <td className="text-right font-medium font-mono text-[var(--text-primary)]">
                         {holding.current_price ? formatCurrency(holding.current_price) : '-'}
                       </td>
-                      <td className="text-right font-medium text-gray-900">
+                      <td className="text-right font-medium font-mono text-[var(--text-primary)]">
                         {holding.current_value ? formatCurrency(holding.current_value) : '-'}
                       </td>
                       <td className="text-right">
-                        <span className={`font-medium ${
-                          (holding.gain_loss || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        <span className={`font-medium font-mono ${
+                          (holding.gain_loss || 0) >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {holding.gain_loss !== undefined
                             ? `${formatCurrency(holding.gain_loss)} (${formatPercent(holding.gain_loss_pct || 0)})`
@@ -298,8 +298,8 @@ export default function PortfolioPage() {
                         </span>
                       </td>
                       <td className="text-right">
-                        <span className={`text-sm font-medium ${
-                          (holding.day_change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        <span className={`text-sm font-medium font-mono ${
+                          (holding.day_change || 0) >= 0 ? 'text-green-400' : 'text-red-400'
                         }`}>
                           {holding.day_change !== undefined
                             ? formatPercent(holding.day_change_pct || 0)
@@ -313,17 +313,17 @@ export default function PortfolioPage() {
                               setEditingHolding(holding);
                               setShowAddModal(true);
                             }}
-                            className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
                             title="Edit"
                           >
-                            <Edit2 className="h-4 w-4 text-primary-600" />
+                            <Edit2 className="h-4 w-4 text-primary-400" />
                           </button>
                           <button
                             onClick={() => handleDeleteHolding(holding.symbol)}
-                            className="p-2 hover:bg-red-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Delete"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4 text-red-400" />
                           </button>
                         </div>
                       </td>
@@ -342,10 +342,10 @@ export default function PortfolioPage() {
           {transactions.length === 0 ? (
             <div className="p-12 text-center">
               <div className="relative mx-auto w-20 h-20 mb-4">
-                <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
+                <div className="absolute inset-0 bg-primary-500/20 blur-xl rounded-full" />
                 <History className="relative h-20 w-20 text-primary-300 mx-auto" />
               </div>
-              <p className="text-gray-500">No transactions yet</p>
+              <p className="text-[var(--text-secondary)]">No transactions yet</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -364,27 +364,27 @@ export default function PortfolioPage() {
                 <tbody>
                   {transactions.map((tx) => (
                     <tr key={tx.id}>
-                      <td className="text-gray-600">{tx.transaction_date}</td>
-                      <td className="font-semibold text-gray-900">{tx.symbol}</td>
+                      <td className="text-[var(--text-secondary)]">{tx.transaction_date}</td>
+                      <td className="font-semibold text-[var(--text-primary)]">{tx.symbol}</td>
                       <td>
                         <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
                           tx.type === 'BUY'
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
                             : tx.type === 'SELL'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-blue-100 text-blue-700'
+                            ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                            : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                         }`}>
                           {tx.type}
                         </span>
                       </td>
-                      <td className="text-right text-gray-600">{tx.quantity || '-'}</td>
-                      <td className="text-right text-gray-600">
+                      <td className="text-right font-mono text-[var(--text-secondary)]">{tx.quantity || '-'}</td>
+                      <td className="text-right font-mono text-[var(--text-secondary)]">
                         {tx.price ? formatCurrency(tx.price) : '-'}
                       </td>
-                      <td className="text-right font-medium text-gray-900">
+                      <td className="text-right font-medium font-mono text-[var(--text-primary)]">
                         {tx.amount ? formatCurrency(tx.amount) : '-'}
                       </td>
-                      <td className="text-gray-500 text-sm truncate max-w-[200px]">
+                      <td className="text-[var(--text-muted)] text-sm truncate max-w-[200px]">
                         {tx.notes || '-'}
                       </td>
                     </tr>
@@ -475,31 +475,31 @@ function HoldingModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="glass-card-dashboard w-full max-w-md p-6 mx-4 animate-slide-down">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] w-full max-w-md p-6 mx-4 rounded-lg animate-slide-down">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             {isEdit ? 'Edit Holding' : 'Add Holding'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-primary-100 rounded-lg transition-colors">
-            <X className="h-5 w-5 text-gray-500" />
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors">
+            <X className="h-5 w-5 text-[var(--text-secondary)]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100">
+            <div className="bg-red-500/10 text-red-400 px-4 py-2 rounded-lg text-sm border border-red-500/20">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Symbol</label>
             <input
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="input-glass-light"
+              className="input-glass w-full"
               placeholder="RELIANCE"
               required
               disabled={isEdit}
@@ -507,12 +507,12 @@ function HoldingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Quantity</label>
             <input
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="input-glass-light"
+              className="input-glass w-full font-mono"
               placeholder="100"
               required
               min="1"
@@ -520,14 +520,14 @@ function HoldingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Average Price</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Average Price</label>
             <div className="relative">
-              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
               <input
                 type="number"
                 value={avgPrice}
                 onChange={(e) => setAvgPrice(e.target.value)}
-                className="input-glass-light pl-10"
+                className="input-glass w-full pl-10 font-mono"
                 placeholder="2500.00"
                 required
                 min="0.01"
@@ -537,11 +537,11 @@ function HoldingModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="input-glass-light"
+              className="input-glass w-full"
               placeholder="Investment thesis..."
               rows={2}
             />
@@ -613,38 +613,38 @@ function TransactionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="glass-card-dashboard w-full max-w-md p-6 mx-4 max-h-[90vh] overflow-y-auto animate-slide-down">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] w-full max-w-md p-6 mx-4 max-h-[90vh] overflow-y-auto rounded-lg animate-slide-down">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Add Transaction</h2>
-          <button onClick={onClose} className="p-2 hover:bg-primary-100 rounded-lg transition-colors">
-            <X className="h-5 w-5 text-gray-500" />
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Transaction</h2>
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors">
+            <X className="h-5 w-5 text-[var(--text-secondary)]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm border border-red-100">
+            <div className="bg-red-500/10 text-red-400 px-4 py-2 rounded-lg text-sm border border-red-500/20">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
             <div className="flex space-x-2">
               {(['BUY', 'SELL', 'DIVIDEND'] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setType(t)}
-                  className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
                     type === t
                       ? t === 'BUY'
-                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-2 border-green-500'
+                        ? 'bg-green-500/10 text-green-400 border-2 border-green-500'
                         : t === 'SELL'
-                        ? 'bg-gradient-to-r from-red-100 to-rose-100 text-red-700 border-2 border-red-500'
-                        : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border-2 border-blue-500'
-                      : 'bg-gray-100 text-gray-600 border-2 border-transparent'
+                        ? 'bg-red-500/10 text-red-400 border-2 border-red-500'
+                        : 'bg-blue-500/10 text-blue-400 border-2 border-blue-500'
+                      : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] border-2 border-transparent'
                   }`}
                 >
                   {t}
@@ -654,24 +654,24 @@ function TransactionModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Symbol</label>
             <input
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="input-glass-light"
+              className="input-glass w-full"
               placeholder="RELIANCE"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="input-glass-light"
+              className="input-glass w-full"
               required
             />
           </div>
@@ -679,12 +679,12 @@ function TransactionModal({
           {type !== 'DIVIDEND' ? (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Quantity</label>
                 <input
                   type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="input-glass-light"
+                  className="input-glass w-full font-mono"
                   placeholder="100"
                   required
                   min="1"
@@ -692,14 +692,14 @@ function TransactionModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price per share</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Price per share</label>
                 <div className="relative">
-                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
                   <input
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="input-glass-light pl-10"
+                    className="input-glass w-full pl-10 font-mono"
                     placeholder="2500.00"
                     required
                     min="0.01"
@@ -710,14 +710,14 @@ function TransactionModal({
             </>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dividend Amount</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Dividend Amount</label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
                 <input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="input-glass-light pl-10"
+                  className="input-glass w-full pl-10 font-mono"
                   placeholder="5000.00"
                   required
                   min="0.01"
@@ -728,14 +728,14 @@ function TransactionModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fees/Charges</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Fees/Charges</label>
             <div className="relative">
-              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
               <input
                 type="number"
                 value={fees}
                 onChange={(e) => setFees(e.target.value)}
-                className="input-glass-light pl-10"
+                className="input-glass w-full pl-10 font-mono"
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -744,11 +744,11 @@ function TransactionModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="input-glass-light"
+              className="input-glass w-full"
               placeholder="Transaction notes..."
               rows={2}
             />

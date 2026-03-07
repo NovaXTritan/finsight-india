@@ -419,6 +419,30 @@ async def calculate_option_greeks(
 # IV PERCENTILE
 # =============================================================================
 
+@router.get("/intelligence/{symbol}")
+async def get_options_intelligence(
+    symbol: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get comprehensive options flow intelligence for a symbol.
+
+    Combines PCR, max pain, OI analysis, IV regime, and smart money positioning
+    into a single actionable intelligence report.
+    """
+    data = await options_fetcher.get_option_chain(symbol.upper())
+
+    if not data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Option chain not available for {symbol.upper()}"
+        )
+
+    from services.options_intelligence import OptionsIntelligence
+    intel = OptionsIntelligence(data)
+    return intel.analyze()
+
+
 @router.get("/iv-percentile/{symbol}")
 async def get_iv_percentile(
     symbol: str,

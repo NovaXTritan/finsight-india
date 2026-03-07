@@ -94,6 +94,8 @@ class Signal(BaseModel):
     context: Optional[str] = None
     sources: Optional[str] = None
     thought_process: Optional[str] = None
+    confidence_level: int = 1
+    catalyst_context: Optional[dict] = None
 
 
 class SignalList(BaseModel):

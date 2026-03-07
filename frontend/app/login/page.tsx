@@ -28,15 +28,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-page-enter">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-3">
-            <TrendingUp className="h-10 w-10 text-primary-500" />
+            <div className="w-9 h-9 rounded-lg bg-primary-500 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
             <div>
-              <span className="text-3xl font-bold text-[var(--text-primary)]">FinSight</span>
-              <span className="badge-glow text-[10px] ml-2">INDIA</span>
+              <span className="text-2xl font-display font-bold text-[var(--text-primary)]">FinSight</span>
+              <span className="badge text-[9px] ml-2">INDIA</span>
             </div>
           </Link>
         </div>
@@ -44,7 +46,7 @@ export default function LoginPage() {
         {/* Login Card */}
         <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Welcome back</h1>
+            <h1 className="text-display-md font-display text-[var(--text-primary)] mb-2">Welcome back</h1>
             <p className="text-[var(--text-secondary)]">Sign in to your account to continue</p>
           </div>
 

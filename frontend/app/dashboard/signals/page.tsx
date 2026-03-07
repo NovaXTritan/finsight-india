@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { signalsApi, Signal, DemoSignal } from '@/lib/api';
 import { SignalsList } from '@/components/SignalsList';
+import dynamic from 'next/dynamic';
+import { SkeletonHeatmap } from '@/components/Skeleton';
 import {
   Bell,
   RefreshCw,
@@ -16,7 +18,14 @@ import {
   ToggleRight,
   Play,
   Sparkles,
+  GitBranch,
+  ChevronDown,
 } from 'lucide-react';
+
+const SankeyFlow = dynamic(
+  () => import('@/components/visualizations/SankeyFlow').then(mod => mod.SankeyFlow),
+  { ssr: false, loading: () => <SkeletonHeatmap /> }
+);
 
 export default function SignalsPage() {
   const [signals, setSignals] = useState<(Signal | DemoSignal)[]>([]);
@@ -27,6 +36,7 @@ export default function SignalsPage() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionMessage, setDetectionMessage] = useState<string | null>(null);
+  const [showPipeline, setShowPipeline] = useState(false);
   const perPage = 20;
 
   const fetchSignals = async (pageNum: number) => {
@@ -37,11 +47,8 @@ export default function SignalsPage() {
       setTotal(data.total);
       setHasMore(data.has_more);
 
-      // If no real signals, suggest demo mode
-      if (data.signals.length === 0 && !isDemoMode) {
-        setIsDemoMode(true);
-        await fetchDemoSignals();
-      }
+      // Don't auto-switch to demo mode — show empty state instead
+      // Demo signals were fake/misleading
     } catch (error) {
       console.error('Failed to fetch signals:', error);
     } finally {
@@ -70,7 +77,6 @@ export default function SignalsPage() {
       const result = await signalsApi.runDetection();
       setDetectionMessage(result.message);
       if (result.success) {
-        // Refresh signals after detection
         await fetchSignals(1);
       }
     } catch (error) {
@@ -99,19 +105,19 @@ export default function SignalsPage() {
   const totalPages = Math.ceil(total / perPage);
 
   const severityColors: Record<string, string> = {
-    critical: 'bg-gradient-to-r from-red-100 to-red-50 text-red-800 border-red-200',
-    high: 'bg-gradient-to-r from-orange-100 to-orange-50 text-orange-800 border-orange-200',
-    medium: 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-800 border-yellow-200',
-    low: 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-800 border-blue-200',
+    critical: 'bg-red-500/10 text-red-400 border-red-500/20',
+    high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    medium: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    low: 'bg-primary-500/10 text-primary-400 border-primary-500/20',
   };
 
   const decisionColors: Record<string, string> = {
-    BUY_CONSIDERATION: 'text-green-600',
-    OPPORTUNITY: 'text-green-600',
-    MONITOR: 'text-yellow-600',
-    WATCH: 'text-yellow-600',
-    ALERT: 'text-orange-600',
-    RESEARCH: 'text-blue-600',
+    BUY_CONSIDERATION: 'text-green-400',
+    OPPORTUNITY: 'text-green-400',
+    MONITOR: 'text-yellow-400',
+    WATCH: 'text-yellow-400',
+    ALERT: 'text-orange-400',
+    RESEARCH: 'text-primary-400',
   };
 
   return (
@@ -120,12 +126,12 @@ export default function SignalsPage() {
       <div className="glass-card-dashboard p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
-              <Bell className="h-6 w-6 text-white" />
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <Bell className="h-6 w-6 text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Signals</h1>
-              <p className="text-gray-500">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Signals</h1>
+              <p className="text-[var(--text-secondary)]">
                 {isDemoMode
                   ? 'Demo signals - showing sample patterns'
                   : `${total} signals detected for your watchlist`}
@@ -133,24 +139,22 @@ export default function SignalsPage() {
             </div>
           </div>
           <div className="flex items-center space-x-3">
-            {/* Demo Mode Toggle */}
             <button
               onClick={toggleDemoMode}
-              className={`flex items-center px-4 py-2.5 rounded-xl border transition-all ${
+              className={`flex items-center px-4 py-2.5 rounded-lg border transition-all ${
                 isDemoMode
-                  ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300 text-yellow-700'
-                  : 'glass-card-dashboard text-gray-700 hover:border-primary-200'
+                  ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
+                  : 'bg-[var(--bg-overlay)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-primary-500/30'
               }`}
             >
               {isDemoMode ? (
-                <ToggleRight className="h-5 w-5 mr-2 text-yellow-500" />
+                <ToggleRight className="h-5 w-5 mr-2 text-yellow-400" />
               ) : (
                 <ToggleLeft className="h-5 w-5 mr-2" />
               )}
               {isDemoMode ? 'Demo Mode' : 'Real Data'}
             </button>
 
-            {/* Run Detection Button */}
             {!isDemoMode && (
               <button
                 onClick={runDetection}
@@ -179,14 +183,14 @@ export default function SignalsPage() {
 
       {/* Demo Mode Banner */}
       {isDemoMode && (
-        <div className="glass-card-dashboard border-l-4 border-l-yellow-400 p-4">
+        <div className="glass-card-dashboard border-l-2 border-l-yellow-500 p-4">
           <div className="flex items-start">
-            <div className="p-2 bg-yellow-100 rounded-lg mr-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <div className="p-2 bg-yellow-500/10 rounded-lg mr-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-yellow-800">Demo Mode Active</h3>
-              <p className="text-sm text-yellow-700 mt-1">
+              <h3 className="text-sm font-semibold text-yellow-400">Demo Mode Active</h3>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">
                 These are sample signals for demonstration purposes. Real signals appear when
                 anomalies are detected in stocks from your watchlist. Add stocks to your watchlist
                 and run detection to see actual signals.
@@ -198,14 +202,14 @@ export default function SignalsPage() {
 
       {/* Detection Message */}
       {detectionMessage && (
-        <div className={`glass-card-dashboard p-4 border-l-4 ${
+        <div className={`glass-card-dashboard p-4 border-l-2 ${
           detectionMessage.includes('Found') || detectionMessage.includes('complete')
-            ? 'border-l-green-500 bg-green-50/50'
-            : 'border-l-blue-500 bg-blue-50/50'
+            ? 'border-l-green-500'
+            : 'border-l-primary-500'
         }`}>
           <div className="flex items-center">
-            <Info className="h-5 w-5 mr-2 text-gray-600" />
-            <span className="text-gray-700">{detectionMessage}</span>
+            <Info className="h-5 w-5 mr-2 text-[var(--text-secondary)]" />
+            <span className="text-[var(--text-secondary)]">{detectionMessage}</span>
           </div>
         </div>
       )}
@@ -213,26 +217,48 @@ export default function SignalsPage() {
       {/* Signal Type Legend */}
       <div className="glass-card-dashboard p-5">
         <div className="flex items-center space-x-2 mb-4">
-          <Sparkles className="h-5 w-5 text-primary-500" />
-          <h3 className="text-sm font-semibold text-gray-900">Signal Types</h3>
+          <Sparkles className="h-5 w-5 text-primary-400" />
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Signal Types</h3>
         </div>
         <div className="flex flex-wrap gap-2">
           {[
-            { name: 'Volume Spike', color: 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border-purple-200' },
-            { name: 'Breakout', color: 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border-green-200' },
-            { name: 'Volatility Surge', color: 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border-red-200' },
-            { name: 'Options Activity', color: 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border-blue-200' },
-            { name: 'Price Divergence', color: 'bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 border-orange-200' },
-            { name: 'Support Test', color: 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border-yellow-200' },
+            { name: 'Volume Spike', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+            { name: 'Breakout', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+            { name: 'Volatility Surge', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+            { name: 'Options Activity', color: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
+            { name: 'Price Divergence', color: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+            { name: 'Support Test', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
           ].map((type) => (
             <span
               key={type.name}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full border ${type.color}`}
+              className={`px-3 py-1.5 text-xs font-medium rounded border ${type.color}`}
             >
               {type.name}
             </span>
           ))}
         </div>
+      </div>
+
+      {/* Signal Pipeline */}
+      <div className="card overflow-hidden">
+        <button
+          onClick={() => setShowPipeline(!showPipeline)}
+          className="flex items-center justify-between w-full px-5 py-4 hover:bg-[var(--bg-muted)] transition-colors"
+        >
+          <div className="flex items-center space-x-2">
+            <GitBranch className="h-5 w-5 text-primary-400" />
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Signal Detection Pipeline</h3>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-[var(--text-muted)] transition-transform ${showPipeline ? 'rotate-180' : ''}`} />
+        </button>
+        {showPipeline && (
+          <div className="px-5 pb-5 border-t border-[var(--border-default)]">
+            <p className="text-xs text-[var(--text-muted)] mt-3 mb-4">
+              Data flows from sources through analysis and severity scoring to actionable decisions.
+            </p>
+            <SankeyFlow />
+          </div>
+        )}
       </div>
 
       {/* Signals List */}
@@ -241,25 +267,26 @@ export default function SignalsPage() {
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-24 bg-primary-50 rounded-xl" />
+                <div key={i} className="h-24 bg-[var(--bg-overlay)] rounded-lg" />
               ))}
             </div>
           ) : signals.length === 0 ? (
             <div className="text-center py-12">
-              <div className="relative mx-auto w-16 h-16 mb-4">
-                <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
-                <Bell className="relative h-16 w-16 mx-auto text-primary-300" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Signals Yet</h3>
-              <p className="text-gray-500 mb-4">
-                Signals appear when unusual market activity is detected for your watchlist stocks.
+              <Bell className="h-12 w-12 mx-auto text-[var(--text-muted)] mb-4" />
+              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No Signals Yet</h3>
+              <p className="text-[var(--text-secondary)] mb-2">
+                Signals appear when real anomalies are detected in your watchlist stocks.
+              </p>
+              <p className="text-xs text-[var(--text-muted)] mb-4">
+                Add stocks to your watchlist, then run detection to scan for volume spikes, breakouts, and unusual activity.
               </p>
               <button
-                onClick={() => setIsDemoMode(true)}
+                onClick={runDetection}
+                disabled={isDetecting}
                 className="btn-glass-primary"
               >
-                <Eye className="h-4 w-4 mr-2" />
-                View Demo Signals
+                <Play className="h-4 w-4 mr-2 inline" />
+                {isDetecting ? 'Detecting...' : 'Run Detection Now'}
               </button>
             </div>
           ) : (
@@ -269,67 +296,84 @@ export default function SignalsPage() {
                 return (
                   <div
                     key={signal.id}
-                    className={`p-5 rounded-xl border transition-all card-hover-lift ${
+                    className={`p-5 rounded-lg border transition-all ${
                       isDemo
-                        ? 'border-yellow-200 bg-gradient-to-r from-yellow-50/50 to-orange-50/30'
-                        : 'glass-card-purple'
+                        ? 'border-yellow-500/20 bg-yellow-500/5'
+                        : 'bg-[var(--bg-overlay)] border-[var(--border-primary)]'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-purple-500 rounded-xl flex items-center justify-center shadow-glow">
-                          <span className="text-lg font-bold text-white">
+                        <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary-400 font-mono">
                             {signal.symbol.slice(0, 2)}
                           </span>
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-gray-900">{signal.symbol}</span>
-                            <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${severityColors[signal.severity]}`}>
+                            <span className="font-semibold text-[var(--text-primary)]">{signal.symbol}</span>
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded border ${severityColors[signal.severity]}`}>
                               {signal.severity.toUpperCase()}
                             </span>
                             {isDemo && (
-                              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">
+                              <span className="px-2 py-0.5 text-xs font-medium rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
                                 DEMO
                               </span>
                             )}
                           </div>
-                          <div className="text-sm text-gray-500 mt-0.5">
-                            {signal.pattern_type.replace(/_/g, ' ')} | Z-Score: {signal.z_score.toFixed(1)}
+                          <div className="text-sm text-[var(--text-muted)] mt-0.5">
+                            {signal.pattern_type.replace(/_/g, ' ')} | Z-Score: <span className="font-mono">{signal.z_score.toFixed(1)}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-semibold text-gray-900">
+                        <div className="text-lg font-semibold text-[var(--text-primary)] font-mono">
                           {signal.price?.toLocaleString('en-IN', {
                             style: 'currency',
                             currency: 'INR',
                             maximumFractionDigits: 2,
                           })}
                         </div>
-                        <div className={`text-sm font-medium ${decisionColors[signal.agent_decision] || 'text-gray-600'}`}>
+                        <div className={`text-sm font-medium ${decisionColors[signal.agent_decision] || 'text-[var(--text-muted)]'}`}>
                           {signal.agent_decision?.replace(/_/g, ' ')}
                         </div>
                       </div>
                     </div>
 
                     <div className="mb-3">
-                      <p className="text-sm text-gray-700">{signal.agent_reason}</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{signal.agent_reason}</p>
                     </div>
 
                     {'context' in signal && signal.context && (
-                      <div className="mb-3 p-4 bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-xl border border-primary-100">
-                        <p className="text-xs text-gray-600">{signal.context}</p>
+                      <div className="mb-3 p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-primary)]">
+                        <p className="text-xs text-[var(--text-muted)]">{signal.context}</p>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-primary-100/50">
+                    {/* Catalyst Context */}
+                    {signal.catalyst_context && Object.keys(signal.catalyst_context).length > 0 && (
+                      <div className="mb-3 p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-primary)] space-y-1">
+                        <p className="text-xs font-semibold text-[var(--text-secondary)] mb-1">Catalyst Context</p>
+                        {Object.entries(signal.catalyst_context).map(([key, val]) => (
+                          <p key={key} className="text-xs text-[var(--text-muted)]">
+                            <span className="text-primary-400 font-medium">{key.replace(/_/g, ' ')}:</span> {val}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-[var(--text-muted)] pt-3 border-t border-[var(--border-primary)]">
                       <span>
                         Detected: {new Date(signal.detected_at).toLocaleString()}
                       </span>
-                      <span className="px-2 py-1 bg-primary-100 rounded-full text-primary-700 font-medium">
-                        Confidence: {((signal.agent_confidence || 0) * 100).toFixed(0)}%
-                      </span>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-yellow-400" title={`Confidence Level ${signal.confidence_level || 1}/5`}>
+                          {'★'.repeat(signal.confidence_level || 1)}{'☆'.repeat(5 - (signal.confidence_level || 1))}
+                        </span>
+                        <span className="px-2 py-1 bg-primary-500/10 rounded text-primary-400 font-medium font-mono">
+                          {((signal.agent_confidence || 0) * 100).toFixed(0)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -338,24 +382,24 @@ export default function SignalsPage() {
           )}
         </div>
 
-        {/* Pagination - only for real signals */}
+        {/* Pagination */}
         {!isDemoMode && totalPages > 1 && (
-          <div className="px-5 py-4 border-t border-primary-100/50 bg-gradient-to-r from-primary-50/30 to-purple-50/30 flex items-center justify-between">
-            <div className="text-sm text-gray-500">
+          <div className="px-5 py-4 border-t border-[var(--border-primary)] flex items-center justify-between">
+            <div className="text-sm text-[var(--text-muted)] font-mono">
               Page {page} of {totalPages} ({total} signals)
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-2 rounded-xl glass-card-dashboard hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:border-[var(--text-muted)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage(p => p + 1)}
                 disabled={!hasMore}
-                className="p-2 rounded-xl glass-card-dashboard hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:border-[var(--text-muted)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>

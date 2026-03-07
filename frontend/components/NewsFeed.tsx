@@ -36,16 +36,16 @@ const CATEGORIES: { id: Category; label: string; icon: React.ElementType }[] = [
 ];
 
 const sentimentConfig = {
-  positive: { icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100', border: 'border-l-green-500' },
-  negative: { icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-100', border: 'border-l-red-500' },
-  neutral: { icon: Minus, color: 'text-gray-600', bg: 'bg-gray-100', border: 'border-l-gray-400' },
+  positive: { icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-l-green-500' },
+  negative: { icon: TrendingDown, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-l-red-500' },
+  neutral: { icon: Minus, color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--bg-overlay)]', border: 'border-l-gray-400' },
 } as const;
 
 const categoryColors: Record<string, string> = {
-  markets: 'bg-blue-100 text-blue-700',
-  economy: 'bg-purple-100 text-purple-700',
-  stocks: 'bg-green-100 text-green-700',
-  ipo: 'bg-orange-100 text-orange-700',
+  markets: 'bg-blue-500/10 text-blue-400',
+  economy: 'bg-purple-500/10 text-purple-400',
+  stocks: 'bg-green-500/10 text-green-400',
+  ipo: 'bg-orange-500/10 text-orange-400',
 };
 
 export function NewsFeed({
@@ -112,11 +112,11 @@ export function NewsFeed({
     return (
       <div className="glass-card-dashboard p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 w-24 bg-primary-100 rounded" />
+          <div className="h-6 w-24 bg-[var(--bg-overlay)] rounded" />
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
-              <div className="h-4 bg-primary-50 rounded w-full" />
-              <div className="h-4 bg-primary-50 rounded w-3/4" />
+              <div className="h-4 bg-[var(--bg-overlay)] rounded w-full" />
+              <div className="h-4 bg-[var(--bg-overlay)] rounded w-3/4" />
             </div>
           ))}
         </div>
@@ -127,26 +127,26 @@ export function NewsFeed({
   return (
     <div className="glass-card-dashboard overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-primary-100/50">
+      <div className="px-6 py-4 border-b border-[var(--border-primary)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-primary-100 to-purple-100 rounded-lg">
-              <Newspaper className="h-5 w-5 text-primary-600" />
+            <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <Newspaper className="h-5 w-5 text-primary-400" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
               {symbol ? `${symbol} News` : 'Market News'}
             </h2>
           </div>
           <div className="flex items-center space-x-3">
             {lastUpdated && (
-              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+              <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-overlay)] px-2 py-1 rounded-full font-mono">
                 Updated {formatTimeAgo(lastUpdated)}
               </span>
             )}
             <button
               onClick={() => fetchNews(activeCategory)}
               disabled={isLoading}
-              className={`p-2 hover:bg-primary-100 rounded-lg transition-colors ${
+              className={`p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors ${
                 isLoading ? 'animate-spin' : ''
               }`}
               title="Refresh"
@@ -159,7 +159,7 @@ export function NewsFeed({
         {/* Search Bar */}
         {showSearch && (
           <div className="mt-3 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
             <input
               type="text"
               placeholder="Search news by title, symbol, or source..."
@@ -177,19 +177,19 @@ export function NewsFeed({
               <button
                 key={id}
                 onClick={() => handleCategoryChange(id)}
-                className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+                className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   activeCategory === id
-                    ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
-                    : 'text-gray-600 hover:bg-primary-50 border border-primary-100/50'
+                    ? 'bg-primary-500/10 text-primary-400'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] border border-[var(--border-primary)]'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
                 <span>{label}</span>
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-xs ${
+                  className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${
                     activeCategory === id
-                      ? 'bg-white/20 text-white'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-primary-500/20 text-primary-400'
+                      : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
                   }`}
                 >
                   {categoryCounts[id]}
@@ -201,22 +201,22 @@ export function NewsFeed({
       </div>
 
       {/* News List */}
-      <div className="divide-y divide-primary-100/50 max-h-[600px] overflow-y-auto">
+      <div className="divide-y divide-[var(--border-primary)] max-h-[600px] overflow-y-auto">
         {error ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-[var(--text-secondary)]">
             <p>{error}</p>
             <button
               onClick={() => fetchNews(activeCategory)}
-              className="mt-2 text-primary-600 hover:text-primary-700 font-medium"
+              className="mt-2 text-primary-400 hover:text-primary-300 font-medium"
             >
               Try again
             </button>
           </div>
         ) : filteredNews.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-[var(--text-secondary)]">
             <div className="relative mx-auto w-16 h-16 mb-4">
-              <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
-              <Newspaper className="relative h-16 w-16 mx-auto text-primary-300" />
+              <div className="absolute inset-0 bg-primary-500/10 blur-xl rounded-full" />
+              <Newspaper className="relative h-16 w-16 mx-auto text-primary-400" />
             </div>
             <p>
               {searchQuery
@@ -232,9 +232,9 @@ export function NewsFeed({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 bg-gradient-to-r from-primary-50/50 to-purple-50/50 border-t border-primary-100/50">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>
+      <div className="px-4 py-3 bg-[var(--bg-overlay)] border-t border-[var(--border-primary)]">
+        <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
+          <span className="font-mono">
             Showing {filteredNews.length} of {categoryCounts.all} articles
           </span>
           <span className="flex items-center space-x-1">
@@ -255,7 +255,7 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
   const highlightText = useMemo(() => {
     if (!searchQuery?.trim()) return (text: string) => text;
     const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return (text: string) => text.replace(regex, '<mark class="bg-yellow-200 rounded px-0.5">$1</mark>');
+    return (text: string) => text.replace(regex, '<mark class="bg-yellow-500/20 text-yellow-300 rounded px-0.5">$1</mark>');
   }, [searchQuery]);
 
   return (
@@ -263,36 +263,36 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`block px-6 py-4 hover:bg-primary-50/50 transition-colors group border-l-4 ${sentiment.border}`}
+      className={`block px-6 py-4 hover:bg-[var(--bg-overlay)] transition-colors group border-l-4 ${sentiment.border}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <h3
-            className="text-sm font-medium text-gray-900 group-hover:text-primary-600 line-clamp-2 transition-colors"
+            className="text-sm font-medium text-[var(--text-primary)] group-hover:text-primary-400 line-clamp-2 transition-colors"
             dangerouslySetInnerHTML={{ __html: highlightText(item.title) }}
           />
 
           {item.summary && (
             <p
-              className="mt-1 text-sm text-gray-500 line-clamp-2"
+              className="mt-1 text-sm text-[var(--text-secondary)] line-clamp-2"
               dangerouslySetInnerHTML={{ __html: highlightText(item.summary) }}
             />
           )}
 
-          <div className="mt-3 flex items-center flex-wrap gap-2 text-xs text-gray-500">
-            <span className="font-semibold text-primary-600">{item.source}</span>
-            <span className="text-gray-300">|</span>
-            <div className="flex items-center">
+          <div className="mt-3 flex items-center flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+            <span className="font-semibold text-primary-400">{item.source}</span>
+            <span className="text-[var(--text-muted)]">|</span>
+            <div className="flex items-center font-mono">
               <Clock className="h-3 w-3 mr-1" />
               {formatTime(item.published_at)}
             </div>
 
             {item.category && item.category !== 'markets' && (
               <>
-                <span className="text-gray-300">|</span>
+                <span className="text-[var(--text-muted)]">|</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                    categoryColors[item.category] || 'bg-gray-100 text-gray-700'
+                    categoryColors[item.category] || 'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
                   }`}
                 >
                   {item.category}
@@ -302,7 +302,7 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
 
             {item.sentiment && (
               <>
-                <span className="text-gray-300">|</span>
+                <span className="text-[var(--text-muted)]">|</span>
                 <div className={`flex items-center ${sentiment.color}`}>
                   <SentimentIcon className="h-3 w-3 mr-1" />
                   {item.sentiment}
@@ -312,18 +312,18 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
 
             {item.symbols && item.symbols.length > 0 && (
               <>
-                <span className="text-gray-300">|</span>
+                <span className="text-[var(--text-muted)]">|</span>
                 <div className="flex gap-1">
                   {item.symbols.slice(0, 3).map((symbol) => (
                     <span
                       key={symbol}
-                      className="px-1.5 py-0.5 bg-gradient-to-r from-primary-100 to-purple-100 text-primary-700 rounded text-xs font-medium"
+                      className="px-1.5 py-0.5 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded text-xs font-medium font-mono"
                     >
                       {symbol}
                     </span>
                   ))}
                   {item.symbols.length > 3 && (
-                    <span className="text-gray-400">+{item.symbols.length - 3}</span>
+                    <span className="text-[var(--text-muted)] font-mono">+{item.symbols.length - 3}</span>
                   )}
                 </div>
               </>
@@ -331,7 +331,7 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
           </div>
         </div>
 
-        <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-primary-500 ml-2 flex-shrink-0 transition-colors" />
+        <ExternalLink className="h-4 w-4 text-[var(--text-muted)] group-hover:text-primary-400 ml-2 flex-shrink-0 transition-colors" />
       </div>
     </a>
   );

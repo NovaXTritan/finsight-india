@@ -10,19 +10,19 @@ export default function NewsPage() {
       <div className="glass-card-dashboard p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
-              <Newspaper className="h-6 w-6 text-white" />
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <Newspaper className="h-6 w-6 text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Market News</h1>
-              <p className="text-gray-500">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Market News</h1>
+              <p className="text-[var(--text-secondary)]">
                 Latest news from Indian financial markets with auto-refresh
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 px-4 py-2 glass-card-purple rounded-full">
-            <Rss className="h-4 w-4 text-orange-500" />
-            <span className="text-sm font-medium text-gray-700">Live Feed</span>
+          <div className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] rounded-lg">
+            <Rss className="h-4 w-4 text-orange-400" />
+            <span className="text-sm font-medium text-[var(--text-secondary)]">Live Feed</span>
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
           </div>
         </div>
@@ -30,26 +30,26 @@ export default function NewsPage() {
 
       {/* Sources Info */}
       <div className="glass-card-dashboard overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-500 to-purple-600 px-6 py-4">
+        <div className="bg-[var(--bg-overlay)] border-b border-[var(--border-primary)] px-6 py-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-              <Bell className="h-5 w-5 text-white" />
+            <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <Bell className="h-5 w-5 text-primary-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white">Real-time News Aggregation</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Real-time News Aggregation</h3>
           </div>
         </div>
         <div className="p-6">
           <div className="flex items-start space-x-3">
-            <Sparkles className="h-5 w-5 text-primary-600 mt-0.5" />
+            <Sparkles className="h-5 w-5 text-primary-400 mt-0.5" />
             <div>
-              <p className="text-sm text-gray-600">
-                News aggregated from <span className="font-semibold text-gray-900">Economic Times</span>,{' '}
-                <span className="font-semibold text-gray-900">Moneycontrol</span>,{' '}
-                <span className="font-semibold text-gray-900">Business Standard</span>,{' '}
-                <span className="font-semibold text-gray-900">LiveMint</span>,{' '}
-                <span className="font-semibold text-gray-900">Yahoo Finance</span>, and more.
+              <p className="text-sm text-[var(--text-secondary)]">
+                News aggregated from <span className="font-semibold text-[var(--text-primary)]">Economic Times</span>,{' '}
+                <span className="font-semibold text-[var(--text-primary)]">Moneycontrol</span>,{' '}
+                <span className="font-semibold text-[var(--text-primary)]">Business Standard</span>,{' '}
+                <span className="font-semibold text-[var(--text-primary)]">LiveMint</span>,{' '}
+                <span className="font-semibold text-[var(--text-primary)]">Yahoo Finance</span>, and more.
               </p>
-              <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500">
+              <div className="mt-3 flex items-center space-x-4 text-xs text-[var(--text-muted)]">
                 <div className="flex items-center space-x-1">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                   <span>Auto-refreshes every 2 minutes</span>
@@ -64,7 +64,7 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* News Feed with all features enabled */}
+      {/* News Feed */}
       <NewsFeed
         limit={100}
         showCategoryTabs={true}

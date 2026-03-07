@@ -14,7 +14,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: 'light',
+      theme: 'dark',
       setTheme: (theme: Theme) => set({ theme }),
       toggleTheme: () => set({ theme: get().theme === 'light' ? 'dark' : 'light' }),
     }),
@@ -68,9 +68,13 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await authApi.me();
           set({ user, isAuthenticated: true });
-        } catch (error) {
-          clearAuthToken();
-          set({ token: null, user: null, isAuthenticated: false });
+        } catch (error: any) {
+          // Only clear token on 401 (unauthorized). Keep token on network/500 errors
+          // so transient failures (cold starts, etc.) don't destroy the session.
+          if (error?.response?.status === 401) {
+            clearAuthToken();
+            set({ token: null, user: null, isAuthenticated: false });
+          }
         } finally {
           set({ isLoading: false });
         }

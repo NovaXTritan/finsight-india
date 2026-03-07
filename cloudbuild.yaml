@@ -32,7 +32,7 @@ steps:
       - '10'
       - '--concurrency'
       - '80'
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'ENVIRONMENT=production,DEBUG=false'
 
 images:

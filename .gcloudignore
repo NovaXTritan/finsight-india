@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.venv
+venv
+env
+
+# Environment files
+.env
+.env.*
+
+# Frontend (separate deployment)
+frontend/
+node_modules/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Data and logs
+*.log
+logs/
+data_cache/
+*.db
+*.sqlite
+postgres_data/
+
+# Test files
+*.json
+!package.json
+*.html
+*.zip
+
+# Docker compose (not needed for Cloud Build)
+docker-compose*
+
+# Misc
+.DS_Store
+Thumbs.db
+.claude/
+
+# LM Studio models (top-level only, NOT api/models/)
+/models/
+*.gguf
+*.bin
+
+# Database
+/database/

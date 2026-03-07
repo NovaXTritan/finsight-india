@@ -84,25 +84,25 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
 
   return (
     <div className="glass-card-dashboard overflow-hidden">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-primary-500 px-6 py-4">
+      {/* Header */}
+      <div className="bg-[var(--bg-overlay)] px-6 py-4 border-b border-[var(--border-primary)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-              <Star className="h-5 w-5 text-white" />
+            <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <Star className="h-5 w-5 text-yellow-400" />
             </div>
-            <h2 className="text-lg font-semibold text-white">Watchlist</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Watchlist</h2>
           </div>
-          <span className="text-sm text-white/90 font-medium">
+          <span className="text-sm text-[var(--text-secondary)] font-medium font-mono">
             {count} / {limit} symbols
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
+        <div className="mt-3 h-2 bg-[var(--bg-overlay)] rounded-full overflow-hidden border border-[var(--border-primary)]">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
-              count >= limit ? 'bg-red-400' : count >= limit * 0.8 ? 'bg-yellow-300' : 'bg-white'
+              count >= limit ? 'bg-red-400' : count >= limit * 0.8 ? 'bg-yellow-400' : 'bg-primary-400'
             }`}
             style={{ width: `${(count / limit) * 100}%` }}
           />
@@ -110,10 +110,10 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
       </div>
 
       {/* Add Symbol Form */}
-      <div className="p-4 border-b border-primary-100/50 bg-gradient-to-b from-primary-50/50 to-white">
+      <div className="p-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)]">
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
             <input
               type="text"
               value={newSymbol}
@@ -140,7 +140,7 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
         </form>
 
         {error && (
-          <div className="mt-3 flex items-center text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+          <div className="mt-3 flex items-center text-sm text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">
             <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
             {error}
           </div>
@@ -149,14 +149,14 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
 
       {/* Quick Add - Popular Stocks */}
       {availablePopularStocks.length > 0 && count < limit && (
-        <div className="px-4 py-3 border-b border-primary-100/50">
-          <div className="text-xs font-medium text-gray-500 mb-2">Quick add popular stocks:</div>
+        <div className="px-4 py-3 border-b border-[var(--border-primary)]">
+          <div className="text-xs font-medium text-[var(--text-secondary)] mb-2">Quick add popular stocks:</div>
           <div className="flex flex-wrap gap-2">
             {availablePopularStocks.slice(0, 5).map((stock) => (
               <button
                 key={stock}
                 onClick={() => handleAdd(stock)}
-                className="px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-primary-50 to-purple-50 text-primary-700 rounded-lg hover:from-primary-100 hover:to-purple-100 transition-all border border-primary-100/50"
+                className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-overlay)] text-primary-400 rounded-lg hover:bg-[var(--bg-overlay)] transition-all border border-[var(--border-primary)]"
               >
                 + {stock}
               </button>
@@ -166,11 +166,10 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
       )}
 
       {/* Watchlist Items */}
-      <div className="divide-y divide-primary-100/50 max-h-[400px] overflow-y-auto">
+      <div className="divide-y divide-[var(--border-primary)] max-h-[400px] overflow-y-auto">
         {symbols.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-[var(--text-secondary)]">
             <div className="relative mx-auto w-16 h-16 mb-4">
-              <div className="absolute inset-0 bg-yellow-200/50 blur-xl rounded-full" />
               <Star className="relative h-16 w-16 mx-auto text-yellow-400" />
             </div>
             <p className="font-medium">No symbols in watchlist</p>
@@ -180,20 +179,20 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
           symbols.map((symbol) => (
             <div
               key={symbol}
-              className="flex items-center justify-between px-4 py-3 hover:bg-primary-50/50 transition-colors group"
+              className="flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-overlay)] transition-colors group"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-purple-500 rounded-xl flex items-center justify-center shadow-glow">
-                  <span className="text-sm font-bold text-white">
+                <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
+                  <span className="text-sm font-bold text-primary-400">
                     {symbol.slice(0, 2)}
                   </span>
                 </div>
-                <span className="font-semibold text-gray-900">{symbol}</span>
+                <span className="font-semibold text-[var(--text-primary)]">{symbol}</span>
               </div>
               <button
                 onClick={() => handleRemove(symbol)}
                 disabled={removingSymbol === symbol}
-                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                className="p-2 text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50 opacity-0 group-hover:opacity-100"
                 title="Remove from watchlist"
               >
                 {removingSymbol === symbol ? (

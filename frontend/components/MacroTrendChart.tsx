@@ -74,13 +74,13 @@ export function MacroTrendChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="glass-card-dashboard p-3 shadow-lg border border-primary-100/50">
-          <p className="text-sm font-semibold text-gray-900">{label}</p>
-          <p className="text-sm text-gray-700">
-            Value: <span className="font-bold text-primary-600">{formatValue(payload[0].value)}</span>
+        <div className="bg-[var(--bg-raised)] p-3 border border-[var(--border-primary)] rounded-lg">
+          <p className="text-sm font-semibold text-[var(--text-primary)]">{label}</p>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Value: <span className="font-bold font-mono text-primary-400">{formatValue(payload[0].value)}</span>
           </p>
           {showYoY && payload[0].payload.yoy_change !== undefined && (
-            <p className={`text-sm font-medium ${payload[0].payload.yoy_change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-sm font-medium font-mono ${payload[0].payload.yoy_change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               YoY: {payload[0].payload.yoy_change >= 0 ? '+' : ''}{payload[0].payload.yoy_change.toFixed(1)}%
             </p>
           )}
@@ -92,7 +92,7 @@ export function MacroTrendChart({
 
   return (
     <div className="glass-card-dashboard p-5">
-      <h3 className="text-sm font-semibold text-gray-900 mb-4">{title}</h3>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={height}>
         {chartType === 'bar' ? (
           <BarChart data={sortedData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
@@ -102,15 +102,15 @@ export function MacroTrendChart({
                 <stop offset="100%" stopColor={color} stopOpacity={0.6} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E9D5FF" strokeOpacity={0.5} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" strokeOpacity={0.5} />
             <XAxis
               dataKey="period"
-              tick={{ fontSize: 10, fill: '#6B7280' }}
+              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
               tickLine={false}
-              axisLine={{ stroke: '#E9D5FF' }}
+              axisLine={{ stroke: 'var(--border-primary)' }}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#6B7280' }}
+              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
               tickFormatter={formatValue}
               tickLine={false}
               axisLine={false}
@@ -138,15 +138,15 @@ export function MacroTrendChart({
                 <stop offset="100%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E9D5FF" strokeOpacity={0.5} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" strokeOpacity={0.5} />
             <XAxis
               dataKey="period"
-              tick={{ fontSize: 10, fill: '#6B7280' }}
+              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
               tickLine={false}
-              axisLine={{ stroke: '#E9D5FF' }}
+              axisLine={{ stroke: 'var(--border-primary)' }}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#6B7280' }}
+              tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
               tickFormatter={formatValue}
               tickLine={false}
               axisLine={false}
@@ -166,8 +166,8 @@ export function MacroTrendChart({
               dataKey="value"
               stroke={color}
               strokeWidth={3}
-              dot={{ fill: color, strokeWidth: 2, r: 4, stroke: '#fff' }}
-              activeDot={{ r: 6, fill: color, stroke: '#fff', strokeWidth: 2 }}
+              dot={{ fill: color, strokeWidth: 2, r: 4, stroke: 'var(--bg-raised)' }}
+              activeDot={{ r: 6, fill: color, stroke: 'var(--bg-raised)', strokeWidth: 2 }}
             />
           </LineChart>
         )}

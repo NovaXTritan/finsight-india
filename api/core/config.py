@@ -72,6 +72,15 @@ class Settings(BaseSettings):
         "unlimited": {"symbols": 999999, "history_days": 999999}
     }
 
+    # Angel One SmartAPI
+    angel_api_key: str = os.getenv("ANGEL_API_KEY", "")
+    angel_client_code: str = os.getenv("ANGEL_CLIENT_CODE", "")
+    angel_pin: str = os.getenv("ANGEL_PIN", "")
+    angel_totp_secret: str = os.getenv("ANGEL_TOTP_SECRET", "")
+
+    # Scheduler secret for internal endpoints
+    scheduler_secret: str = os.getenv("SCHEDULER_SECRET", "")
+
     # Emails that automatically get unlimited tier access
     premium_emails: list = [
         "divyanshukumar0163@gmail.com",
@@ -92,6 +101,8 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3001",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
+            "https://finsight-nova.web.app",
+            "https://finsight-nova.firebaseapp.com",
         ]
 
     class Config:

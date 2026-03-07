@@ -17,7 +17,7 @@ from slowapi.errors import RateLimitExceeded
 
 from api.core.config import get_settings
 from api.core.database import db
-from api.routes import auth, signals, watchlist, user, market, portfolio, screener, options, backtest, macro
+from api.routes import auth, signals, watchlist, user, market, portfolio, screener, options, backtest, macro, internal
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     print("Starting FinSight API...")
     try:
         await db.connect()
-        print("Database connected")
+        print("Database connected and tables ensured")
     except Exception as e:
         print(f"Warning: Database connection failed: {e}")
         print("Running in limited mode (no database)")
@@ -148,6 +148,7 @@ app.include_router(screener.router, prefix="/api")
 app.include_router(options.router, prefix="/api")
 app.include_router(backtest.router, prefix="/api")
 app.include_router(macro.router)
+app.include_router(internal.router, prefix="/api")
 
 
 # Health check

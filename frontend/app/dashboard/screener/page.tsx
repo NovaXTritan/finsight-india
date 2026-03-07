@@ -172,21 +172,21 @@ export default function ScreenerPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
               <Sliders className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Stock Screener</h1>
-              <p className="text-gray-500">Filter stocks by fundamentals</p>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Stock Screener</h1>
+              <p className="text-[var(--text-secondary)]">Filter stocks by fundamentals</p>
             </div>
           </div>
           <div className="flex items-center flex-wrap gap-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-4 py-2 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+              className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
             >
               <Filter className="h-4 w-4" />
               <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
@@ -195,14 +195,14 @@ export default function ScreenerPage() {
               <>
                 <button
                   onClick={() => setSaveModalOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
                 >
                   <Save className="h-4 w-4" />
                   <span>Save</span>
                 </button>
                 <button
                   onClick={exportToCsv}
-                  className="flex items-center space-x-2 px-4 py-2 glass-card-purple hover:bg-primary-100 text-primary-700 rounded-xl transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
                 >
                   <Download className="h-4 w-4" />
                   <span>Export</span>
@@ -226,14 +226,14 @@ export default function ScreenerPage() {
       </div>
 
       {/* Presets & Saved Screeners */}
-      <div className="glass-card-dashboard p-4">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg p-4">
         <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-sm font-medium text-gray-500 mr-2">Quick Presets:</span>
+          <span className="text-sm font-medium text-[var(--text-secondary)] mr-2">Quick Presets:</span>
           {presets.slice(0, 6).map((preset) => (
             <button
               key={preset.name}
               onClick={() => loadPreset(preset)}
-              className="px-4 py-1.5 text-sm bg-gradient-to-r from-primary-50 to-purple-50 hover:from-primary-100 hover:to-purple-100 text-primary-700 rounded-full transition-all border border-primary-100/50"
+              className="px-4 py-1.5 text-sm bg-[var(--bg-overlay)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-full transition-all border border-[var(--border-primary)]"
               title={preset.description}
             >
               {preset.name}
@@ -241,13 +241,13 @@ export default function ScreenerPage() {
           ))}
           {savedScreeners.length > 0 && (
             <>
-              <span className="text-gray-300 mx-2">|</span>
-              <span className="text-sm font-medium text-gray-500 mr-2">Saved:</span>
+              <span className="text-[var(--text-muted)] mx-2">|</span>
+              <span className="text-sm font-medium text-[var(--text-secondary)] mr-2">Saved:</span>
               {savedScreeners.slice(0, 3).map((screener) => (
                 <button
                   key={screener.id}
                   onClick={() => loadSavedScreener(screener)}
-                  className="px-4 py-1.5 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 hover:from-blue-100 hover:to-indigo-100 rounded-full transition-all flex items-center space-x-1.5 border border-blue-100/50"
+                  className="px-4 py-1.5 text-sm bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-full transition-all flex items-center space-x-1.5 border border-blue-500/20"
                 >
                   <Bookmark className="h-3 w-3" />
                   <span>{screener.name}</span>
@@ -260,15 +260,15 @@ export default function ScreenerPage() {
 
       {/* Filters Panel */}
       {showFilters && filterOptions && (
-        <div className="glass-card-dashboard p-6">
+        <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-primary-600" />
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center space-x-2">
+              <Filter className="h-5 w-5 text-primary-400" />
               <span>Filters</span>
             </h2>
             <button
               onClick={clearFilters}
-              className="text-sm text-gray-500 hover:text-primary-600 transition-colors"
+              className="text-sm text-[var(--text-secondary)] hover:text-primary-400 transition-colors"
             >
               Clear All
             </button>
@@ -277,7 +277,7 @@ export default function ScreenerPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {/* PE Ratio */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 PE Ratio
               </label>
               <div className="flex space-x-2">
@@ -286,21 +286,21 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.pe_min || ''}
                   onChange={(e) => setFilters({ ...filters, pe_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.pe_max || ''}
                   onChange={(e) => setFilters({ ...filters, pe_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
 
             {/* PB Ratio */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 PB Ratio
               </label>
               <div className="flex space-x-2">
@@ -309,21 +309,21 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.pb_min || ''}
                   onChange={(e) => setFilters({ ...filters, pb_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.pb_max || ''}
                   onChange={(e) => setFilters({ ...filters, pb_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
 
             {/* ROE */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 ROE (%)
               </label>
               <div className="flex space-x-2">
@@ -332,21 +332,21 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.roe_min || ''}
                   onChange={(e) => setFilters({ ...filters, roe_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.roe_max || ''}
                   onChange={(e) => setFilters({ ...filters, roe_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
 
             {/* Dividend Yield */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Dividend Yield (%)
               </label>
               <div className="flex space-x-2">
@@ -355,21 +355,21 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.dividend_yield_min || ''}
                   onChange={(e) => setFilters({ ...filters, dividend_yield_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.dividend_yield_max || ''}
                   onChange={(e) => setFilters({ ...filters, dividend_yield_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
 
             {/* Debt to Equity */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Debt/Equity (Max)
               </label>
               <input
@@ -377,13 +377,13 @@ export default function ScreenerPage() {
                 placeholder="Max D/E"
                 value={filters.debt_to_equity_max || ''}
                 onChange={(e) => setFilters({ ...filters, debt_to_equity_max: e.target.value ? Number(e.target.value) : undefined })}
-                className="input-glass-light text-sm"
+                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
               />
             </div>
 
             {/* Current Ratio */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Current Ratio (Min)
               </label>
               <input
@@ -391,13 +391,13 @@ export default function ScreenerPage() {
                 placeholder="Min"
                 value={filters.current_ratio_min || ''}
                 onChange={(e) => setFilters({ ...filters, current_ratio_min: e.target.value ? Number(e.target.value) : undefined })}
-                className="input-glass-light text-sm"
+                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
               />
             </div>
 
             {/* Market Cap */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Market Cap (Cr)
               </label>
               <div className="flex space-x-2">
@@ -406,21 +406,21 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.market_cap_min ? filters.market_cap_min / 1e7 : ''}
                   onChange={(e) => setFilters({ ...filters, market_cap_min: e.target.value ? Number(e.target.value) * 1e7 : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.market_cap_max ? filters.market_cap_max / 1e7 : ''}
                   onChange={(e) => setFilters({ ...filters, market_cap_max: e.target.value ? Number(e.target.value) * 1e7 : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
 
             {/* 52-Week High/Low */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Near 52W High/Low (%)
               </label>
               <div className="flex space-x-2">
@@ -429,27 +429,27 @@ export default function ScreenerPage() {
                   placeholder="High %"
                   value={filters.near_52w_high || ''}
                   onChange={(e) => setFilters({ ...filters, near_52w_high: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Low %"
                   value={filters.near_52w_low || ''}
                   onChange={(e) => setFilters({ ...filters, near_52w_low: e.target.value ? Number(e.target.value) : undefined })}
-                  className="input-glass-light text-sm"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
 
             {/* Sector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 Sector
               </label>
               <select
                 value={filters.sectors?.[0] || ''}
                 onChange={(e) => setFilters({ ...filters, sectors: e.target.value ? [e.target.value] : undefined })}
-                className="input-glass-light text-sm"
+                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2"
               >
                 <option value="">All Sectors</option>
                 {filterOptions.sectors.map((sector) => (
@@ -460,14 +460,14 @@ export default function ScreenerPage() {
 
             {/* FNO Only */}
             <div className="flex items-end">
-              <label className="flex items-center space-x-2 cursor-pointer px-4 py-2.5 glass-card-purple rounded-xl hover:bg-primary-100 transition-colors">
+              <label className="flex items-center space-x-2 cursor-pointer px-4 py-2.5 bg-[var(--bg-overlay)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-overlay)] transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.is_fno || false}
                   onChange={(e) => setFilters({ ...filters, is_fno: e.target.checked ? true : undefined })}
-                  className="w-4 h-4 text-primary-600 border-primary-300 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-400 border-[var(--border-primary)] rounded focus:ring-primary-500"
                 />
-                <span className="text-sm font-medium text-primary-700">F&O Stocks Only</span>
+                <span className="text-sm font-medium text-primary-400">F&O Stocks Only</span>
               </label>
             </div>
           </div>
@@ -477,15 +477,15 @@ export default function ScreenerPage() {
       {/* Results Summary */}
       {results.length > 0 && (
         <div className="flex items-center justify-between px-2">
-          <p className="text-sm text-gray-500">
-            Showing <span className="font-semibold text-primary-600">{results.length}</span> of{' '}
-            <span className="font-semibold">{total}</span> stocks
+          <p className="text-sm text-[var(--text-secondary)]">
+            Showing <span className="font-semibold text-primary-400 font-mono">{results.length}</span> of{' '}
+            <span className="font-semibold font-mono">{total}</span> stocks
           </p>
           <div className="flex items-center space-x-2">
             {page > 1 && (
               <button
                 onClick={() => runScreener(filters, page - 1)}
-                className="px-4 py-1.5 text-sm glass-card-purple text-primary-700 rounded-lg hover:bg-primary-100 transition-colors"
+                className="px-4 py-1.5 text-sm bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-primary-400 rounded-lg hover:bg-[var(--bg-overlay)] transition-colors"
               >
                 Previous
               </button>
@@ -493,7 +493,7 @@ export default function ScreenerPage() {
             {(page * perPage) < total && (
               <button
                 onClick={() => runScreener(filters, page + 1)}
-                className="px-4 py-1.5 text-sm glass-card-purple text-primary-700 rounded-lg hover:bg-primary-100 transition-colors"
+                className="px-4 py-1.5 text-sm bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-primary-400 rounded-lg hover:bg-[var(--bg-overlay)] transition-colors"
               >
                 Next
               </button>
@@ -503,23 +503,23 @@ export default function ScreenerPage() {
       )}
 
       {/* Results Table */}
-      <div className="glass-card-dashboard overflow-hidden">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="relative mx-auto w-16 h-16 mb-4">
               <div className="absolute inset-0 bg-primary-500/30 blur-xl rounded-full animate-pulse" />
               <RefreshCw className="relative h-16 w-16 text-primary-500 animate-spin mx-auto" />
             </div>
-            <p className="text-gray-500">Running screener...</p>
+            <p className="text-[var(--text-secondary)]">Running screener...</p>
           </div>
         ) : results.length === 0 ? (
           <div className="p-12 text-center">
             <div className="relative mx-auto w-20 h-20 mb-4">
-              <div className="absolute inset-0 bg-primary-200/50 blur-xl rounded-full" />
-              <Search className="relative h-20 w-20 text-primary-300 mx-auto" />
+              <div className="absolute inset-0 bg-primary-500/20 blur-xl rounded-full" />
+              <Search className="relative h-20 w-20 text-primary-500/40 mx-auto" />
             </div>
-            <p className="text-gray-600 font-medium">Set filters and click "Run Screener"</p>
-            <p className="text-sm text-gray-400 mt-1">Or select a preset to get started</p>
+            <p className="text-[var(--text-secondary)] font-medium">Set filters and click &quot;Run Screener&quot;</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">Or select a preset to get started</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -542,7 +542,7 @@ export default function ScreenerPage() {
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
-                      className="cursor-pointer hover:bg-primary-100/50 transition-colors"
+                      className="cursor-pointer hover:bg-[var(--bg-overlay)] transition-colors"
                     >
                       <div className="flex items-center space-x-1">
                         <span>{col.label}</span>
@@ -559,7 +559,7 @@ export default function ScreenerPage() {
                   <tr key={stock.symbol}>
                     <td>
                       <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-gray-900">{stock.symbol}</span>
+                        <span className="font-semibold text-[var(--text-primary)]">{stock.symbol}</span>
                         {stock.is_fno && (
                           <span title="F&O enabled">
                             <Star className="h-3 w-3 text-yellow-500" />
@@ -567,41 +567,41 @@ export default function ScreenerPage() {
                         )}
                       </div>
                     </td>
-                    <td className="text-gray-600 text-sm max-w-[200px] truncate">
+                    <td className="text-[var(--text-secondary)] text-sm max-w-[200px] truncate">
                       {stock.name || '-'}
                     </td>
-                    <td className="text-gray-600 text-sm">{stock.sector || '-'}</td>
-                    <td className="font-medium text-gray-900">
+                    <td className="text-[var(--text-secondary)] text-sm">{stock.sector || '-'}</td>
+                    <td className="font-medium text-[var(--text-primary)] font-mono">
                       {formatMarketCap(stock.market_cap)}
                     </td>
-                    <td className="text-gray-900">
+                    <td className="text-[var(--text-primary)] font-mono">
                       {stock.current_price ? `₹${stock.current_price.toLocaleString()}` : '-'}
                     </td>
-                    <td className="text-gray-600">{formatNumber(stock.pe_ratio)}</td>
-                    <td className="text-gray-600">{formatNumber(stock.pb_ratio)}</td>
+                    <td className="text-[var(--text-secondary)] font-mono">{formatNumber(stock.pe_ratio)}</td>
+                    <td className="text-[var(--text-secondary)] font-mono">{formatNumber(stock.pb_ratio)}</td>
                     <td>
-                      <span className={stock.roe && stock.roe > 15 ? 'text-green-600 font-medium' : 'text-gray-600'}>
+                      <span className={`font-mono ${stock.roe && stock.roe > 15 ? 'text-green-400 font-medium' : 'text-[var(--text-secondary)]'}`}>
                         {formatNumber(stock.roe)}
                       </span>
                     </td>
                     <td>
-                      <span className={stock.dividend_yield && stock.dividend_yield > 2 ? 'text-green-600 font-medium' : 'text-gray-600'}>
+                      <span className={`font-mono ${stock.dividend_yield && stock.dividend_yield > 2 ? 'text-green-400 font-medium' : 'text-[var(--text-secondary)]'}`}>
                         {formatNumber(stock.dividend_yield)}
                       </span>
                     </td>
                     <td>
-                      <span className={stock.debt_to_equity && stock.debt_to_equity > 100 ? 'text-red-600' : 'text-gray-600'}>
+                      <span className={`font-mono ${stock.debt_to_equity && stock.debt_to_equity > 100 ? 'text-red-400' : 'text-[var(--text-secondary)]'}`}>
                         {formatNumber(stock.debt_to_equity)}
                       </span>
                     </td>
                     <td>
                       <div className="flex items-center space-x-1">
                         {stock.price_to_52w_high && stock.price_to_52w_high >= 95 ? (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
+                          <TrendingUp className="h-3 w-3 text-green-400" />
                         ) : stock.price_to_52w_high && stock.price_to_52w_high <= 60 ? (
-                          <TrendingDown className="h-3 w-3 text-red-500" />
+                          <TrendingDown className="h-3 w-3 text-red-400" />
                         ) : null}
-                        <span className="text-gray-600">{formatNumber(stock.price_to_52w_high)}</span>
+                        <span className="text-[var(--text-secondary)] font-mono">{formatNumber(stock.price_to_52w_high)}</span>
                       </div>
                     </td>
                   </tr>
@@ -614,22 +614,22 @@ export default function ScreenerPage() {
 
       {/* Save Modal */}
       {saveModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="glass-card-dashboard w-full max-w-md p-6 mx-4 animate-slide-down">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg w-full max-w-md p-6 mx-4 animate-slide-down">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Save Screener</h2>
-              <button onClick={() => setSaveModalOpen(false)} className="p-2 hover:bg-primary-100 rounded-lg transition-colors">
-                <X className="h-5 w-5 text-gray-500" />
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Save Screener</h2>
+              <button onClick={() => setSaveModalOpen(false)} className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors">
+                <X className="h-5 w-5 text-[var(--text-secondary)]" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
                 <input
                   type="text"
                   value={screenerName}
                   onChange={(e) => setScreenerName(e.target.value)}
-                  className="input-glass-light"
+                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                   placeholder="My Value Screener"
                 />
               </div>

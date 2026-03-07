@@ -14,15 +14,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (mounted) {
       const root = document.documentElement;
+      root.setAttribute('data-theme', theme);
+      // Also toggle class for Tailwind dark: variants
       if (theme === 'dark') {
         root.classList.add('dark');
+        root.classList.remove('light');
       } else {
         root.classList.remove('dark');
+        root.classList.add('light');
       }
     }
   }, [theme, mounted]);
 
-  // Prevent flash by not rendering until mounted
   if (!mounted) {
     return <>{children}</>;
   }

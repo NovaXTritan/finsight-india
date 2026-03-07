@@ -1,20 +1,28 @@
 """
 Real-Time Anomaly Detection for Indian Stocks
 
-Analyzes stocks using Yahoo Finance data and generates signals
-only when genuine statistical anomalies are detected.
+Analyzes stocks using market_data table (populated by SmartAPI) and generates
+signals only when genuine statistical anomalies are detected.
+
+Data priority: market_data DB (SmartAPI) → Yahoo Finance → skip (no fake data).
 """
 import asyncio
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import logging
-import yfinance as yf
 import numpy as np
 import asyncpg
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# yfinance as secondary fallback only
+try:
+    import yfinance as yf
+    YF_AVAILABLE = True
+except ImportError:
+    YF_AVAILABLE = False
 
 
 class RealAnomalyDetector:
@@ -39,7 +47,10 @@ class RealAnomalyDetector:
 
     async def connect(self):
         """Connect to database."""
-        self.pool = await asyncpg.create_pool(self.db_url, min_size=1, max_size=5)
+        self.pool = await asyncpg.create_pool(
+            self.db_url, min_size=1, max_size=5,
+            statement_cache_size=0,  # Required for Neon PgBouncer pooler
+        )
         logger.info("Connected to database")
 
     async def close(self):
@@ -47,50 +58,123 @@ class RealAnomalyDetector:
         if self.pool:
             await self.pool.close()
 
-    def fetch_stock_data(self, symbol: str) -> Optional[Dict]:
+    async def fetch_stock_data_from_db(self, symbol: str) -> Optional[Dict]:
         """
-        Fetch stock data from Yahoo Finance.
+        Fetch stock data from market_data table (SmartAPI-populated).
 
         Returns dict with today's data and historical baseline.
+        Falls back to yfinance if DB has insufficient data.
         """
+        # Try database first (SmartAPI data)
+        data = await self._try_database(symbol)
+        if data:
+            return data
+
+        # Fallback to yfinance (works locally, may fail on cloud)
+        data = self._try_yfinance(symbol)
+        if data:
+            return data
+
+        # Never return fake data
+        logger.warning(f"No real data available for {symbol} — skipping detection")
+        return None
+
+    def fetch_stock_data(self, symbol: str) -> Optional[Dict]:
+        """
+        Sync wrapper — kept for backward compatibility.
+        Prefer fetch_stock_data_from_db() for async callers.
+        """
+        if YF_AVAILABLE:
+            data = self._try_yfinance(symbol)
+            if data:
+                return data
+        logger.warning(f"No real data available for {symbol} — skipping detection")
+        return None
+
+    async def _try_database(self, symbol: str) -> Optional[Dict]:
+        """Try fetching from market_data table."""
+        if not self.pool:
+            return None
+
         try:
-            # Determine the correct Yahoo Finance symbol
-            # Indian stocks use .NS (NSE) or .BO (BSE)
-            # US stocks don't need suffix
-            indian_stocks = [
-                'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'HDFC',
-                'KOTAKBANK', 'SBIN', 'BHARTIARTL', 'ITC', 'HINDUNILVR',
-                'BAJFINANCE', 'MARUTI', 'AXISBANK', 'LT', 'ASIANPAINT',
-                'TATAMOTORS', 'SUNPHARMA', 'WIPRO', 'ULTRACEMCO', 'TITAN',
-                'NESTLEIND', 'TECHM', 'POWERGRID', 'NTPC', 'M&M', 'ONGC',
-                'JSWSTEEL', 'TATASTEEL', 'ADANIENT', 'ADANIPORTS', 'COALINDIA',
-                'BPCL', 'GRASIM', 'DIVISLAB', 'DRREDDY', 'CIPLA', 'EICHERMOT',
-                'HEROMOTOCO', 'BAJAJFINSV', 'BRITANNIA', 'APOLLOHOSP', 'SBILIFE',
-                'HCLTECH', 'INDUSINDBK', 'TATACONSUM', 'UPL', 'VEDL', 'HINDALCO',
-            ]
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT trade_date, open, high, low, close, volume
+                    FROM market_data
+                    WHERE symbol = $1
+                    ORDER BY trade_date DESC
+                    LIMIT 25
+                """, symbol)
 
-            if symbol.upper() in indian_stocks or not any(c.isalpha() and c.isupper() for c in symbol[-2:]):
-                yf_symbol = f"{symbol}.NS"
-            else:
-                # Try as-is for US stocks
-                yf_symbol = symbol
+            if not rows or len(rows) < 15:
+                logger.warning(f"Insufficient DB data for {symbol}: {len(rows) if rows else 0} days")
+                return None
 
+            # Convert to usable format (rows are newest-first)
+            rows = list(reversed(rows))  # oldest-first
+            today = rows[-1]
+            baseline_rows = rows[-21:-1] if len(rows) >= 21 else rows[:-1]
+
+            if len(baseline_rows) < 10:
+                return None
+
+            volumes = [float(r["volume"]) for r in baseline_rows]
+            closes = [float(r["close"]) for r in baseline_rows]
+            highs = [float(r["high"]) for r in baseline_rows]
+            lows = [float(r["low"]) for r in baseline_rows]
+            ranges = [h - l for h, l in zip(highs, lows)]
+
+            prev_close = float(rows[-2]["close"]) if len(rows) >= 2 else float(today["close"])
+
+            return {
+                "symbol": symbol,
+                "today": {
+                    "date": today["trade_date"],
+                    "open": float(today["open"]),
+                    "high": float(today["high"]),
+                    "low": float(today["low"]),
+                    "close": float(today["close"]),
+                    "volume": int(today["volume"]),
+                    "range": float(today["high"]) - float(today["low"]),
+                },
+                "baseline": {
+                    "volume_mean": np.mean(volumes),
+                    "volume_std": np.std(volumes),
+                    "close_mean": np.mean(closes),
+                    "close_std": np.std(closes),
+                    "range_mean": np.mean(ranges),
+                    "range_std": np.std(ranges),
+                    "high_20d": max(highs),
+                    "low_20d": min(lows),
+                },
+                "info": {
+                    "name": symbol,
+                    "sector": "Unknown",
+                    "market_cap": 0,
+                    "prev_close": prev_close,
+                },
+                "data_source": "smartapi_db",
+            }
+
+        except Exception as e:
+            logger.error(f"DB fetch error for {symbol}: {e}")
+            return None
+
+    def _try_yfinance(self, symbol: str) -> Optional[Dict]:
+        """Try fetching from Yahoo Finance (secondary fallback)."""
+        if not YF_AVAILABLE:
+            return None
+        try:
+            yf_symbol = f"{symbol}.NS"
             ticker = yf.Ticker(yf_symbol)
-
-            # Get 25 days of data (20 days baseline + recent days)
             hist = ticker.history(period="25d")
 
             if len(hist) < 15:
-                logger.warning(f"Insufficient data for {symbol}: {len(hist)} days")
+                logger.warning(f"Insufficient yfinance data for {symbol}: {len(hist)} days")
                 return None
 
-            # Get current info
             info = ticker.info
-
-            # Today's data (most recent)
             today = hist.iloc[-1]
-
-            # Baseline (previous 20 days, excluding today)
             baseline = hist.iloc[-21:-1] if len(hist) >= 21 else hist.iloc[:-1]
 
             return {
@@ -122,7 +206,7 @@ class RealAnomalyDetector:
                 }
             }
         except Exception as e:
-            logger.error(f"Error fetching {symbol}: {e}")
+            logger.warning(f"yfinance failed for {symbol}: {e}")
             return None
 
     def calculate_zscores(self, data: Dict) -> Dict[str, float]:
@@ -282,7 +366,7 @@ class RealAnomalyDetector:
         price_change = ((today["close"] - info["prev_close"]) / info["prev_close"] * 100) if info["prev_close"] > 0 else 0
 
         sources = [
-            f"Yahoo Finance Real-time",
+            f"Market Data Analysis",
             f"Price: Rs {today['close']:.2f} ({price_change:+.2f}%)",
             f"Volume: {today['volume']/100000:.1f}L ({vol_ratio:.1f}x avg)",
             f"Range: Rs {today['low']:.2f} - Rs {today['high']:.2f}",
@@ -373,9 +457,10 @@ class RealAnomalyDetector:
         Analyze a single symbol for anomalies.
 
         Returns signal dict if anomaly detected, None otherwise.
+        Uses market_data DB first, then yfinance fallback.
         """
-        # Fetch data
-        data = self.fetch_stock_data(symbol)
+        # Fetch data — prefer database (SmartAPI data), fallback to yfinance
+        data = await self.fetch_stock_data_from_db(symbol)
         if not data:
             return None
 
@@ -390,6 +475,30 @@ class RealAnomalyDetector:
 
         # Generate signal
         decision, confidence, reason = self.determine_decision(anomaly, data)
+
+        # Catalyst context & confidence level
+        catalyst_context = {}
+        confidence_level = 1
+        if self.pool:
+            try:
+                from services.catalyst_engine import CatalystEngine, compute_confidence_level
+                engine = CatalystEngine(self.pool)
+                catalyst_context = await engine.get_catalyst_context(symbol, {
+                    "pattern_type": anomaly["pattern_type"],
+                    "z_score": anomaly["max_zscore"],
+                })
+
+                # Add institutional flow analysis
+                from services.institutional_flow import InstitutionalFlowDetector
+                flow_detector = InstitutionalFlowDetector(self.pool)
+                flow_signals = await flow_detector.analyze_stock(symbol)
+                if flow_signals:
+                    for key, val in flow_signals.items():
+                        catalyst_context[f"institutional_{key}"] = val
+
+                confidence_level = compute_confidence_level(anomaly, catalyst_context)
+            except Exception as e:
+                logger.debug(f"Catalyst/confidence error for {symbol}: {e}")
 
         signal = {
             "id": f"sig-{uuid.uuid4().hex[:8]}",
@@ -406,27 +515,34 @@ class RealAnomalyDetector:
             "context": self.generate_context(data, anomaly),
             "sources": self.generate_sources(data),
             "thought_process": self.generate_thought_process(data, anomaly),
+            "confidence_level": confidence_level,
+            "catalyst_context": catalyst_context,
         }
 
-        logger.info(f"{symbol}: ANOMALY DETECTED - {anomaly['pattern_type']} ({anomaly['severity']})")
+        logger.info(f"{symbol}: ANOMALY DETECTED - {anomaly['pattern_type']} ({anomaly['severity']}) confidence={confidence_level}")
         return signal
 
     async def save_signal(self, signal: Dict):
         """Save signal to database."""
+        import json
+        catalyst = signal.get("catalyst_context")
+        catalyst_json = json.dumps(catalyst) if catalyst else None
+
         async with self.pool.acquire() as conn:
             await conn.execute("""
                 INSERT INTO anomalies (
                     id, symbol, pattern_type, severity, z_score, price, volume,
                     detected_at, agent_decision, agent_confidence, agent_reason,
-                    context, sources, thought_process
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    context, sources, thought_process, confidence_level, catalyst_context
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 ON CONFLICT (id) DO NOTHING
             """,
                 signal["id"], signal["symbol"], signal["pattern_type"],
                 signal["severity"], signal["z_score"], signal["price"],
                 signal["volume"], signal["detected_at"], signal["agent_decision"],
                 signal["agent_confidence"], signal["agent_reason"],
-                signal["context"], signal["sources"], signal["thought_process"]
+                signal["context"], signal["sources"], signal["thought_process"],
+                signal.get("confidence_level", 1), catalyst_json
             )
 
     async def run_detection(self, symbols: List[str]) -> List[Dict]:

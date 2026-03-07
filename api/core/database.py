@@ -266,6 +266,25 @@ class APIDatabase:
                     UNIQUE(symbol, trade_date)
                 );
                 CREATE INDEX IF NOT EXISTS idx_market_data_symbol_date ON market_data(symbol, trade_date DESC);
+
+                -- Signal outcomes (Phase 2: outcome tracking)
+                CREATE TABLE IF NOT EXISTS signal_outcomes (
+                    id SERIAL PRIMARY KEY,
+                    signal_id TEXT NOT NULL REFERENCES anomalies(id) ON DELETE CASCADE,
+                    horizon_days INT NOT NULL,
+                    price_at_signal DECIMAL(12,2) NOT NULL,
+                    price_at_horizon DECIMAL(12,2),
+                    return_pct FLOAT,
+                    was_correct BOOLEAN,
+                    tracked_at TIMESTAMPTZ DEFAULT NOW(),
+                    UNIQUE(signal_id, horizon_days)
+                );
+                CREATE INDEX IF NOT EXISTS idx_signal_outcomes_signal ON signal_outcomes(signal_id);
+                CREATE INDEX IF NOT EXISTS idx_signal_outcomes_horizon ON signal_outcomes(horizon_days);
+
+                -- Add confidence_level and catalyst_context to anomalies
+                ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS confidence_level INT DEFAULT 1;
+                ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS catalyst_context JSONB;
             """)
     
     async def close(self):

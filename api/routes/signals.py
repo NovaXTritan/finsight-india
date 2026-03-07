@@ -109,6 +109,30 @@ DEMO_SIGNALS = [
 router = APIRouter(prefix="/signals", tags=["Signals"])
 
 
+@router.get("/track-record")
+async def get_track_record(db: APIDatabase = Depends(get_db)):
+    """
+    Get platform-wide signal track record.
+
+    Returns hit rates by horizon, signal type, and stock.
+    Public endpoint — no auth required for transparency.
+    """
+    if db.pool is None:
+        return {
+            "total_signals": 0,
+            "hit_rates": {},
+            "by_signal_type": {},
+            "by_stock": {},
+            "recent_signals": [],
+            "last_updated": datetime.now().isoformat(),
+            "message": "No data available yet. Track record builds as signals are generated and outcomes are tracked."
+        }
+
+    from services.outcome_tracker import OutcomeTracker
+    tracker = OutcomeTracker(db.pool)
+    return await tracker.get_track_record()
+
+
 @router.get("", response_model=SignalList)
 async def get_signals(
     page: int = Query(1, ge=1, description="Page number"),
@@ -173,141 +197,6 @@ async def get_latest_signals(
 
     signals = await db.get_latest_signals(user_id=user_id, limit=limit)
     return [Signal(**s) for s in signals]
-
-
-@router.get("/{signal_id}", response_model=Signal)
-async def get_signal(
-    signal_id: str,
-    user_id: str = Depends(get_current_user_id),
-    db: APIDatabase = Depends(get_db)
-):
-    """
-    Get details of a specific signal.
-    """
-    # Demo mode - look in demo signals
-    if db.pool is None:
-        for signal in DEMO_SIGNALS:
-            if signal["id"] == signal_id:
-                return Signal(**signal)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Signal not found or not in your watchlist"
-        )
-
-    async with db.pool.acquire() as conn:
-        row = await conn.fetchrow("""
-            SELECT
-                a.id, a.symbol, a.pattern_type, a.severity,
-                a.z_score, a.price, a.volume, a.detected_at,
-                a.agent_decision, a.agent_confidence, a.agent_reason,
-                a.context, a.sources, a.thought_process
-            FROM anomalies a
-            INNER JOIN user_watchlist w ON a.symbol = w.symbol
-            WHERE a.id = $1 AND w.user_id = $2
-        """, signal_id, user_id)
-
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Signal not found or not in your watchlist"
-            )
-
-        return Signal(**dict(row))
-
-
-@router.post("/{signal_id}/action", response_model=MessageResponse)
-async def record_signal_action(
-    signal_id: str,
-    action: SignalAction,
-    user_id: str = Depends(get_current_user_id),
-    db: APIDatabase = Depends(get_db)
-):
-    """
-    Record your action on a signal.
-
-    This helps FinSight learn your preferences.
-
-    Actions:
-    - **ignored**: You saw it but didn't act
-    - **reviewed**: You researched it further
-    - **traded**: You made a trade based on this signal
-    """
-    # Demo mode - just acknowledge without persisting
-    if db.pool is None:
-        return MessageResponse(
-            message=f"Action '{action.action}' recorded for signal (demo mode)",
-            success=True
-        )
-
-    # Verify signal exists and is accessible
-    async with db.pool.acquire() as conn:
-        exists = await conn.fetchval("""
-            SELECT EXISTS(
-                SELECT 1 FROM anomalies a
-                INNER JOIN user_watchlist w ON a.symbol = w.symbol
-                WHERE a.id = $1 AND w.user_id = $2
-            )
-        """, signal_id, user_id)
-
-        if not exists:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Signal not found or not in your watchlist"
-            )
-
-    await db.record_user_action(
-        user_id=user_id,
-        anomaly_id=signal_id,
-        action=action.action,
-        notes=action.notes
-    )
-
-    return MessageResponse(
-        message=f"Action '{action.action}' recorded for signal",
-        success=True
-    )
-
-
-@router.get("/symbol/{symbol}", response_model=list[Signal])
-async def get_signals_by_symbol(
-    symbol: str,
-    limit: int = Query(10, ge=1, le=50),
-    user_id: str = Depends(get_current_user_id),
-    db: APIDatabase = Depends(get_db)
-):
-    """
-    Get signals for a specific symbol.
-
-    Symbol must be in your watchlist.
-    """
-    # Demo mode - filter demo signals by symbol
-    if db.pool is None:
-        filtered = [s for s in DEMO_SIGNALS if s["symbol"] == symbol.upper()][:limit]
-        return [Signal(**s) for s in filtered]
-
-    # Check if symbol is in watchlist
-    watchlist = await db.get_watchlist(user_id)
-
-    if symbol.upper() not in watchlist:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"{symbol.upper()} is not in your watchlist"
-        )
-
-    async with db.pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT
-                id, symbol, pattern_type, severity,
-                z_score, price, volume, detected_at,
-                agent_decision, agent_confidence, agent_reason,
-                context, sources, thought_process
-            FROM anomalies
-            WHERE symbol = $1
-            ORDER BY detected_at DESC
-            LIMIT $2
-        """, symbol.upper(), limit)
-
-        return [Signal(**dict(row)) for row in rows]
 
 
 @router.get("/demo")
@@ -389,3 +278,185 @@ async def run_detection(
             )
     finally:
         await detector.close()
+
+
+@router.get("/symbol/{symbol}", response_model=list[Signal])
+async def get_signals_by_symbol(
+    symbol: str,
+    limit: int = Query(10, ge=1, le=50),
+    user_id: str = Depends(get_current_user_id),
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Get signals for a specific symbol.
+
+    Symbol must be in your watchlist.
+    """
+    # Demo mode - filter demo signals by symbol
+    if db.pool is None:
+        filtered = [s for s in DEMO_SIGNALS if s["symbol"] == symbol.upper()][:limit]
+        return [Signal(**s) for s in filtered]
+
+    # Check if symbol is in watchlist
+    watchlist = await db.get_watchlist(user_id)
+
+    if symbol.upper() not in watchlist:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{symbol.upper()} is not in your watchlist"
+        )
+
+    async with db.pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT
+                id, symbol, pattern_type, severity,
+                z_score, price, volume, detected_at,
+                agent_decision, agent_confidence, agent_reason,
+                context, sources, thought_process
+            FROM anomalies
+            WHERE symbol = $1
+            ORDER BY detected_at DESC
+            LIMIT $2
+        """, symbol.upper(), limit)
+
+        return [Signal(**dict(row)) for row in rows]
+
+
+@router.get("/{signal_id}")
+async def get_signal(
+    signal_id: str,
+    user_id: str = Depends(get_current_user_id),
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Get details of a specific signal with historical comparison and outcomes.
+    """
+    # Demo mode - look in demo signals
+    if db.pool is None:
+        for signal in DEMO_SIGNALS:
+            if signal["id"] == signal_id:
+                return {**signal, "historical_similar": [], "outcomes": {}}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Signal not found or not in your watchlist"
+        )
+
+    async with db.pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT
+                a.id, a.symbol, a.pattern_type, a.severity,
+                a.z_score, a.price, a.volume, a.detected_at,
+                a.agent_decision, a.agent_confidence, a.agent_reason,
+                a.context, a.sources, a.thought_process,
+                a.confidence_level, a.catalyst_context
+            FROM anomalies a
+            INNER JOIN user_watchlist w ON a.symbol = w.symbol
+            WHERE a.id = $1 AND w.user_id = $2
+        """, signal_id, user_id)
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Signal not found or not in your watchlist"
+            )
+
+        signal_dict = dict(row)
+
+        # Fetch outcomes for this signal
+        outcomes = await conn.fetch("""
+            SELECT horizon_days, price_at_signal, price_at_horizon, return_pct, was_correct, tracked_at
+            FROM signal_outcomes
+            WHERE signal_id = $1
+            ORDER BY horizon_days
+        """, signal_id)
+        signal_dict["outcomes"] = {
+            f"{o['horizon_days']}d": {
+                "return_pct": round(float(o["return_pct"]), 2) if o["return_pct"] else None,
+                "was_correct": o["was_correct"],
+                "price_at_horizon": float(o["price_at_horizon"]) if o["price_at_horizon"] else None,
+            }
+            for o in outcomes
+        }
+
+        # Fetch historical similar signals (same symbol + pattern type)
+        historical = await conn.fetch("""
+            SELECT a.id, a.detected_at, a.z_score, a.price, a.severity,
+                   so3.return_pct as return_3d, so3.was_correct as correct_3d,
+                   so5.return_pct as return_5d, so5.was_correct as correct_5d
+            FROM anomalies a
+            LEFT JOIN signal_outcomes so3 ON a.id = so3.signal_id AND so3.horizon_days = 3
+            LEFT JOIN signal_outcomes so5 ON a.id = so5.signal_id AND so5.horizon_days = 5
+            WHERE a.symbol = $1 AND a.pattern_type = $2 AND a.id != $3
+            ORDER BY a.detected_at DESC
+            LIMIT 10
+        """, row["symbol"], row["pattern_type"], signal_id)
+
+        signal_dict["historical_similar"] = [
+            {
+                "id": h["id"],
+                "detected_at": h["detected_at"].isoformat(),
+                "z_score": float(h["z_score"]),
+                "price": float(h["price"]),
+                "severity": h["severity"],
+                "return_3d": round(float(h["return_3d"]), 2) if h["return_3d"] is not None else None,
+                "correct_3d": h["correct_3d"],
+                "return_5d": round(float(h["return_5d"]), 2) if h["return_5d"] is not None else None,
+                "correct_5d": h["correct_5d"],
+            }
+            for h in historical
+        ]
+
+        return signal_dict
+
+
+@router.post("/{signal_id}/action", response_model=MessageResponse)
+async def record_signal_action(
+    signal_id: str,
+    action: SignalAction,
+    user_id: str = Depends(get_current_user_id),
+    db: APIDatabase = Depends(get_db)
+):
+    """
+    Record your action on a signal.
+
+    This helps FinSight learn your preferences.
+
+    Actions:
+    - **ignored**: You saw it but didn't act
+    - **reviewed**: You researched it further
+    - **traded**: You made a trade based on this signal
+    """
+    # Demo mode - just acknowledge without persisting
+    if db.pool is None:
+        return MessageResponse(
+            message=f"Action '{action.action}' recorded for signal (demo mode)",
+            success=True
+        )
+
+    # Verify signal exists and is accessible
+    async with db.pool.acquire() as conn:
+        exists = await conn.fetchval("""
+            SELECT EXISTS(
+                SELECT 1 FROM anomalies a
+                INNER JOIN user_watchlist w ON a.symbol = w.symbol
+                WHERE a.id = $1 AND w.user_id = $2
+            )
+        """, signal_id, user_id)
+
+        if not exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Signal not found or not in your watchlist"
+            )
+
+    await db.record_user_action(
+        user_id=user_id,
+        anomaly_id=signal_id,
+        action=action.action,
+        notes=action.notes
+    )
+
+    return MessageResponse(
+        message=f"Action '{action.action}' recorded for signal",
+        success=True
+    )

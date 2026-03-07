@@ -20,6 +20,10 @@ import time
 import yfinance as yf
 
 import config
+from data.market_fallback import (
+    get_fallback_indices, get_fallback_fii_dii, get_fallback_nifty50,
+    get_fallback_price, get_fallback_stock_candles,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -237,8 +241,9 @@ class IndiaDataFetcher:
             df = ticker.history(period=period, interval=interval)
 
             if df.empty:
-                logger.warning(f"No data returned for {symbol}")
-                return None
+                logger.warning(f"No data returned for {symbol}, using fallback")
+                candles = get_fallback_stock_candles(symbol, period, interval)
+                return pd.DataFrame(candles) if candles else None
 
             # Standardize column names
             df = df.reset_index()
@@ -251,8 +256,9 @@ class IndiaDataFetcher:
             return df
 
         except Exception as e:
-            logger.error(f"Error fetching {symbol}: {e}")
-            return None
+            logger.error(f"Error fetching {symbol}: {e}, using fallback")
+            candles = get_fallback_stock_candles(symbol, period, interval)
+            return pd.DataFrame(candles) if candles else None
 
     async def fetch_stock_data_async(
         self,
@@ -274,10 +280,17 @@ class IndiaDataFetcher:
         try:
             ticker = yf.Ticker(symbol)
             info = ticker.info
-            return info.get("regularMarketPrice") or info.get("currentPrice")
+            price = info.get("regularMarketPrice") or info.get("currentPrice")
+            if price:
+                return price
         except Exception as e:
             logger.error(f"Error getting price for {symbol}: {e}")
-            return None
+
+        # Fallback
+        fallback_price = get_fallback_price(symbol)
+        if fallback_price:
+            logger.warning(f"Using fallback price for {symbol}")
+        return fallback_price
 
     async def get_current_price_async(self, symbol: str) -> Optional[float]:
         """Async version - runs in thread pool."""
@@ -315,26 +328,72 @@ class IndiaDataFetcher:
                         "low": item.get("low", 0),
                     }
             if indices:
-                self._set_cache("indices", indices)
-                return indices
+                result = {"data": indices, "data_source": "nse", "is_live": True}
+                self._set_cache("indices", result)
+                return result
 
         # Fallback to Yahoo Finance
+        # Map config keys to display names matching NSE format
+        DISPLAY_NAMES = {
+            "NIFTY50": "NIFTY 50",
+            "SENSEX": "SENSEX",
+            "BANKNIFTY": "NIFTY BANK",
+            "NIFTYIT": "NIFTY IT",
+            "INDIAVIX": "INDIA VIX",
+        }
         indices = {}
-        for name, symbol in config.INDIA_INDICES.items():
+        for config_name, symbol in config.INDIA_INDICES.items():
+            display_name = DISPLAY_NAMES.get(config_name, config_name)
             try:
                 ticker = yf.Ticker(symbol)
-                info = ticker.info
-                indices[name] = {
-                    "value": info.get("regularMarketPrice", 0),
-                    "change": info.get("regularMarketChange", 0),
-                    "change_pct": info.get("regularMarketChangePercent", 0),
-                }
+                # Try fast_info first, fall back to history() if it fails
+                try:
+                    fi = ticker.fast_info
+                    price = fi.last_price
+                    prev = fi.previous_close
+                    if price and prev and prev > 0:
+                        indices[display_name] = {
+                            "value": round(price, 2),
+                            "change": round(price - prev, 2),
+                            "change_pct": round((price - prev) / prev * 100, 2),
+                            "open": round(fi.open, 2) if fi.open else 0,
+                            "high": round(fi.day_high, 2) if fi.day_high else 0,
+                            "low": round(fi.day_low, 2) if fi.day_low else 0,
+                        }
+                        continue
+                except Exception as e:
+                    logger.warning(f"fast_info failed for {config_name}: {e}, trying history()")
+
+                # Fallback: use history() which is more reliable
+                hist = ticker.history(period="5d")
+                if hist is not None and len(hist) >= 1:
+                    today = hist.iloc[-1]
+                    prev_row = hist.iloc[-2] if len(hist) >= 2 else today
+                    price = float(today["Close"])
+                    prev = float(prev_row["Close"])
+                    if price > 0 and prev > 0:
+                        indices[display_name] = {
+                            "value": round(price, 2),
+                            "change": round(price - prev, 2),
+                            "change_pct": round((price - prev) / prev * 100, 2),
+                            "open": round(float(today["Open"]), 2),
+                            "high": round(float(today["High"]), 2),
+                            "low": round(float(today["Low"]), 2),
+                        }
             except Exception as e:
-                logger.warning(f"Failed to fetch {name}: {e}")
+                logger.warning(f"Yahoo Finance failed for {config_name} ({symbol}): {e}")
 
         if indices:
-            self._set_cache("indices", indices)
-        return indices
+            result = {"data": indices, "data_source": "yahoo", "is_live": True}
+            self._set_cache("indices", result)
+            return result
+
+        # Fallback to static data when cloud IPs are blocked
+        logger.warning("Both NSE and Yahoo Finance failed, using fallback indices data")
+        fallback_data = get_fallback_indices()
+        result = {"data": fallback_data, "data_source": "fallback", "is_live": False}
+        self._set_cache("indices", result)
+        return result
 
     # =========================================================================
     # FII/DII DATA
@@ -356,7 +415,12 @@ class IndiaDataFetcher:
 
         data = await self.nse.get_fii_dii_data()
         if not data:
-            return None
+            logger.warning("NSE FII/DII unavailable, using fallback data")
+            fallback = get_fallback_fii_dii()
+            fallback["data_source"] = "fallback"
+            fallback["is_live"] = False
+            self._set_cache("fii_dii", fallback)
+            return fallback
 
         result = {
             "date": datetime.now().strftime("%Y-%m-%d"),
@@ -366,6 +430,8 @@ class IndiaDataFetcher:
             "dii_buy": 0,
             "dii_sell": 0,
             "dii_net": 0,
+            "data_source": "nse",
+            "is_live": True,
         }
 
         # Parse NSE FII/DII response
@@ -442,25 +508,69 @@ class IndiaDataFetcher:
         - symbol, open, high, low, last_price, prev_close, change, change_pct, volume
         """
         data = await self.nse.get_nifty50_stocks()
-        if not data:
-            return None
+        if data:
+            rows = []
+            for stock in data:
+                rows.append({
+                    "symbol": stock.get("symbol", ""),
+                    "open": stock.get("open", 0),
+                    "high": stock.get("dayHigh", 0),
+                    "low": stock.get("dayLow", 0),
+                    "last_price": stock.get("lastPrice", 0),
+                    "prev_close": stock.get("previousClose", 0),
+                    "change": stock.get("change", 0),
+                    "change_pct": stock.get("pChange", 0),
+                    "volume": stock.get("totalTradedVolume", 0),
+                    "value": stock.get("totalTradedValue", 0),
+                })
+            return pd.DataFrame(rows)
 
-        rows = []
-        for stock in data:
-            rows.append({
-                "symbol": stock.get("symbol", ""),
-                "open": stock.get("open", 0),
-                "high": stock.get("dayHigh", 0),
-                "low": stock.get("dayLow", 0),
-                "last_price": stock.get("lastPrice", 0),
-                "prev_close": stock.get("previousClose", 0),
-                "change": stock.get("change", 0),
-                "change_pct": stock.get("pChange", 0),
-                "volume": stock.get("totalTradedVolume", 0),
-                "value": stock.get("totalTradedValue", 0),
-            })
+        # Fallback: Yahoo Finance batch download for top Nifty stocks
+        logger.warning("NSE Nifty 50 unavailable, trying Yahoo Finance batch...")
+        try:
+            symbols_yf = [s.replace(".NS", "") for s in config.INDIA_SYMBOLS]
+            tickers_str = " ".join(config.INDIA_SYMBOLS)
+            loop = asyncio.get_event_loop()
+            batch = await loop.run_in_executor(
+                None,
+                lambda: yf.download(tickers_str, period="2d", group_by="ticker", progress=False)
+            )
+            rows = []
+            for sym_clean, sym_yf in zip(symbols_yf, config.INDIA_SYMBOLS):
+                try:
+                    ticker_sym = sym_clean if sym_clean in batch.columns.get_level_values(0) else sym_yf
+                    stock_data = batch[ticker_sym] if ticker_sym in batch.columns.get_level_values(0) else None
+                    if stock_data is None or stock_data.empty or len(stock_data) < 1:
+                        continue
+                    today = stock_data.iloc[-1]
+                    prev = stock_data.iloc[-2] if len(stock_data) >= 2 else today
+                    close = today["Close"]
+                    prev_close = prev["Close"]
+                    change = close - prev_close
+                    change_pct = (change / prev_close * 100) if prev_close > 0 else 0
+                    rows.append({
+                        "symbol": sym_clean.replace(".NS", ""),
+                        "open": round(today["Open"], 2),
+                        "high": round(today["High"], 2),
+                        "low": round(today["Low"], 2),
+                        "last_price": round(close, 2),
+                        "prev_close": round(prev_close, 2),
+                        "change": round(change, 2),
+                        "change_pct": round(change_pct, 2),
+                        "volume": int(today.get("Volume", 0)),
+                        "value": 0,
+                    })
+                except Exception as e:
+                    logger.warning(f"Yahoo batch failed for {sym_clean}: {e}")
+            if rows:
+                logger.info(f"Yahoo batch returned data for {len(rows)} stocks")
+                return pd.DataFrame(rows)
+        except Exception as e:
+            logger.warning(f"Yahoo Finance batch download failed: {e}")
 
-        return pd.DataFrame(rows)
+        # Final fallback to static data
+        logger.warning("All sources failed, using static fallback Nifty 50 data")
+        return pd.DataFrame(get_fallback_nifty50())
 
 
 # =============================================================================
@@ -499,13 +609,18 @@ async def fetch_india_market_summary() -> Dict:
 
         # Handle exceptions
         if isinstance(indices, Exception):
-            indices = {}
+            indices = {"data": {}, "data_source": "error", "is_live": False}
         if isinstance(fii_dii, Exception):
             fii_dii = None
         if isinstance(is_open, Exception):
             is_open = False
         if isinstance(nifty50, Exception):
             nifty50 = None
+
+        # Extract indices data and metadata
+        indices_data = indices.get("data", indices) if isinstance(indices, dict) else indices
+        data_source = indices.get("data_source", "unknown") if isinstance(indices, dict) else "unknown"
+        is_live = indices.get("is_live", False) if isinstance(indices, dict) else False
 
         # Calculate top gainers/losers
         top_gainers = []
@@ -518,10 +633,12 @@ async def fetch_india_market_summary() -> Dict:
         return {
             "timestamp": datetime.now().isoformat(),
             "market_open": is_open,
-            "indices": indices,
+            "indices": indices_data,
             "fii_dii": fii_dii,
             "top_gainers": top_gainers,
             "top_losers": top_losers,
+            "data_source": data_source,
+            "is_live": is_live,
         }
 
     finally:

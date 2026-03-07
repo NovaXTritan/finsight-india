@@ -93,6 +93,45 @@ export interface Signal {
   context?: string;
   sources?: string;
   thought_process?: string;
+  confidence_level: number;
+  catalyst_context?: Record<string, string>;
+}
+
+export interface TrackRecordData {
+  total_signals: number;
+  hit_rates: Record<string, {
+    total: number;
+    hits: number;
+    hit_rate: number;
+    avg_return: number;
+    avg_abs_return: number;
+  }>;
+  by_signal_type: Record<string, {
+    count: number;
+    hit_rate_3d: number;
+    avg_return_3d: number;
+  }>;
+  by_stock: Record<string, {
+    count: number;
+    hit_rate_3d: number;
+    avg_return_3d: number;
+  }>;
+  recent_signals: Array<{
+    id: string;
+    symbol: string;
+    pattern_type: string;
+    severity: string;
+    z_score: number;
+    price: number;
+    detected_at: string;
+    confidence_level: number;
+    return_3d: number | null;
+    correct_3d: boolean | null;
+    return_5d: number | null;
+    correct_5d: boolean | null;
+  }>;
+  last_updated: string;
+  message?: string;
 }
 
 export interface Index {
@@ -387,10 +426,95 @@ export interface OIAnalysis {
   sentiment: string;
 }
 
+export interface OptionsIntelSignal {
+  type: string;
+  bias: 'bullish' | 'bearish' | 'neutral';
+  description: string;
+  strength: number;
+  strike?: number;
+  oi?: number;
+  oi_change?: number;
+}
+
+export interface OptionsIntelligence {
+  symbol: string;
+  spot_price: number;
+  expiry_date: string;
+  signals: OptionsIntelSignal[];
+  pcr?: {
+    pcr_oi: number;
+    pcr_volume: number;
+    total_ce_oi: number;
+    total_pe_oi: number;
+    signal?: OptionsIntelSignal;
+  };
+  max_pain?: {
+    max_pain: number;
+    spot: number;
+    distance_pct: number;
+    signal?: OptionsIntelSignal;
+  };
+  iv?: {
+    atm_iv: number;
+    regime: string;
+    signal?: OptionsIntelSignal;
+  };
+  positioning?: {
+    near_ce_oi: number;
+    near_pe_oi: number;
+    ce_dominance_pct: number;
+    pe_dominance_pct: number;
+    signal?: OptionsIntelSignal;
+  };
+  summary: {
+    bias: string;
+    strength: number;
+    total_signals: number;
+  };
+  timestamp: string;
+}
+
 export interface FNOSymbol {
   symbol: string;
   lot_size: number;
   is_index: boolean;
+}
+
+// Market Regime Types
+export interface RegimeInfo {
+  label: string;
+  color: string;
+  description: string;
+}
+
+export interface MarketRegime {
+  regime: 'BULL' | 'BEAR' | 'SIDEWAYS' | 'VOLATILE';
+  regime_info: RegimeInfo;
+  confidence: number;
+  scores: {
+    trend: number;
+    breadth: number;
+    volatility: number;
+    momentum: number;
+  };
+  details: Record<string, any>;
+  timestamp: string;
+}
+
+export interface InstitutionalFlow {
+  market_volume_today: number;
+  market_volume_prev: number;
+  volume_change_pct: number;
+  advances: number;
+  declines: number;
+  advance_decline_ratio: number;
+}
+
+export interface StockInstitutionalFlow {
+  symbol: string;
+  signals: Record<string, string>;
+  has_institutional_activity: boolean;
+  timestamp: string;
 }
 
 export interface MarketSummary {
@@ -569,6 +693,11 @@ export const signalsApi = {
     const res = await api.post('/signals/detect');
     return res.data;
   },
+
+  getTrackRecord: async (): Promise<TrackRecordData> => {
+    const res = await api.get('/signals/track-record');
+    return res.data;
+  },
 };
 
 // Market APIs
@@ -617,6 +746,21 @@ export const marketApi = {
     const res = await api.get(`/market/stock/${symbol}`, { params: { period, interval } });
     return res.data;
   },
+
+  getRegime: async (): Promise<MarketRegime> => {
+    const res = await api.get('/market/regime');
+    return res.data;
+  },
+
+  getInstitutionalFlow: async (): Promise<InstitutionalFlow> => {
+    const res = await api.get('/market/institutional-flow');
+    return res.data;
+  },
+
+  getStockInstitutionalFlow: async (symbol: string): Promise<StockInstitutionalFlow> => {
+    const res = await api.get(`/market/institutional-flow/${symbol}`);
+    return res.data;
+  },
 };
 
 // F&O APIs
@@ -660,6 +804,11 @@ export const optionsApi = {
 
   getLotSize: async (symbol: string): Promise<{ symbol: string; lot_size: number; is_fno: boolean }> => {
     const res = await api.get(`/options/lot-size/${symbol}`);
+    return res.data;
+  },
+
+  getIntelligence: async (symbol: string): Promise<OptionsIntelligence> => {
+    const res = await api.get(`/options/intelligence/${symbol}`);
     return res.data;
   },
 

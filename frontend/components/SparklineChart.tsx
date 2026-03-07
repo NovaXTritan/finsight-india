@@ -24,7 +24,7 @@ export function SparklineChart({
     return (
       <div
         style={{ width, height }}
-        className="flex items-center justify-center text-gray-300 text-xs bg-gray-50 rounded-lg"
+        className="flex items-center justify-center text-[var(--text-muted)] text-xs bg-[var(--bg-overlay)] rounded-lg"
       >
         No data
       </div>
@@ -32,7 +32,7 @@ export function SparklineChart({
   }
 
   // Determine color based on price movement
-  let strokeColor = '#9333ea'; // purple default
+  let strokeColor = '#0ea5e9'; // purple default
   let gradientId = 'gradientPurple';
 
   if (color === 'auto') {
@@ -52,7 +52,7 @@ export function SparklineChart({
     strokeColor = '#EF4444';
     gradientId = 'gradientRed';
   } else if (color === 'purple') {
-    strokeColor = '#9333ea';
+    strokeColor = '#0ea5e9';
     gradientId = 'gradientPurple';
   }
 
@@ -77,8 +77,8 @@ export function SparklineChart({
                 <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="gradientPurple" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#9333ea" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#9333ea" stopOpacity={0} />
+                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
               </linearGradient>
             </defs>
             <YAxis

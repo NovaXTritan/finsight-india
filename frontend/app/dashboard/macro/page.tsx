@@ -17,10 +17,11 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import api from '@/lib/api';
 
 const MacroTrendChart = dynamic(
   () => import('@/components/MacroTrendChart').then(mod => mod.MacroTrendChart),
-  { ssr: false, loading: () => <div className="w-full h-[280px] bg-gray-100 dark:bg-gray-800 rounded animate-pulse" /> }
+  { ssr: false, loading: () => <div className="w-full h-[280px] bg-[var(--bg-overlay)] rounded animate-pulse" /> }
 );
 import { HealthScorecard } from '@/components/HealthScorecard';
 
@@ -89,19 +90,19 @@ const categoryIcons: Record<string, React.ElementType> = {
 };
 
 const categoryColors: Record<string, string> = {
-  'Tax Revenue': 'from-green-500 to-emerald-600',
-  'Auto Industry': 'from-blue-500 to-indigo-600',
-  'Economic Activity': 'from-purple-500 to-violet-600',
-  'Infrastructure': 'from-orange-500 to-amber-600',
-  'Infrastructure - Cement': 'from-orange-500 to-amber-600',
-  'Infrastructure - Power': 'from-yellow-500 to-amber-500',
+  'Tax Revenue': 'bg-green-500/10 border border-green-500/20',
+  'Auto Industry': 'bg-blue-500/10 border border-blue-500/20',
+  'Economic Activity': 'bg-purple-500/10 border border-purple-500/20',
+  'Infrastructure': 'bg-orange-500/10 border border-orange-500/20',
+  'Infrastructure - Cement': 'bg-orange-500/10 border border-orange-500/20',
+  'Infrastructure - Power': 'bg-yellow-500/10 border border-yellow-500/20',
 };
 
 function TrendIcon({ value }: { value: number | null }) {
-  if (value === null) return <Minus className="h-4 w-4 text-gray-400" />;
+  if (value === null) return <Minus className="h-4 w-4 text-[var(--text-muted)]" />;
   if (value > 0) return <TrendingUp className="h-4 w-4 text-green-500" />;
   if (value < 0) return <TrendingDown className="h-4 w-4 text-red-500" />;
-  return <Minus className="h-4 w-4 text-gray-400" />;
+  return <Minus className="h-4 w-4 text-[var(--text-muted)]" />;
 }
 
 function formatValue(value: number, unit: string): string {
@@ -153,16 +154,16 @@ function SummaryCard({
   return (
     <div className="glass-card-dashboard p-5 card-hover-lift">
       <div className="flex items-center justify-between mb-3">
-        <div className={`p-2.5 bg-gradient-to-br ${colorClass} rounded-xl shadow-glow`}>
+        <div className={`p-2.5 ${colorClass} rounded-lg`}>
           <Icon className="h-5 w-5 text-white" />
         </div>
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{period}</span>
+        <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-overlay)] px-2 py-1 rounded-full">{period}</span>
       </div>
-      <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
+      <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-1">{title}</h3>
       <div className="flex items-end justify-between">
-        <span className="text-2xl font-bold text-gray-900">{value}</span>
+        <span className="text-2xl font-bold font-mono text-[var(--text-primary)]">{value}</span>
         {change !== null && (
-          <div className={`flex items-center text-sm font-semibold ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`flex items-center text-sm font-semibold font-mono ${change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             <TrendIcon value={change} />
             <span className="ml-1">{change >= 0 ? '+' : ''}{change.toFixed(1)}%</span>
           </div>
@@ -174,10 +175,10 @@ function SummaryCard({
 
 function InsightCard({ insight }: { insight: MacroInsight }) {
   const signalColors: Record<string, string> = {
-    BULLISH: 'bg-green-100 text-green-800 border-green-200',
-    NEUTRAL: 'bg-gray-100 text-gray-800 border-gray-200',
-    CAUTIOUS: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    BEARISH: 'bg-red-100 text-red-800 border-red-200',
+    BULLISH: 'bg-green-500/10 text-green-400 border-green-500/20',
+    NEUTRAL: 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] border-[var(--border-primary)]',
+    CAUTIOUS: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    BEARISH: 'bg-red-500/10 text-red-400 border-red-500/20',
   };
 
   const signalBorders: Record<string, string> = {
@@ -190,18 +191,18 @@ function InsightCard({ insight }: { insight: MacroInsight }) {
   return (
     <div className={`glass-card-dashboard p-5 border-l-4 ${signalBorders[insight.signal] || signalBorders.NEUTRAL}`}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold text-gray-900">{insight.indicator}</h4>
+        <h4 className="font-semibold text-[var(--text-primary)]">{insight.indicator}</h4>
         <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${signalColors[insight.signal] || signalColors.NEUTRAL}`}>
           {insight.signal}
         </span>
       </div>
 
       <div className="flex items-center space-x-4 mb-4 text-sm">
-        <span className="text-gray-600">
-          Value: <span className="font-bold text-gray-900">{insight.current_value.toFixed(1)}</span>
+        <span className="text-[var(--text-secondary)]">
+          Value: <span className="font-bold font-mono text-[var(--text-primary)]">{insight.current_value.toFixed(1)}</span>
         </span>
         {insight.change !== null && (
-          <span className={`font-semibold ${insight.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <span className={`font-semibold font-mono ${insight.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {insight.change >= 0 ? '+' : ''}{insight.change.toFixed(1)}%
           </span>
         )}
@@ -209,23 +210,23 @@ function InsightCard({ insight }: { insight: MacroInsight }) {
 
       <div className="space-y-3">
         {insight.sector_impacts.map((impact, idx) => (
-          <div key={idx} className="bg-gradient-to-r from-primary-50/50 to-purple-50/50 rounded-xl p-4 border border-primary-100/50">
+          <div key={idx} className="bg-[var(--bg-overlay)] rounded-lg p-4 border border-[var(--border-primary)]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-900">{impact.sector}</span>
+              <span className="text-sm font-semibold text-[var(--text-primary)]">{impact.sector}</span>
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                impact.impact.includes('Positive') ? 'bg-green-100 text-green-700' :
-                impact.impact.includes('Negative') ? 'bg-red-100 text-red-700' :
-                'bg-gray-100 text-gray-700'
+                impact.impact.includes('Positive') ? 'bg-green-500/10 text-green-400' :
+                impact.impact.includes('Negative') ? 'bg-red-500/10 text-red-400' :
+                'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
               }`}>
                 {impact.impact}
               </span>
             </div>
-            <p className="text-xs text-gray-600 mb-2">{impact.reasoning}</p>
+            <p className="text-xs text-[var(--text-secondary)] mb-2">{impact.reasoning}</p>
             <div className="flex flex-wrap gap-1.5">
               {impact.stocks.map((stock) => (
                 <span
                   key={stock}
-                  className="inline-flex items-center px-2 py-0.5 text-xs bg-gradient-to-r from-primary-100 to-purple-100 text-primary-700 rounded font-medium"
+                  className="inline-flex items-center px-2 py-0.5 text-xs bg-primary-500/10 text-primary-400 rounded font-medium font-mono"
                 >
                   {stock}
                 </span>
@@ -247,33 +248,27 @@ export default function MacroPage() {
   const [months, setMonths] = useState(12);
   const [activeTab, setActiveTab] = useState<'overview' | 'charts' | 'insights'>('overview');
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [macroRes, healthRes, insightsRes] = await Promise.all([
-        fetch(`${API_BASE}/api/macro/all?months=${months}`),
-        fetch(`${API_BASE}/api/macro/health-score`),
-        fetch(`${API_BASE}/api/macro/insights`),
+      const [macroRes, healthRes, insightsRes] = await Promise.allSettled([
+        api.get(`/macro/all`, { params: { months } }),
+        api.get(`/macro/health-score`),
+        api.get(`/macro/insights`),
       ]);
 
-      if (!macroRes.ok) {
+      if (macroRes.status === 'rejected') {
         throw new Error('Failed to fetch macro data');
       }
+      setData(macroRes.value.data);
 
-      const macroData = await macroRes.json();
-      setData(macroData);
-
-      if (healthRes.ok) {
-        const healthData = await healthRes.json();
-        setHealthScore(healthData);
+      if (healthRes.status === 'fulfilled') {
+        setHealthScore(healthRes.value.data);
       }
 
-      if (insightsRes.ok) {
-        const insightsData = await insightsRes.json();
-        setInsights(insightsData);
+      if (insightsRes.status === 'fulfilled') {
+        setInsights(insightsRes.value.data);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
@@ -346,12 +341,12 @@ export default function MacroPage() {
       <div className="glass-card-dashboard p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
-              <BarChart3 className="h-6 w-6 text-white" />
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <BarChart3 className="h-6 w-6 text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Macro Analytics</h1>
-              <p className="text-gray-500">Economic indicators with sector impact analysis</p>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Macro Analytics</h1>
+              <p className="text-[var(--text-secondary)]">Economic indicators with sector impact analysis</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -367,9 +362,9 @@ export default function MacroPage() {
             </select>
             <button
               onClick={fetchData}
-              className="p-2.5 hover:bg-primary-100 rounded-xl transition-colors"
+              className="p-2.5 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
             >
-              <RefreshCw className="h-5 w-5 text-primary-600" />
+              <RefreshCw className="h-5 w-5 text-primary-400" />
             </button>
           </div>
         </div>
@@ -382,10 +377,10 @@ export default function MacroPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 activeTab === tab
-                  ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
-                  : 'text-gray-600 hover:bg-primary-50 hover:text-primary-700'
+                  ? 'bg-primary-500/10 text-primary-400'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -416,7 +411,7 @@ export default function MacroPage() {
                 change={latestGST.yoy_change}
                 period={formatPeriod(latestGST.period)}
                 icon={IndianRupee}
-                colorClass="from-green-500 to-emerald-600"
+                colorClass="bg-green-500/10 border border-green-500/20"
               />
             )}
             {latestPMI && (
@@ -426,7 +421,7 @@ export default function MacroPage() {
                 change={latestPMI.mom_change}
                 period={formatPeriod(latestPMI.period)}
                 icon={Factory}
-                colorClass="from-purple-500 to-violet-600"
+                colorClass="bg-purple-500/10 border border-purple-500/20"
               />
             )}
             {latestPower && (
@@ -436,7 +431,7 @@ export default function MacroPage() {
                 change={latestPower.yoy_change}
                 period={formatPeriod(latestPower.period)}
                 icon={Zap}
-                colorClass="from-yellow-500 to-amber-500"
+                colorClass="bg-yellow-500/10 border border-yellow-500/20"
               />
             )}
             {latestAuto && (
@@ -446,35 +441,35 @@ export default function MacroPage() {
                 change={latestAuto.yoy_change}
                 period={formatPeriod(latestAuto.period)}
                 icon={Car}
-                colorClass="from-blue-500 to-indigo-600"
+                colorClass="bg-blue-500/10 border border-blue-500/20"
               />
             )}
           </div>
 
           {/* Quick Insights */}
           {insights.length > 0 && (
-            <div className="glass-card-dashboard p-6 bg-gradient-to-r from-primary-50/50 to-purple-50/50">
+            <div className="glass-card-dashboard p-6 bg-[var(--bg-overlay)]">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="p-2 bg-gradient-to-br from-primary-500 to-purple-500 rounded-lg">
-                  <Lightbulb className="h-5 w-5 text-white" />
+                <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+                  <Lightbulb className="h-5 w-5 text-primary-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Key Insights</h3>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Key Insights</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {insights.slice(0, 3).map((insight, idx) => (
-                  <div key={idx} className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-primary-100/50">
+                  <div key={idx} className="bg-[var(--bg-raised)] backdrop-blur-sm rounded-lg p-4 border border-[var(--border-primary)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-gray-900">{insight.indicator}</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{insight.indicator}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        insight.signal === 'BULLISH' ? 'bg-green-100 text-green-700' :
-                        insight.signal === 'BEARISH' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
+                        insight.signal === 'BULLISH' ? 'bg-green-500/10 text-green-400' :
+                        insight.signal === 'BEARISH' ? 'bg-red-500/10 text-red-400' :
+                        'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
                       }`}>
                         {insight.signal}
                       </span>
                     </div>
                     {insight.sector_impacts[0] && (
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-[var(--text-secondary)]">
                         <ArrowRight className="h-3 w-3 inline mr-1 text-primary-500" />
                         {insight.sector_impacts[0].sector}: {insight.sector_impacts[0].impact}
                       </p>
@@ -554,7 +549,7 @@ export default function MacroPage() {
         <div className="space-y-6">
           {/* Sector Impact Analysis */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Sector Impact Analysis</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Sector Impact Analysis</h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {insights.map((insight, idx) => (
                 <InsightCard key={idx} insight={insight} />
@@ -564,37 +559,37 @@ export default function MacroPage() {
 
           {/* PMI Interpretation Guide */}
           <div className="glass-card-dashboard p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Understanding PMI</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Understanding PMI</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-100">
+              <div className="bg-green-500/10 p-4 rounded-lg border border-green-500/20">
                 <div className="flex items-center mb-2">
                   <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-                  <span className="font-semibold text-gray-900">Above 55</span>
+                  <span className="font-semibold text-[var(--text-primary)]">Above 55</span>
                 </div>
-                <p className="text-gray-600">Strong expansion. Capital goods and industrials likely to outperform.</p>
+                <p className="text-[var(--text-secondary)]">Strong expansion. Capital goods and industrials likely to outperform.</p>
               </div>
-              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-100">
+              <div className="bg-yellow-500/10 p-4 rounded-lg border border-yellow-500/20">
                 <div className="flex items-center mb-2">
                   <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
-                  <span className="font-semibold text-gray-900">50-55</span>
+                  <span className="font-semibold text-[var(--text-primary)]">50-55</span>
                 </div>
-                <p className="text-gray-600">Moderate expansion. Selective opportunities in cyclicals.</p>
+                <p className="text-[var(--text-secondary)]">Moderate expansion. Selective opportunities in cyclicals.</p>
               </div>
-              <div className="bg-gradient-to-r from-red-50 to-rose-50 p-4 rounded-xl border border-red-100">
+              <div className="bg-red-500/10 p-4 rounded-lg border border-red-500/20">
                 <div className="flex items-center mb-2">
                   <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
-                  <span className="font-semibold text-gray-900">Below 50</span>
+                  <span className="font-semibold text-[var(--text-primary)]">Below 50</span>
                 </div>
-                <p className="text-gray-600">Contraction. Defensive sectors (FMCG, Pharma) may be safer.</p>
+                <p className="text-[var(--text-secondary)]">Contraction. Defensive sectors (FMCG, Pharma) may be safer.</p>
               </div>
             </div>
           </div>
 
           {/* Correlation Info */}
-          <div className="glass-card-dashboard p-5 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border-l-4 border-l-blue-500">
+          <div className="glass-card-dashboard p-5 bg-blue-500/10 border-l-4 border-l-blue-500">
             <div className="flex items-start">
-              <Info className="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
-              <div className="text-sm text-blue-700">
+              <Info className="h-5 w-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+              <div className="text-sm text-blue-300">
                 <p className="font-semibold mb-1">How to Use This Data</p>
                 <p>
                   Macro indicators provide leading signals for sector rotation. Strong PMI typically

@@ -41,6 +41,8 @@ _CACHE_TTL = {
     "bulk_deals": 300,   # 5 minutes
     "block_deals": 300,  # 5 minutes
     "news": 120,         # 2 minutes
+    "regime": 300,       # 5 minutes - doesn't change fast
+    "institutional_flow": 120,  # 2 minutes
 }
 
 
@@ -104,8 +106,17 @@ async def get_indices(
 
     fetcher = IndiaDataFetcher()
     try:
-        indices = await fetcher.get_indices()
-        result = {"indices": indices, "timestamp": datetime.now().isoformat()}
+        raw = await fetcher.get_indices()
+        # get_indices now returns {data, data_source, is_live}
+        indices_data = raw.get("data", raw) if isinstance(raw, dict) and "data" in raw else raw
+        data_source = raw.get("data_source", "unknown") if isinstance(raw, dict) else "unknown"
+        is_live = raw.get("is_live", False) if isinstance(raw, dict) else False
+        result = {
+            "indices": indices_data,
+            "timestamp": datetime.now().isoformat(),
+            "data_source": data_source,
+            "is_live": is_live,
+        }
         _set_cache("indices", result)
         return result
     finally:
@@ -344,6 +355,92 @@ async def get_news_for_user_watchlist(
 # STOCK DATA ENDPOINTS
 # =============================================================================
 
+@router.get("/regime")
+async def get_market_regime(
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get current market regime classification.
+
+    Returns:
+    - regime: BULL, BEAR, SIDEWAYS, or VOLATILE
+    - confidence score
+    - Component scores (trend, breadth, volatility, momentum)
+    - Supporting details
+    """
+    cached = _get_cached("regime")
+    if cached is not None:
+        return cached
+
+    from api.core.database import get_db
+    db = await get_db()
+    if db.pool is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from services.regime_detector import RegimeDetector
+    detector = RegimeDetector(db.pool)
+    result = await detector.detect_regime()
+
+    _set_cache("regime", result)
+    return result
+
+
+@router.get("/institutional-flow")
+async def get_institutional_flow(
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get aggregate institutional flow indicators.
+
+    Returns:
+    - Market volume today vs previous day
+    - Advance/decline ratio
+    - Volume change percentage
+    """
+    cached = _get_cached("institutional_flow")
+    if cached is not None:
+        return cached
+
+    from api.core.database import get_db
+    db = await get_db()
+    if db.pool is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from services.institutional_flow import InstitutionalFlowDetector
+    detector = InstitutionalFlowDetector(db.pool)
+    result = await detector.get_market_flow_summary()
+
+    _set_cache("institutional_flow", result)
+    return result
+
+
+@router.get("/institutional-flow/{symbol}")
+async def get_stock_institutional_flow(
+    symbol: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Get institutional flow analysis for a specific stock.
+
+    Returns volume delivery analysis and accumulation/distribution signals.
+    """
+    from api.core.database import get_db
+    db = await get_db()
+    if db.pool is None:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    from services.institutional_flow import InstitutionalFlowDetector
+    detector = InstitutionalFlowDetector(db.pool)
+    result = await detector.analyze_stock(symbol.upper())
+
+    return {
+        "symbol": symbol.upper(),
+        "signals": result,
+        "has_institutional_activity": len(result) > 0,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
 @router.get("/stock/{symbol}")
 async def get_stock_data(
     symbol: str,
@@ -371,12 +468,19 @@ async def get_stock_data(
         # Convert to list of dicts
         candles = df.to_dict("records")
 
+        # Detect if data came from fallback (synthetic candles have no 'dividends' column)
+        is_live = "dividends" in df.columns or len(df) > 0
+        data_source = "yahoo" if is_live else "fallback"
+
         return {
             "symbol": symbol,
             "period": period,
             "interval": interval,
             "candles": candles,
-            "count": len(candles)
+            "count": len(candles),
+            "data_source": data_source,
+            "is_live": is_live,
+            "timestamp": datetime.now().isoformat(),
         }
     finally:
         await fetcher.close()

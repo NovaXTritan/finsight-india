@@ -10,6 +10,7 @@ import {
   OIAnalysis,
   FNOSymbol,
 } from '@/lib/api';
+import dynamic from 'next/dynamic';
 import {
   TrendingUp,
   TrendingDown,
@@ -22,6 +23,11 @@ import {
   Gauge,
 } from 'lucide-react';
 
+const StockChart = dynamic(
+  () => import('@/components/StockChart').then(mod => mod.StockChart),
+  { ssr: false, loading: () => <div className="h-[300px] bg-[var(--bg-overlay)] rounded animate-pulse" /> }
+);
+
 export default function FNOPage() {
   const [symbols, setSymbols] = useState<FNOSymbol[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState('NIFTY');
@@ -31,7 +37,7 @@ export default function FNOPage() {
   const [oiAnalysis, setOIAnalysis] = useState<OIAnalysis | null>(null);
   const [ivData, setIVData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chain' | 'analysis'>('chain');
+  const [activeTab, setActiveTab] = useState<'chart' | 'chain' | 'analysis'>('chart');
 
   useEffect(() => {
     loadSymbols();
@@ -55,18 +61,18 @@ export default function FNOPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [chainData, painData, pcrData, oiData, ivInfo] = await Promise.all([
+      const [chainRes, painRes, pcrRes, oiRes, ivRes] = await Promise.allSettled([
         optionsApi.getChainByStrikes(selectedSymbol, 15),
         optionsApi.getMaxPain(selectedSymbol),
         optionsApi.getPCR(selectedSymbol),
         optionsApi.getOIAnalysis(selectedSymbol),
         optionsApi.getIVPercentile(selectedSymbol),
       ]);
-      setOptionChain(chainData);
-      setMaxPain(painData);
-      setPCR(pcrData);
-      setOIAnalysis(oiData);
-      setIVData(ivInfo);
+      if (chainRes.status === 'fulfilled') setOptionChain(chainRes.value);
+      if (painRes.status === 'fulfilled') setMaxPain(painRes.value);
+      if (pcrRes.status === 'fulfilled') setPCR(pcrRes.value);
+      if (oiRes.status === 'fulfilled') setOIAnalysis(oiRes.value);
+      if (ivRes.status === 'fulfilled') setIVData(ivRes.value);
     } catch (error) {
       console.error('Failed to load F&O data:', error);
     } finally {
@@ -105,12 +111,12 @@ export default function FNOPage() {
       <div className="glass-card-dashboard p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-3 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl shadow-glow">
+            <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
               <Gauge className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">F&O Analytics</h1>
-              <p className="text-gray-500">Option chain, Greeks, Max Pain, PCR</p>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">F&O Analytics</h1>
+              <p className="text-[var(--text-secondary)]">Option chain, Greeks, Max Pain, PCR</p>
             </div>
           </div>
           <div className="flex items-center space-x-3">
@@ -118,7 +124,7 @@ export default function FNOPage() {
               <select
                 value={selectedSymbol}
                 onChange={(e) => setSelectedSymbol(e.target.value)}
-                className="input-glass-light pr-10 appearance-none cursor-pointer"
+                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg pr-10 appearance-none cursor-pointer px-3 py-2"
               >
                 <optgroup label="Indices">
                   {symbols.filter((s) => s.is_index).map((s) => (
@@ -135,7 +141,7 @@ export default function FNOPage() {
                   ))}
                 </optgroup>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)] pointer-events-none" />
             </div>
             <button
               onClick={loadData}
@@ -154,22 +160,22 @@ export default function FNOPage() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Spot Price */}
           <div className="glass-card-dashboard p-4 card-hover-lift">
-            <div className="text-sm text-gray-500 mb-1">Spot Price</div>
-            <p className="text-xl font-bold text-gray-900">
+            <div className="text-sm text-[var(--text-secondary)] mb-1">Spot Price</div>
+            <p className="text-xl font-bold font-mono text-[var(--text-primary)]">
               {formatNumber(optionChain.spot_price)}
             </p>
-            <p className="text-xs text-gray-500">Lot: {optionChain.lot_size}</p>
+            <p className="text-xs text-[var(--text-secondary)] font-mono">Lot: {optionChain.lot_size}</p>
           </div>
 
           {/* Max Pain */}
           {maxPain && (
             <div className="glass-card-dashboard p-4 card-hover-lift border-l-4 border-l-purple-500">
-              <div className="flex items-center space-x-1 text-sm text-gray-500 mb-1">
+              <div className="flex items-center space-x-1 text-sm text-[var(--text-secondary)] mb-1">
                 <Target className="h-4 w-4 text-purple-500" />
                 <span>Max Pain</span>
               </div>
-              <p className="text-xl font-bold text-purple-600">{formatNumber(maxPain.max_pain)}</p>
-              <p className={`text-xs ${maxPain.distance_from_spot > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className="text-xl font-bold font-mono text-purple-400">{formatNumber(maxPain.max_pain)}</p>
+              <p className={`text-xs font-mono ${maxPain.distance_from_spot > 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {maxPain.distance_from_spot > 0 ? '+' : ''}{maxPain.distance_from_spot}% from spot
               </p>
             </div>
@@ -179,19 +185,19 @@ export default function FNOPage() {
           {pcr && (
             <div className={`glass-card-dashboard p-4 card-hover-lift border-l-4 ${
               pcr.sentiment === 'BULLISH' ? 'border-l-green-500' :
-              pcr.sentiment === 'BEARISH' ? 'border-l-red-500' : 'border-l-gray-400'
+              pcr.sentiment === 'BEARISH' ? 'border-l-red-500' : 'border-l-[var(--text-muted)]'
             }`}>
-              <div className="flex items-center space-x-1 text-sm text-gray-500 mb-1">
+              <div className="flex items-center space-x-1 text-sm text-[var(--text-secondary)] mb-1">
                 <BarChart3 className="h-4 w-4 text-primary-500" />
                 <span>PCR (OI)</span>
               </div>
-              <p className={`text-xl font-bold ${
-                pcr.sentiment === 'BULLISH' ? 'text-green-600' :
-                pcr.sentiment === 'BEARISH' ? 'text-red-600' : 'text-gray-900'
+              <p className={`text-xl font-bold font-mono ${
+                pcr.sentiment === 'BULLISH' ? 'text-green-400' :
+                pcr.sentiment === 'BEARISH' ? 'text-red-400' : 'text-[var(--text-primary)]'
               }`}>
                 {pcr.pcr_oi}
               </p>
-              <p className="text-xs text-gray-500">{pcr.sentiment}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{pcr.sentiment}</p>
             </div>
           )}
 
@@ -201,14 +207,14 @@ export default function FNOPage() {
               ivData.iv_interpretation === 'HIGH' ? 'border-l-red-500' :
               ivData.iv_interpretation === 'LOW' ? 'border-l-green-500' : 'border-l-yellow-500'
             }`}>
-              <div className="flex items-center space-x-1 text-sm text-gray-500 mb-1">
+              <div className="flex items-center space-x-1 text-sm text-[var(--text-secondary)] mb-1">
                 <Activity className="h-4 w-4 text-orange-500" />
                 <span>ATM IV</span>
               </div>
-              <p className="text-xl font-bold text-gray-900">{ivData.current_iv}%</p>
-              <p className={`text-xs ${
-                ivData.iv_interpretation === 'HIGH' ? 'text-red-600' :
-                ivData.iv_interpretation === 'LOW' ? 'text-green-600' : 'text-gray-500'
+              <p className="text-xl font-bold font-mono text-[var(--text-primary)]">{ivData.current_iv}%</p>
+              <p className={`text-xs font-mono ${
+                ivData.iv_interpretation === 'HIGH' ? 'text-red-400' :
+                ivData.iv_interpretation === 'LOW' ? 'text-green-400' : 'text-[var(--text-secondary)]'
               }`}>
                 {ivData.iv_interpretation} ({ivData.iv_percentile}%)
               </p>
@@ -218,13 +224,13 @@ export default function FNOPage() {
           {/* Support/Resistance */}
           {oiAnalysis && (
             <div className="glass-card-dashboard p-4 card-hover-lift">
-              <div className="text-sm text-gray-500 mb-1">Support / Resistance</div>
+              <div className="text-sm text-[var(--text-secondary)] mb-1">Support / Resistance</div>
               <div className="flex items-center space-x-2">
-                <span className="text-green-600 font-bold">{oiAnalysis.max_pe_oi_strike}</span>
-                <span className="text-gray-400">/</span>
-                <span className="text-red-600 font-bold">{oiAnalysis.max_ce_oi_strike}</span>
+                <span className="text-green-400 font-bold font-mono">{oiAnalysis.max_pe_oi_strike}</span>
+                <span className="text-[var(--text-muted)]">/</span>
+                <span className="text-red-400 font-bold font-mono">{oiAnalysis.max_ce_oi_strike}</span>
               </div>
-              <p className="text-xs text-gray-500">Max OI strikes</p>
+              <p className="text-xs text-[var(--text-secondary)]">Max OI strikes</p>
             </div>
           )}
         </div>
@@ -233,16 +239,17 @@ export default function FNOPage() {
       {/* Tabs */}
       <div className="flex space-x-2">
         {[
+          { id: 'chart', label: 'Price Chart' },
           { id: 'chain', label: 'Option Chain' },
           { id: 'analysis', label: 'OI Analysis' },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-6 py-3 rounded-xl text-sm font-medium transition-all ${
+            className={`px-6 py-3 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
-                ? 'bg-gradient-to-r from-primary-500 to-purple-500 text-white shadow-glow'
-                : 'glass-card-dashboard text-gray-600 hover:text-primary-600'
+                ? 'bg-primary-500/10 text-primary-400'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
             }`}
           >
             {tab.label}
@@ -250,33 +257,42 @@ export default function FNOPage() {
         ))}
       </div>
 
+      {/* Price Chart */}
+      {activeTab === 'chart' && (
+        <StockChart
+          symbol={selectedSymbol === 'NIFTY' ? '^NSEI' : selectedSymbol === 'BANKNIFTY' ? '^NSEBANK' : selectedSymbol}
+          height={450}
+          defaultPeriod="3mo"
+        />
+      )}
+
       {/* Option Chain Table */}
       {activeTab === 'chain' && (
         <div className="glass-card-dashboard overflow-hidden">
           {isLoading ? (
             <div className="p-8 text-center">
               <RefreshCw className="h-8 w-8 text-primary-400 animate-spin mx-auto" />
-              <p className="mt-2 text-gray-500">Loading option chain...</p>
+              <p className="mt-2 text-[var(--text-secondary)]">Loading option chain...</p>
             </div>
           ) : !optionChain ? (
             <div className="p-8 text-center">
               <Activity className="h-12 w-12 text-primary-300 mx-auto" />
-              <p className="mt-2 text-gray-500">Select a symbol to view option chain</p>
+              <p className="mt-2 text-[var(--text-secondary)]">Select a symbol to view option chain</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gradient-to-r from-primary-50 via-white to-purple-50 border-b border-primary-100">
-                    <th colSpan={8} className="px-2 py-3 text-center text-green-700 bg-green-50/80 border-r border-primary-100 font-semibold">
+                  <tr className="bg-[var(--bg-overlay)] border-b border-[var(--border-primary)]">
+                    <th colSpan={8} className="px-2 py-3 text-center text-green-400 bg-green-500/10 border-r border-[var(--border-primary)] font-semibold">
                       CALLS
                     </th>
-                    <th className="px-3 py-3 text-center bg-gradient-to-r from-primary-100 to-purple-100 font-bold text-primary-700">Strike</th>
-                    <th colSpan={8} className="px-2 py-3 text-center text-red-700 bg-red-50/80 border-l border-primary-100 font-semibold">
+                    <th className="px-3 py-3 text-center bg-primary-500/10 font-bold text-primary-400">Strike</th>
+                    <th colSpan={8} className="px-2 py-3 text-center text-red-400 bg-red-500/10 border-l border-[var(--border-primary)] font-semibold">
                       PUTS
                     </th>
                   </tr>
-                  <tr className="bg-gray-50/80 border-b border-primary-100 text-xs text-gray-500">
+                  <tr className="bg-[var(--bg-overlay)] border-b border-[var(--border-primary)] text-xs text-[var(--text-secondary)]">
                     <th className="px-2 py-2 text-right">OI</th>
                     <th className="px-2 py-2 text-right">Chg</th>
                     <th className="px-2 py-2 text-right">Vol</th>
@@ -284,9 +300,9 @@ export default function FNOPage() {
                     <th className="px-2 py-2 text-right">LTP</th>
                     <th className="px-2 py-2 text-right">Delta</th>
                     <th className="px-2 py-2 text-right">Theta</th>
-                    <th className="px-2 py-2 text-right border-r border-primary-100">Vega</th>
-                    <th className="px-3 py-2 text-center bg-primary-50/50">Strike</th>
-                    <th className="px-2 py-2 text-right border-l border-primary-100">Vega</th>
+                    <th className="px-2 py-2 text-right border-r border-[var(--border-primary)]">Vega</th>
+                    <th className="px-3 py-2 text-center bg-primary-500/10">Strike</th>
+                    <th className="px-2 py-2 text-right border-l border-[var(--border-primary)]">Vega</th>
                     <th className="px-2 py-2 text-right">Theta</th>
                     <th className="px-2 py-2 text-right">Delta</th>
                     <th className="px-2 py-2 text-right">LTP</th>
@@ -296,97 +312,97 @@ export default function FNOPage() {
                     <th className="px-2 py-2 text-right">OI</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-primary-100/50">
+                <tbody className="divide-y divide-[var(--border-primary)]">
                   {optionChain.strikes.map((strike) => (
                     <tr
                       key={strike.strike}
                       className={`transition-colors ${
                         strike.is_atm
-                          ? 'bg-gradient-to-r from-yellow-50 via-yellow-100/50 to-yellow-50'
+                          ? 'bg-yellow-500/10'
                           : strike.is_itm_ce
-                          ? 'bg-green-50/40'
+                          ? 'bg-green-500/5'
                           : strike.is_itm_pe
-                          ? 'bg-red-50/40'
-                          : 'hover:bg-primary-50/30'
+                          ? 'bg-red-500/5'
+                          : 'hover:bg-[var(--bg-overlay)]'
                       }`}
                     >
                       {/* CE Side */}
                       <td className="px-2 py-2 text-right">
                         <div className="flex items-center justify-end">
                           <div
-                            className="h-2 bg-gradient-to-r from-green-300 to-green-400 rounded-full mr-1"
+                            className="h-2 bg-green-400 rounded-full mr-1"
                             style={{ width: `${getOIBarWidth(strike.ce?.oi || 0, maxOI)}px`, maxWidth: '60px' }}
                           />
-                          <span className={strike.ce?.oi === oiAnalysis?.max_ce_oi ? 'font-bold text-green-700' : ''}>
+                          <span className={`font-mono ${strike.ce?.oi === oiAnalysis?.max_ce_oi ? 'font-bold text-green-400' : ''}`}>
                             {formatLargeNumber(strike.ce?.oi)}
                           </span>
                         </div>
                       </td>
-                      <td className={`px-2 py-2 text-right ${
-                        (strike.ce?.oi_change || 0) > 0 ? 'text-green-600' : 'text-red-600'
+                      <td className={`px-2 py-2 text-right font-mono ${
+                        (strike.ce?.oi_change || 0) > 0 ? 'text-green-400' : 'text-red-400'
                       }`}>
                         {formatLargeNumber(strike.ce?.oi_change)}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-600">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] font-mono">
                         {formatLargeNumber(strike.ce?.volume)}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-600">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] font-mono">
                         {strike.ce?.iv?.toFixed(1) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right font-medium">
+                      <td className="px-2 py-2 text-right font-medium font-mono">
                         {strike.ce?.ltp?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-500 text-xs">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono">
                         {strike.ce?.delta?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-500 text-xs">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono">
                         {strike.ce?.theta?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-500 text-xs border-r border-primary-100">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono border-r border-[var(--border-primary)]">
                         {strike.ce?.vega?.toFixed(2) || '-'}
                       </td>
 
                       {/* Strike */}
-                      <td className={`px-3 py-2 text-center font-bold ${
+                      <td className={`px-3 py-2 text-center font-bold font-mono ${
                         strike.is_atm
-                          ? 'bg-gradient-to-r from-yellow-200 via-yellow-300 to-yellow-200 text-yellow-800'
-                          : 'bg-gradient-to-r from-primary-50 to-purple-50'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-primary-500/10'
                       }`}>
                         {strike.strike}
                         {strike.is_atm && <span className="block text-xs font-medium">ATM</span>}
                       </td>
 
                       {/* PE Side */}
-                      <td className="px-2 py-2 text-right text-gray-500 text-xs border-l border-primary-100">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono border-l border-[var(--border-primary)]">
                         {strike.pe?.vega?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-500 text-xs">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono">
                         {strike.pe?.theta?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-500 text-xs">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono">
                         {strike.pe?.delta?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right font-medium">
+                      <td className="px-2 py-2 text-right font-medium font-mono">
                         {strike.pe?.ltp?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-600">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] font-mono">
                         {strike.pe?.iv?.toFixed(1) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-gray-600">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] font-mono">
                         {formatLargeNumber(strike.pe?.volume)}
                       </td>
-                      <td className={`px-2 py-2 text-right ${
-                        (strike.pe?.oi_change || 0) > 0 ? 'text-green-600' : 'text-red-600'
+                      <td className={`px-2 py-2 text-right font-mono ${
+                        (strike.pe?.oi_change || 0) > 0 ? 'text-green-400' : 'text-red-400'
                       }`}>
                         {formatLargeNumber(strike.pe?.oi_change)}
                       </td>
                       <td className="px-2 py-2 text-right">
                         <div className="flex items-center">
-                          <span className={strike.pe?.oi === oiAnalysis?.max_pe_oi ? 'font-bold text-red-700' : ''}>
+                          <span className={`font-mono ${strike.pe?.oi === oiAnalysis?.max_pe_oi ? 'font-bold text-red-400' : ''}`}>
                             {formatLargeNumber(strike.pe?.oi)}
                           </span>
                           <div
-                            className="h-2 bg-gradient-to-r from-red-400 to-red-300 rounded-full ml-1"
+                            className="h-2 bg-red-400 rounded-full ml-1"
                             style={{ width: `${getOIBarWidth(strike.pe?.oi || 0, maxOI)}px`, maxWidth: '60px' }}
                           />
                         </div>
@@ -406,36 +422,36 @@ export default function FNOPage() {
           {/* PCR Details */}
           {pcr && (
             <div className="glass-card-dashboard p-6 card-hover-lift">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div className="p-2 bg-gradient-to-br from-primary-100 to-purple-100 rounded-lg mr-3">
-                  <BarChart3 className="h-5 w-5 text-primary-600" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg mr-3">
+                  <BarChart3 className="h-5 w-5 text-primary-400" />
                 </div>
                 Put-Call Ratio
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">PCR (OI)</span>
-                  <span className={`text-xl font-bold ${
-                    pcr.sentiment === 'BULLISH' ? 'text-green-600' :
-                    pcr.sentiment === 'BEARISH' ? 'text-red-600' : 'text-gray-900'
+                  <span className="text-[var(--text-secondary)]">PCR (OI)</span>
+                  <span className={`text-xl font-bold font-mono ${
+                    pcr.sentiment === 'BULLISH' ? 'text-green-400' :
+                    pcr.sentiment === 'BEARISH' ? 'text-red-400' : 'text-[var(--text-primary)]'
                   }`}>{pcr.pcr_oi}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">PCR (Volume)</span>
-                  <span className="font-bold">{pcr.pcr_volume}</span>
+                  <span className="text-[var(--text-secondary)]">PCR (Volume)</span>
+                  <span className="font-bold font-mono">{pcr.pcr_volume}</span>
                 </div>
-                <div className="h-4 bg-gradient-to-r from-green-100 to-red-100 rounded-full overflow-hidden">
+                <div className="h-4 bg-[var(--bg-overlay)] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full"
+                    className="h-full bg-green-500 rounded-full"
                     style={{ width: `${(pcr.put_oi / (pcr.call_oi + pcr.put_oi)) * 100}%` }}
                   />
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-green-600 font-medium">Put OI: {formatLargeNumber(pcr.put_oi)}</span>
-                  <span className="text-red-600 font-medium">Call OI: {formatLargeNumber(pcr.call_oi)}</span>
+                  <span className="text-green-400 font-medium font-mono">Put OI: {formatLargeNumber(pcr.put_oi)}</span>
+                  <span className="text-red-400 font-medium font-mono">Call OI: {formatLargeNumber(pcr.call_oi)}</span>
                 </div>
-                <div className="mt-4 p-4 bg-gradient-to-r from-primary-50 to-purple-50 rounded-xl border border-primary-100">
-                  <p className="text-sm text-gray-600">{pcr.description}</p>
+                <div className="mt-4 p-4 bg-[var(--bg-overlay)] rounded-lg border border-[var(--border-primary)]">
+                  <p className="text-sm text-[var(--text-secondary)]">{pcr.description}</p>
                 </div>
               </div>
             </div>
@@ -444,31 +460,31 @@ export default function FNOPage() {
           {/* Max Pain Details */}
           {maxPain && (
             <div className="glass-card-dashboard p-6 card-hover-lift">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div className="p-2 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg mr-3">
-                  <Target className="h-5 w-5 text-purple-600" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                <div className="p-2 bg-purple-500/10 border border-purple-500/20 rounded-lg mr-3">
+                  <Target className="h-5 w-5 text-purple-400" />
                 </div>
                 Max Pain Analysis
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Max Pain Strike</span>
-                  <span className="text-xl font-bold text-purple-600">{maxPain.max_pain}</span>
+                  <span className="text-[var(--text-secondary)]">Max Pain Strike</span>
+                  <span className="text-xl font-bold font-mono text-purple-400">{maxPain.max_pain}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Current Spot</span>
-                  <span className="font-bold">{formatNumber(maxPain.current_price)}</span>
+                  <span className="text-[var(--text-secondary)]">Current Spot</span>
+                  <span className="font-bold font-mono">{formatNumber(maxPain.current_price)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Distance from Spot</span>
-                  <span className={`font-bold ${maxPain.distance_from_spot > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className="text-[var(--text-secondary)]">Distance from Spot</span>
+                  <span className={`font-bold font-mono ${maxPain.distance_from_spot > 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {maxPain.distance_from_spot > 0 ? '+' : ''}{maxPain.distance_from_spot}%
                   </span>
                 </div>
-                <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+                <div className="mt-4 p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
                   <div className="flex items-start space-x-2">
-                    <Info className="h-4 w-4 text-purple-600 mt-0.5" />
-                    <p className="text-sm text-purple-800">
+                    <Info className="h-4 w-4 text-purple-400 mt-0.5" />
+                    <p className="text-sm text-purple-300">
                       Max Pain is where option writers make maximum profit.
                       Price tends to gravitate toward this level near expiry.
                     </p>
@@ -480,23 +496,23 @@ export default function FNOPage() {
 
           {/* Support/Resistance */}
           <div className="glass-card-dashboard p-6 card-hover-lift">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <div className="p-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg mr-3">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+              <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg mr-3">
+                <TrendingUp className="h-5 w-5 text-blue-400" />
               </div>
               Support & Resistance
             </h3>
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-gray-500 mb-2">Resistance (Max Call OI)</p>
+                <p className="text-sm text-[var(--text-secondary)] mb-2">Resistance (Max Call OI)</p>
                 <div className="flex flex-wrap gap-2">
                   {oiAnalysis.resistance_levels.map((level) => (
                     <span
                       key={level}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium font-mono transition-all ${
                         level === oiAnalysis.max_ce_oi_strike
-                          ? 'bg-gradient-to-r from-red-100 to-red-200 text-red-700 shadow-sm'
-                          : 'bg-red-50 text-red-600 hover:bg-red-100'
+                          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                       }`}
                     >
                       {level}
@@ -505,15 +521,15 @@ export default function FNOPage() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-500 mb-2">Support (Max Put OI)</p>
+                <p className="text-sm text-[var(--text-secondary)] mb-2">Support (Max Put OI)</p>
                 <div className="flex flex-wrap gap-2">
                   {oiAnalysis.support_levels.map((level) => (
                     <span
                       key={level}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium font-mono transition-all ${
                         level === oiAnalysis.max_pe_oi_strike
-                          ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-700 shadow-sm'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                          : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
                       }`}
                     >
                       {level}
@@ -521,9 +537,9 @@ export default function FNOPage() {
                   ))}
                 </div>
               </div>
-              <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
-                <p className="text-sm text-blue-800 font-medium">
-                  Range: {oiAnalysis.support_levels[0]} - {oiAnalysis.resistance_levels[oiAnalysis.resistance_levels.length - 1]}
+              <div className="mt-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <p className="text-sm text-blue-300 font-medium font-mono">
+                  Range: {oiAnalysis.support_levels[0] ?? '—'} - {oiAnalysis.resistance_levels[oiAnalysis.resistance_levels.length - 1] ?? '—'}
                 </p>
               </div>
             </div>
@@ -532,35 +548,35 @@ export default function FNOPage() {
           {/* IV Analysis */}
           {ivData && (
             <div className="glass-card-dashboard p-6 card-hover-lift">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div className="p-2 bg-gradient-to-br from-orange-100 to-amber-100 rounded-lg mr-3">
-                  <Activity className="h-5 w-5 text-orange-600" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
+                <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded-lg mr-3">
+                  <Activity className="h-5 w-5 text-orange-400" />
                 </div>
                 Implied Volatility
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">ATM IV</span>
-                  <span className="text-xl font-bold">{ivData.current_iv}%</span>
+                  <span className="text-[var(--text-secondary)]">ATM IV</span>
+                  <span className="text-xl font-bold font-mono">{ivData.current_iv}%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">IV Percentile</span>
-                  <span className={`font-bold ${
-                    ivData.iv_interpretation === 'HIGH' ? 'text-red-600' :
-                    ivData.iv_interpretation === 'LOW' ? 'text-green-600' : 'text-gray-900'
+                  <span className="text-[var(--text-secondary)]">IV Percentile</span>
+                  <span className={`font-bold font-mono ${
+                    ivData.iv_interpretation === 'HIGH' ? 'text-red-400' :
+                    ivData.iv_interpretation === 'LOW' ? 'text-green-400' : 'text-[var(--text-primary)]'
                   }`}>{ivData.iv_percentile}%</span>
                 </div>
-                <div className="h-3 bg-gradient-to-r from-green-100 via-yellow-100 to-red-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-[var(--bg-overlay)] rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      ivData.iv_interpretation === 'HIGH' ? 'bg-gradient-to-r from-red-500 to-red-400' :
-                      ivData.iv_interpretation === 'LOW' ? 'bg-gradient-to-r from-green-500 to-green-400' : 'bg-gradient-to-r from-yellow-500 to-yellow-400'
+                      ivData.iv_interpretation === 'HIGH' ? 'bg-red-500' :
+                      ivData.iv_interpretation === 'LOW' ? 'bg-green-500' : 'bg-yellow-500'
                     }`}
                     style={{ width: `${ivData.iv_percentile}%` }}
                   />
                 </div>
-                <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-100">
-                  <p className="text-sm text-orange-800">{ivData.recommendation}</p>
+                <div className="mt-4 p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                  <p className="text-sm text-orange-300">{ivData.recommendation}</p>
                 </div>
               </div>
             </div>
@@ -572,9 +588,9 @@ export default function FNOPage() {
       {optionChain && (
         <div className="text-center">
           <div className="inline-flex items-center space-x-4 glass-card-dashboard px-6 py-3">
-            <span className="text-sm text-gray-500">Expiry: <span className="font-medium text-gray-700">{optionChain.expiry_date}</span></span>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm text-gray-500">Updated: <span className="font-medium text-gray-700">{new Date().toLocaleTimeString()}</span></span>
+            <span className="text-sm text-[var(--text-secondary)]">Expiry: <span className="font-medium text-[var(--text-primary)]">{optionChain.expiry_date}</span></span>
+            <span className="text-[var(--text-muted)]">|</span>
+            <span className="text-sm text-[var(--text-secondary)]">Updated: <span className="font-medium text-[var(--text-primary)]">{new Date().toLocaleTimeString()}</span></span>
           </div>
         </div>
       )}

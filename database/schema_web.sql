@@ -173,6 +173,30 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON password_reset_tokens(token);
 
 -- =============================================================================
+-- NEW: Signal outcomes (Phase 2: outcome tracking)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS signal_outcomes (
+    id SERIAL PRIMARY KEY,
+    signal_id TEXT NOT NULL REFERENCES anomalies(id) ON DELETE CASCADE,
+    horizon_days INT NOT NULL,
+    price_at_signal DECIMAL(12,2) NOT NULL,
+    price_at_horizon DECIMAL(12,2),
+    return_pct FLOAT,
+    was_correct BOOLEAN,
+    tracked_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(signal_id, horizon_days)
+);
+
+CREATE INDEX IF NOT EXISTS idx_signal_outcomes_signal ON signal_outcomes(signal_id);
+CREATE INDEX IF NOT EXISTS idx_signal_outcomes_horizon ON signal_outcomes(horizon_days);
+
+-- =============================================================================
+-- MIGRATION: Add Phase 2 columns to anomalies
+-- =============================================================================
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS confidence_level INT DEFAULT 1;
+ALTER TABLE anomalies ADD COLUMN IF NOT EXISTS catalyst_context JSONB;
+
+-- =============================================================================
 -- MIGRATION: If upgrading from old schema
 -- =============================================================================
 -- Run these if tables already exist without new columns:
