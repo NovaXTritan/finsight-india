@@ -41,8 +41,6 @@ COPY agents/ ./agents/
 COPY learning/ ./learning/
 COPY tracking/ ./tracking/
 COPY services/ ./services/
-COPY scripts/ ./scripts/
-COPY database/ ./database/
 
 # Create non-root user for security
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
