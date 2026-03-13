@@ -57,7 +57,7 @@ export function ToastContainer() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-start gap-3 p-4 bg-[var(--bg-raised)] border border-[var(--border-primary)] border-l-2 ${borderColors[t.type]} rounded-lg shadow-lg animate-slide-up`}
+          className={`flex items-start gap-3 p-4 bg-[var(--bg-elevated)] border border-[var(--border-default)] border-l-2 ${borderColors[t.type]} rounded-lg shadow-lg animate-slide-up`}
         >
           <div className="flex-shrink-0 mt-0.5">{icons[t.type]}</div>
           <p className="text-sm text-[var(--text-primary)] flex-1">{t.message}</p>

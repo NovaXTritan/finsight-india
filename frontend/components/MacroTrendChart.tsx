@@ -74,7 +74,7 @@ export function MacroTrendChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[var(--bg-raised)] p-3 border border-[var(--border-primary)] rounded-lg">
+        <div className="bg-[var(--bg-elevated)] p-3 border border-[var(--border-default)] rounded-lg">
           <p className="text-sm font-semibold text-[var(--text-primary)]">{label}</p>
           <p className="text-sm text-[var(--text-secondary)]">
             Value: <span className="font-bold font-mono text-primary-400">{formatValue(payload[0].value)}</span>
@@ -91,7 +91,7 @@ export function MacroTrendChart({
   };
 
   return (
-    <div className="glass-card-dashboard p-5">
+    <div className="card p-5">
       <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={height}>
         {chartType === 'bar' ? (
@@ -102,12 +102,12 @@ export function MacroTrendChart({
                 <stop offset="100%" stopColor={color} stopOpacity={0.6} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" strokeOpacity={0.5} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" strokeOpacity={0.5} />
             <XAxis
               dataKey="period"
               tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
               tickLine={false}
-              axisLine={{ stroke: 'var(--border-primary)' }}
+              axisLine={{ stroke: 'var(--border-default)' }}
             />
             <YAxis
               tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
@@ -138,12 +138,12 @@ export function MacroTrendChart({
                 <stop offset="100%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" strokeOpacity={0.5} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" strokeOpacity={0.5} />
             <XAxis
               dataKey="period"
               tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
               tickLine={false}
-              axisLine={{ stroke: 'var(--border-primary)' }}
+              axisLine={{ stroke: 'var(--border-default)' }}
             />
             <YAxis
               tick={{ fontSize: 10, fill: 'var(--text-muted)' }}
@@ -166,8 +166,8 @@ export function MacroTrendChart({
               dataKey="value"
               stroke={color}
               strokeWidth={3}
-              dot={{ fill: color, strokeWidth: 2, r: 4, stroke: 'var(--bg-raised)' }}
-              activeDot={{ r: 6, fill: color, stroke: 'var(--bg-raised)', strokeWidth: 2 }}
+              dot={{ fill: color, strokeWidth: 2, r: 4, stroke: 'var(--bg-elevated)' }}
+              activeDot={{ r: 6, fill: color, stroke: 'var(--bg-elevated)', strokeWidth: 2 }}
             />
           </LineChart>
         )}

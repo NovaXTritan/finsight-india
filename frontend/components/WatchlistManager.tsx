@@ -83,23 +83,23 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
   );
 
   return (
-    <div className="glass-card-dashboard overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Header */}
-      <div className="bg-[var(--bg-overlay)] px-6 py-4 border-b border-[var(--border-primary)]">
+      <div className="bg-[var(--bg-muted)] px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border-default)]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <Star className="h-5 w-5 text-yellow-400" />
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="p-1.5 sm:p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
             </div>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Watchlist</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-[var(--text-primary)]">Watchlist</h2>
           </div>
-          <span className="text-sm text-[var(--text-secondary)] font-medium font-mono">
-            {count} / {limit} symbols
+          <span className="text-xs sm:text-sm text-[var(--text-secondary)] font-medium font-mono">
+            {count} / {limit}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="mt-3 h-2 bg-[var(--bg-overlay)] rounded-full overflow-hidden border border-[var(--border-primary)]">
+        <div className="mt-3 h-2 bg-[var(--bg-muted)] rounded-full overflow-hidden border border-[var(--border-default)]">
           <div
             className={`h-full rounded-full transition-all duration-500 ${
               count >= limit ? 'bg-red-400' : count >= limit * 0.8 ? 'bg-yellow-400' : 'bg-primary-400'
@@ -110,7 +110,7 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
       </div>
 
       {/* Add Symbol Form */}
-      <div className="p-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)]">
+      <div className="p-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)]">
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
@@ -119,14 +119,14 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
               value={newSymbol}
               onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
               placeholder="Add symbol (e.g., RELIANCE)"
-              className="input-glass-light pl-10"
+              className="input pl-10"
               disabled={count >= limit}
             />
           </div>
           <button
             type="submit"
             disabled={isAdding || !newSymbol.trim() || count >= limit}
-            className="btn-glass-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="btn-primary px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isAdding ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -149,14 +149,14 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
 
       {/* Quick Add - Popular Stocks */}
       {availablePopularStocks.length > 0 && count < limit && (
-        <div className="px-4 py-3 border-b border-[var(--border-primary)]">
+        <div className="px-4 py-3 border-b border-[var(--border-default)]">
           <div className="text-xs font-medium text-[var(--text-secondary)] mb-2">Quick add popular stocks:</div>
           <div className="flex flex-wrap gap-2">
             {availablePopularStocks.slice(0, 5).map((stock) => (
               <button
                 key={stock}
                 onClick={() => handleAdd(stock)}
-                className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-overlay)] text-primary-400 rounded-lg hover:bg-[var(--bg-overlay)] transition-all border border-[var(--border-primary)]"
+                className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-muted)] text-primary-400 rounded-lg hover:bg-[var(--bg-muted)] transition-all border border-[var(--border-default)]"
               >
                 + {stock}
               </button>
@@ -166,7 +166,7 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
       )}
 
       {/* Watchlist Items */}
-      <div className="divide-y divide-[var(--border-primary)] max-h-[400px] overflow-y-auto">
+      <div className="divide-y divide-[var(--border-default)] max-h-[400px] overflow-y-auto">
         {symbols.length === 0 ? (
           <div className="p-8 text-center text-[var(--text-secondary)]">
             <div className="relative mx-auto w-16 h-16 mb-4">
@@ -179,7 +179,7 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
           symbols.map((symbol) => (
             <div
               key={symbol}
-              className="flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-overlay)] transition-colors group"
+              className="flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-muted)] transition-colors group"
             >
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
@@ -192,7 +192,7 @@ export function WatchlistManager({ onUpdate }: WatchlistManagerProps) {
               <button
                 onClick={() => handleRemove(symbol)}
                 disabled={removingSymbol === symbol}
-                className="p-2 text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50 opacity-0 group-hover:opacity-100"
+                className="p-2 text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50 sm:opacity-0 sm:group-hover:opacity-100"
                 title="Remove from watchlist"
               >
                 {removingSymbol === symbol ? (

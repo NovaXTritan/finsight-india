@@ -38,7 +38,7 @@ const CATEGORIES: { id: Category; label: string; icon: React.ElementType }[] = [
 const sentimentConfig = {
   positive: { icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-l-green-500' },
   negative: { icon: TrendingDown, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-l-red-500' },
-  neutral: { icon: Minus, color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--bg-overlay)]', border: 'border-l-gray-400' },
+  neutral: { icon: Minus, color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--bg-muted)]', border: 'border-l-gray-400' },
 } as const;
 
 const categoryColors: Record<string, string> = {
@@ -110,13 +110,13 @@ export function NewsFeed({
 
   if (isLoading && news.length === 0) {
     return (
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 w-24 bg-[var(--bg-overlay)] rounded" />
+          <div className="h-6 w-24 bg-[var(--bg-muted)] rounded" />
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
-              <div className="h-4 bg-[var(--bg-overlay)] rounded w-full" />
-              <div className="h-4 bg-[var(--bg-overlay)] rounded w-3/4" />
+              <div className="h-4 bg-[var(--bg-muted)] rounded w-full" />
+              <div className="h-4 bg-[var(--bg-muted)] rounded w-3/4" />
             </div>
           ))}
         </div>
@@ -125,28 +125,28 @@ export function NewsFeed({
   }
 
   return (
-    <div className="glass-card-dashboard overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[var(--border-primary)]">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border-default)]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
-              <Newspaper className="h-5 w-5 text-primary-400" />
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="p-1.5 sm:p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <Newspaper className="h-4 w-4 sm:h-5 sm:w-5 text-primary-400" />
             </div>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-              {symbol ? `${symbol} News` : 'Market News'}
+            <h2 className="text-base sm:text-lg font-semibold text-[var(--text-primary)]">
+              {symbol ? `${symbol} News` : 'News'}
             </h2>
           </div>
           <div className="flex items-center space-x-3">
             {lastUpdated && (
-              <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-overlay)] px-2 py-1 rounded-full font-mono">
+              <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-muted)] px-2 py-1 rounded-full font-mono">
                 Updated {formatTimeAgo(lastUpdated)}
               </span>
             )}
             <button
               onClick={() => fetchNews(activeCategory)}
               disabled={isLoading}
-              className={`p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors ${
+              className={`p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors ${
                 isLoading ? 'animate-spin' : ''
               }`}
               title="Refresh"
@@ -165,7 +165,7 @@ export function NewsFeed({
               placeholder="Search news by title, symbol, or source..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-glass-light pl-10 text-sm"
+              className="input pl-10 text-sm"
             />
           </div>
         )}
@@ -180,7 +180,7 @@ export function NewsFeed({
                 className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   activeCategory === id
                     ? 'bg-primary-500/10 text-primary-400'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] border border-[var(--border-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] border border-[var(--border-default)]'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -189,7 +189,7 @@ export function NewsFeed({
                   className={`px-1.5 py-0.5 rounded-full text-xs font-mono ${
                     activeCategory === id
                       ? 'bg-primary-500/20 text-primary-400'
-                      : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
+                      : 'bg-[var(--bg-muted)] text-[var(--text-secondary)]'
                   }`}
                 >
                   {categoryCounts[id]}
@@ -201,7 +201,7 @@ export function NewsFeed({
       </div>
 
       {/* News List */}
-      <div className="divide-y divide-[var(--border-primary)] max-h-[600px] overflow-y-auto">
+      <div className="divide-y divide-[var(--border-default)] max-h-[600px] overflow-y-auto">
         {error ? (
           <div className="p-8 text-center text-[var(--text-secondary)]">
             <p>{error}</p>
@@ -232,7 +232,7 @@ export function NewsFeed({
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 bg-[var(--bg-overlay)] border-t border-[var(--border-primary)]">
+      <div className="px-4 py-3 bg-[var(--bg-muted)] border-t border-[var(--border-default)]">
         <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
           <span className="font-mono">
             Showing {filteredNews.length} of {categoryCounts.all} articles
@@ -263,7 +263,7 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`block px-6 py-4 hover:bg-[var(--bg-overlay)] transition-colors group border-l-4 ${sentiment.border}`}
+      className={`block px-4 sm:px-6 py-3 sm:py-4 hover:bg-[var(--bg-muted)] transition-colors group border-l-4 ${sentiment.border}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -279,31 +279,18 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
             />
           )}
 
-          <div className="mt-3 flex items-center flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
+          <div className="mt-2 sm:mt-3 flex items-center flex-wrap gap-1.5 sm:gap-2 text-xs text-[var(--text-secondary)]">
             <span className="font-semibold text-primary-400">{item.source}</span>
-            <span className="text-[var(--text-muted)]">|</span>
+            <span className="text-[var(--text-muted)]">&middot;</span>
             <div className="flex items-center font-mono">
               <Clock className="h-3 w-3 mr-1" />
               {formatTime(item.published_at)}
             </div>
 
-            {item.category && item.category !== 'markets' && (
-              <>
-                <span className="text-[var(--text-muted)]">|</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                    categoryColors[item.category] || 'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
-                  }`}
-                >
-                  {item.category}
-                </span>
-              </>
-            )}
-
             {item.sentiment && (
               <>
-                <span className="text-[var(--text-muted)]">|</span>
-                <div className={`flex items-center ${sentiment.color}`}>
+                <span className="hidden sm:inline text-[var(--text-muted)]">&middot;</span>
+                <div className={`hidden sm:flex items-center ${sentiment.color}`}>
                   <SentimentIcon className="h-3 w-3 mr-1" />
                   {item.sentiment}
                 </div>
@@ -312,8 +299,8 @@ const NewsCard = memo(function NewsCard({ item, searchQuery }: { item: NewsItem;
 
             {item.symbols && item.symbols.length > 0 && (
               <>
-                <span className="text-[var(--text-muted)]">|</span>
-                <div className="flex gap-1">
+                <span className="hidden sm:inline text-[var(--text-muted)]">&middot;</span>
+                <div className="hidden sm:flex gap-1">
                   {item.symbols.slice(0, 3).map((symbol) => (
                     <span
                       key={symbol}

@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="glass-card-dashboard p-8 text-center">
+        <div className="card p-8 text-center">
           <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Something went wrong</h3>
           <p className="text-sm text-[var(--text-secondary)] mb-4">
@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="btn-glass-primary px-6 py-2.5 inline-flex items-center space-x-2"
+            className="btn-primary px-6 py-2.5 inline-flex items-center space-x-2"
           >
             <RefreshCw className="h-4 w-4" />
             <span>Try Again</span>

@@ -60,7 +60,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Register Card */}
-        <div className="glass-card p-8">
+        <div className="card p-8">
           <div className="text-center mb-8">
             <h1 className="text-display-md font-display text-[var(--text-primary)] mb-2">Create your account</h1>
             <p className="text-[var(--text-secondary)]">Start your free trial today</p>
@@ -84,7 +84,7 @@ export default function RegisterPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="input-glass pl-12"
+                  className="input pl-12"
                   placeholder="Divyanshu Kumar"
                   required
                   minLength={2}
@@ -103,7 +103,7 @@ export default function RegisterPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-glass pl-12"
+                  className="input pl-12"
                   placeholder="you@example.com"
                   required
                 />
@@ -120,7 +120,7 @@ export default function RegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-glass pl-12 pr-12"
+                  className="input pl-12 pr-12"
                   placeholder="Min 8 characters"
                   required
                   minLength={8}
@@ -154,7 +154,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-glass-primary py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-primary py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -168,7 +168,7 @@ export default function RegisterPage() {
           </form>
 
           {/* Benefits */}
-          <div className="mt-6 pt-6 border-t border-[var(--border-primary)]">
+          <div className="mt-6 pt-6 border-t border-[var(--border-default)]">
             <p className="text-sm text-[var(--text-secondary)] mb-3">Free tier includes:</p>
             <ul className="space-y-2">
               {['5 watchlist symbols', 'Basic anomaly detection', 'Market news feed', 'FII/DII data'].map(

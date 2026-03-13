@@ -87,12 +87,12 @@ export interface Signal {
   price: number;
   volume: number;
   detected_at: string;
-  agent_decision: string;
-  agent_confidence: number;
-  agent_reason: string;
+  signal_action: string;
+  statistical_confidence: number;
+  reasoning: string;
   context?: string;
   sources?: string;
-  thought_process?: string;
+  statistical_analysis?: string;
   confidence_level: number;
   catalyst_context?: Record<string, string>;
 }

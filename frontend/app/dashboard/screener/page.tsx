@@ -172,7 +172,7 @@ export default function ScreenerPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg p-6">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -186,7 +186,7 @@ export default function ScreenerPage() {
           <div className="flex items-center flex-wrap gap-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
+              className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-muted)] border border-[var(--border-default)] hover:bg-[var(--bg-muted)] text-primary-400 rounded-lg transition-all"
             >
               <Filter className="h-4 w-4" />
               <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
@@ -195,14 +195,14 @@ export default function ScreenerPage() {
               <>
                 <button
                   onClick={() => setSaveModalOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-muted)] border border-[var(--border-default)] hover:bg-[var(--bg-muted)] text-primary-400 rounded-lg transition-all"
                 >
                   <Save className="h-4 w-4" />
                   <span>Save</span>
                 </button>
                 <button
                   onClick={exportToCsv}
-                  className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
+                  className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-muted)] border border-[var(--border-default)] hover:bg-[var(--bg-muted)] text-primary-400 rounded-lg transition-all"
                 >
                   <Download className="h-4 w-4" />
                   <span>Export</span>
@@ -212,7 +212,7 @@ export default function ScreenerPage() {
             <button
               onClick={() => runScreener()}
               disabled={isLoading}
-              className="btn-glass-primary px-5 py-2.5 flex items-center space-x-2 disabled:opacity-50"
+              className="btn-primary px-5 py-2.5 flex items-center space-x-2 disabled:opacity-50"
             >
               {isLoading ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -226,14 +226,14 @@ export default function ScreenerPage() {
       </div>
 
       {/* Presets & Saved Screeners */}
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg p-4">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg p-4">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm font-medium text-[var(--text-secondary)] mr-2">Quick Presets:</span>
           {presets.slice(0, 6).map((preset) => (
             <button
               key={preset.name}
               onClick={() => loadPreset(preset)}
-              className="px-4 py-1.5 text-sm bg-[var(--bg-overlay)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-full transition-all border border-[var(--border-primary)]"
+              className="px-4 py-1.5 text-sm bg-[var(--bg-muted)] hover:bg-[var(--bg-muted)] text-primary-400 rounded-full transition-all border border-[var(--border-default)]"
               title={preset.description}
             >
               {preset.name}
@@ -260,7 +260,7 @@ export default function ScreenerPage() {
 
       {/* Filters Panel */}
       {showFilters && filterOptions && (
-        <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg p-6">
+        <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center space-x-2">
               <Filter className="h-5 w-5 text-primary-400" />
@@ -274,7 +274,7 @@ export default function ScreenerPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {/* PE Ratio */}
             <div>
               <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
@@ -286,14 +286,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.pe_min || ''}
                   onChange={(e) => setFilters({ ...filters, pe_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.pe_max || ''}
                   onChange={(e) => setFilters({ ...filters, pe_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -309,14 +309,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.pb_min || ''}
                   onChange={(e) => setFilters({ ...filters, pb_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.pb_max || ''}
                   onChange={(e) => setFilters({ ...filters, pb_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -332,14 +332,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.roe_min || ''}
                   onChange={(e) => setFilters({ ...filters, roe_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.roe_max || ''}
                   onChange={(e) => setFilters({ ...filters, roe_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -355,14 +355,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.dividend_yield_min || ''}
                   onChange={(e) => setFilters({ ...filters, dividend_yield_min: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.dividend_yield_max || ''}
                   onChange={(e) => setFilters({ ...filters, dividend_yield_max: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -377,7 +377,7 @@ export default function ScreenerPage() {
                 placeholder="Max D/E"
                 value={filters.debt_to_equity_max || ''}
                 onChange={(e) => setFilters({ ...filters, debt_to_equity_max: e.target.value ? Number(e.target.value) : undefined })}
-                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
               />
             </div>
 
@@ -391,7 +391,7 @@ export default function ScreenerPage() {
                 placeholder="Min"
                 value={filters.current_ratio_min || ''}
                 onChange={(e) => setFilters({ ...filters, current_ratio_min: e.target.value ? Number(e.target.value) : undefined })}
-                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
               />
             </div>
 
@@ -406,14 +406,14 @@ export default function ScreenerPage() {
                   placeholder="Min"
                   value={filters.market_cap_min ? filters.market_cap_min / 1e7 : ''}
                   onChange={(e) => setFilters({ ...filters, market_cap_min: e.target.value ? Number(e.target.value) * 1e7 : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Max"
                   value={filters.market_cap_max ? filters.market_cap_max / 1e7 : ''}
                   onChange={(e) => setFilters({ ...filters, market_cap_max: e.target.value ? Number(e.target.value) * 1e7 : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -429,14 +429,14 @@ export default function ScreenerPage() {
                   placeholder="High %"
                   value={filters.near_52w_high || ''}
                   onChange={(e) => setFilters({ ...filters, near_52w_high: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
                 <input
                   type="number"
                   placeholder="Low %"
                   value={filters.near_52w_low || ''}
                   onChange={(e) => setFilters({ ...filters, near_52w_low: e.target.value ? Number(e.target.value) : undefined })}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                 />
               </div>
             </div>
@@ -449,7 +449,7 @@ export default function ScreenerPage() {
               <select
                 value={filters.sectors?.[0] || ''}
                 onChange={(e) => setFilters({ ...filters, sectors: e.target.value ? [e.target.value] : undefined })}
-                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2"
+                className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg text-sm w-full px-3 py-2"
               >
                 <option value="">All Sectors</option>
                 {filterOptions.sectors.map((sector) => (
@@ -460,12 +460,12 @@ export default function ScreenerPage() {
 
             {/* FNO Only */}
             <div className="flex items-end">
-              <label className="flex items-center space-x-2 cursor-pointer px-4 py-2.5 bg-[var(--bg-overlay)] border border-[var(--border-primary)] rounded-lg hover:bg-[var(--bg-overlay)] transition-colors">
+              <label className="flex items-center space-x-2 cursor-pointer px-4 py-2.5 bg-[var(--bg-muted)] border border-[var(--border-default)] rounded-lg hover:bg-[var(--bg-muted)] transition-colors">
                 <input
                   type="checkbox"
                   checked={filters.is_fno || false}
                   onChange={(e) => setFilters({ ...filters, is_fno: e.target.checked ? true : undefined })}
-                  className="w-4 h-4 text-primary-400 border-[var(--border-primary)] rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-primary-400 border-[var(--border-default)] rounded focus:ring-primary-500"
                 />
                 <span className="text-sm font-medium text-primary-400">F&O Stocks Only</span>
               </label>
@@ -485,7 +485,7 @@ export default function ScreenerPage() {
             {page > 1 && (
               <button
                 onClick={() => runScreener(filters, page - 1)}
-                className="px-4 py-1.5 text-sm bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-primary-400 rounded-lg hover:bg-[var(--bg-overlay)] transition-colors"
+                className="px-4 py-1.5 text-sm bg-[var(--bg-muted)] border border-[var(--border-default)] text-primary-400 rounded-lg hover:bg-[var(--bg-muted)] transition-colors"
               >
                 Previous
               </button>
@@ -493,7 +493,7 @@ export default function ScreenerPage() {
             {(page * perPage) < total && (
               <button
                 onClick={() => runScreener(filters, page + 1)}
-                className="px-4 py-1.5 text-sm bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-primary-400 rounded-lg hover:bg-[var(--bg-overlay)] transition-colors"
+                className="px-4 py-1.5 text-sm bg-[var(--bg-muted)] border border-[var(--border-default)] text-primary-400 rounded-lg hover:bg-[var(--bg-muted)] transition-colors"
               >
                 Next
               </button>
@@ -503,7 +503,7 @@ export default function ScreenerPage() {
       )}
 
       {/* Results Table */}
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg overflow-hidden">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="relative mx-auto w-16 h-16 mb-4">
@@ -523,7 +523,7 @@ export default function ScreenerPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="table-glass w-full">
+            <table className="table w-full">
               <thead>
                 <tr>
                   {[
@@ -542,7 +542,7 @@ export default function ScreenerPage() {
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
-                      className="cursor-pointer hover:bg-[var(--bg-overlay)] transition-colors"
+                      className="cursor-pointer hover:bg-[var(--bg-muted)] transition-colors"
                     >
                       <div className="flex items-center space-x-1">
                         <span>{col.label}</span>
@@ -615,10 +615,10 @@ export default function ScreenerPage() {
       {/* Save Modal */}
       {saveModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] rounded-lg w-full max-w-md p-6 mx-4 animate-slide-down">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-lg w-full max-w-md p-6 mx-4 animate-slide-down">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Save Screener</h2>
-              <button onClick={() => setSaveModalOpen(false)} className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors">
+              <button onClick={() => setSaveModalOpen(false)} className="p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors">
                 <X className="h-5 w-5 text-[var(--text-secondary)]" />
               </button>
             </div>
@@ -629,21 +629,21 @@ export default function ScreenerPage() {
                   type="text"
                   value={screenerName}
                   onChange={(e) => setScreenerName(e.target.value)}
-                  className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
+                  className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg w-full px-3 py-2 placeholder:text-[var(--text-muted)]"
                   placeholder="My Value Screener"
                 />
               </div>
               <div className="flex space-x-3">
                 <button
                   onClick={() => setSaveModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 btn-glass-secondary"
+                  className="flex-1 px-4 py-2.5 btn-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveScreener}
                   disabled={!screenerName.trim()}
-                  className="flex-1 btn-glass-primary disabled:opacity-50"
+                  className="flex-1 btn-primary disabled:opacity-50"
                 >
                   Save
                 </button>

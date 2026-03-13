@@ -25,7 +25,7 @@ import {
 
 const StockChart = dynamic(
   () => import('@/components/StockChart').then(mod => mod.StockChart),
-  { ssr: false, loading: () => <div className="h-[300px] bg-[var(--bg-overlay)] rounded animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-[300px] bg-[var(--bg-muted)] rounded animate-pulse" /> }
 );
 
 export default function FNOPage() {
@@ -108,7 +108,7 @@ export default function FNOPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -124,7 +124,7 @@ export default function FNOPage() {
               <select
                 value={selectedSymbol}
                 onChange={(e) => setSelectedSymbol(e.target.value)}
-                className="bg-[var(--bg-overlay)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg pr-10 appearance-none cursor-pointer px-3 py-2"
+                className="bg-[var(--bg-muted)] border border-[var(--border-default)] text-[var(--text-primary)] rounded-lg pr-10 appearance-none cursor-pointer px-3 py-2"
               >
                 <optgroup label="Indices">
                   {symbols.filter((s) => s.is_index).map((s) => (
@@ -146,7 +146,7 @@ export default function FNOPage() {
             <button
               onClick={loadData}
               disabled={isLoading}
-              className="btn-glass-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2"
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
@@ -159,7 +159,7 @@ export default function FNOPage() {
       {optionChain && (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Spot Price */}
-          <div className="glass-card-dashboard p-4 card-hover-lift">
+          <div className="card p-4 card-hover-lift">
             <div className="text-sm text-[var(--text-secondary)] mb-1">Spot Price</div>
             <p className="text-xl font-bold font-mono text-[var(--text-primary)]">
               {formatNumber(optionChain.spot_price)}
@@ -169,7 +169,7 @@ export default function FNOPage() {
 
           {/* Max Pain */}
           {maxPain && (
-            <div className="glass-card-dashboard p-4 card-hover-lift border-l-4 border-l-purple-500">
+            <div className="card p-4 card-hover-lift border-l-4 border-l-purple-500">
               <div className="flex items-center space-x-1 text-sm text-[var(--text-secondary)] mb-1">
                 <Target className="h-4 w-4 text-purple-500" />
                 <span>Max Pain</span>
@@ -183,7 +183,7 @@ export default function FNOPage() {
 
           {/* PCR */}
           {pcr && (
-            <div className={`glass-card-dashboard p-4 card-hover-lift border-l-4 ${
+            <div className={`card p-4 card-hover-lift border-l-4 ${
               pcr.sentiment === 'BULLISH' ? 'border-l-green-500' :
               pcr.sentiment === 'BEARISH' ? 'border-l-red-500' : 'border-l-[var(--text-muted)]'
             }`}>
@@ -203,7 +203,7 @@ export default function FNOPage() {
 
           {/* IV Percentile */}
           {ivData && (
-            <div className={`glass-card-dashboard p-4 card-hover-lift border-l-4 ${
+            <div className={`card p-4 card-hover-lift border-l-4 ${
               ivData.iv_interpretation === 'HIGH' ? 'border-l-red-500' :
               ivData.iv_interpretation === 'LOW' ? 'border-l-green-500' : 'border-l-yellow-500'
             }`}>
@@ -223,7 +223,7 @@ export default function FNOPage() {
 
           {/* Support/Resistance */}
           {oiAnalysis && (
-            <div className="glass-card-dashboard p-4 card-hover-lift">
+            <div className="card p-4 card-hover-lift">
               <div className="text-sm text-[var(--text-secondary)] mb-1">Support / Resistance</div>
               <div className="flex items-center space-x-2">
                 <span className="text-green-400 font-bold font-mono">{oiAnalysis.max_pe_oi_strike}</span>
@@ -249,7 +249,7 @@ export default function FNOPage() {
             className={`px-6 py-3 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab.id
                 ? 'bg-primary-500/10 text-primary-400'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
             }`}
           >
             {tab.label}
@@ -268,7 +268,7 @@ export default function FNOPage() {
 
       {/* Option Chain Table */}
       {activeTab === 'chain' && (
-        <div className="glass-card-dashboard overflow-hidden">
+        <div className="card overflow-hidden">
           {isLoading ? (
             <div className="p-8 text-center">
               <RefreshCw className="h-8 w-8 text-primary-400 animate-spin mx-auto" />
@@ -283,16 +283,16 @@ export default function FNOPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-[var(--bg-overlay)] border-b border-[var(--border-primary)]">
-                    <th colSpan={8} className="px-2 py-3 text-center text-green-400 bg-green-500/10 border-r border-[var(--border-primary)] font-semibold">
+                  <tr className="bg-[var(--bg-muted)] border-b border-[var(--border-default)]">
+                    <th colSpan={8} className="px-2 py-3 text-center text-green-400 bg-green-500/10 border-r border-[var(--border-default)] font-semibold">
                       CALLS
                     </th>
                     <th className="px-3 py-3 text-center bg-primary-500/10 font-bold text-primary-400">Strike</th>
-                    <th colSpan={8} className="px-2 py-3 text-center text-red-400 bg-red-500/10 border-l border-[var(--border-primary)] font-semibold">
+                    <th colSpan={8} className="px-2 py-3 text-center text-red-400 bg-red-500/10 border-l border-[var(--border-default)] font-semibold">
                       PUTS
                     </th>
                   </tr>
-                  <tr className="bg-[var(--bg-overlay)] border-b border-[var(--border-primary)] text-xs text-[var(--text-secondary)]">
+                  <tr className="bg-[var(--bg-muted)] border-b border-[var(--border-default)] text-xs text-[var(--text-secondary)]">
                     <th className="px-2 py-2 text-right">OI</th>
                     <th className="px-2 py-2 text-right">Chg</th>
                     <th className="px-2 py-2 text-right">Vol</th>
@@ -300,9 +300,9 @@ export default function FNOPage() {
                     <th className="px-2 py-2 text-right">LTP</th>
                     <th className="px-2 py-2 text-right">Delta</th>
                     <th className="px-2 py-2 text-right">Theta</th>
-                    <th className="px-2 py-2 text-right border-r border-[var(--border-primary)]">Vega</th>
+                    <th className="px-2 py-2 text-right border-r border-[var(--border-default)]">Vega</th>
                     <th className="px-3 py-2 text-center bg-primary-500/10">Strike</th>
-                    <th className="px-2 py-2 text-right border-l border-[var(--border-primary)]">Vega</th>
+                    <th className="px-2 py-2 text-right border-l border-[var(--border-default)]">Vega</th>
                     <th className="px-2 py-2 text-right">Theta</th>
                     <th className="px-2 py-2 text-right">Delta</th>
                     <th className="px-2 py-2 text-right">LTP</th>
@@ -312,7 +312,7 @@ export default function FNOPage() {
                     <th className="px-2 py-2 text-right">OI</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-primary)]">
+                <tbody className="divide-y divide-[var(--border-default)]">
                   {optionChain.strikes.map((strike) => (
                     <tr
                       key={strike.strike}
@@ -323,7 +323,7 @@ export default function FNOPage() {
                           ? 'bg-green-500/5'
                           : strike.is_itm_pe
                           ? 'bg-red-500/5'
-                          : 'hover:bg-[var(--bg-overlay)]'
+                          : 'hover:bg-[var(--bg-muted)]'
                       }`}
                     >
                       {/* CE Side */}
@@ -358,7 +358,7 @@ export default function FNOPage() {
                       <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono">
                         {strike.ce?.theta?.toFixed(2) || '-'}
                       </td>
-                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono border-r border-[var(--border-primary)]">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono border-r border-[var(--border-default)]">
                         {strike.ce?.vega?.toFixed(2) || '-'}
                       </td>
 
@@ -373,7 +373,7 @@ export default function FNOPage() {
                       </td>
 
                       {/* PE Side */}
-                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono border-l border-[var(--border-primary)]">
+                      <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono border-l border-[var(--border-default)]">
                         {strike.pe?.vega?.toFixed(2) || '-'}
                       </td>
                       <td className="px-2 py-2 text-right text-[var(--text-secondary)] text-xs font-mono">
@@ -421,7 +421,7 @@ export default function FNOPage() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* PCR Details */}
           {pcr && (
-            <div className="glass-card-dashboard p-6 card-hover-lift">
+            <div className="card p-6 card-hover-lift">
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
                 <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg mr-3">
                   <BarChart3 className="h-5 w-5 text-primary-400" />
@@ -440,7 +440,7 @@ export default function FNOPage() {
                   <span className="text-[var(--text-secondary)]">PCR (Volume)</span>
                   <span className="font-bold font-mono">{pcr.pcr_volume}</span>
                 </div>
-                <div className="h-4 bg-[var(--bg-overlay)] rounded-full overflow-hidden">
+                <div className="h-4 bg-[var(--bg-muted)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-green-500 rounded-full"
                     style={{ width: `${(pcr.put_oi / (pcr.call_oi + pcr.put_oi)) * 100}%` }}
@@ -450,7 +450,7 @@ export default function FNOPage() {
                   <span className="text-green-400 font-medium font-mono">Put OI: {formatLargeNumber(pcr.put_oi)}</span>
                   <span className="text-red-400 font-medium font-mono">Call OI: {formatLargeNumber(pcr.call_oi)}</span>
                 </div>
-                <div className="mt-4 p-4 bg-[var(--bg-overlay)] rounded-lg border border-[var(--border-primary)]">
+                <div className="mt-4 p-4 bg-[var(--bg-muted)] rounded-lg border border-[var(--border-default)]">
                   <p className="text-sm text-[var(--text-secondary)]">{pcr.description}</p>
                 </div>
               </div>
@@ -459,7 +459,7 @@ export default function FNOPage() {
 
           {/* Max Pain Details */}
           {maxPain && (
-            <div className="glass-card-dashboard p-6 card-hover-lift">
+            <div className="card p-6 card-hover-lift">
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
                 <div className="p-2 bg-purple-500/10 border border-purple-500/20 rounded-lg mr-3">
                   <Target className="h-5 w-5 text-purple-400" />
@@ -495,7 +495,7 @@ export default function FNOPage() {
           )}
 
           {/* Support/Resistance */}
-          <div className="glass-card-dashboard p-6 card-hover-lift">
+          <div className="card p-6 card-hover-lift">
             <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
               <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg mr-3">
                 <TrendingUp className="h-5 w-5 text-blue-400" />
@@ -547,7 +547,7 @@ export default function FNOPage() {
 
           {/* IV Analysis */}
           {ivData && (
-            <div className="glass-card-dashboard p-6 card-hover-lift">
+            <div className="card p-6 card-hover-lift">
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
                 <div className="p-2 bg-orange-500/10 border border-orange-500/20 rounded-lg mr-3">
                   <Activity className="h-5 w-5 text-orange-400" />
@@ -566,7 +566,7 @@ export default function FNOPage() {
                     ivData.iv_interpretation === 'LOW' ? 'text-green-400' : 'text-[var(--text-primary)]'
                   }`}>{ivData.iv_percentile}%</span>
                 </div>
-                <div className="h-3 bg-[var(--bg-overlay)] rounded-full overflow-hidden">
+                <div className="h-3 bg-[var(--bg-muted)] rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
                       ivData.iv_interpretation === 'HIGH' ? 'bg-red-500' :
@@ -587,7 +587,7 @@ export default function FNOPage() {
       {/* Expiry Info */}
       {optionChain && (
         <div className="text-center">
-          <div className="inline-flex items-center space-x-4 glass-card-dashboard px-6 py-3">
+          <div className="inline-flex items-center space-x-4 card px-6 py-3">
             <span className="text-sm text-[var(--text-secondary)]">Expiry: <span className="font-medium text-[var(--text-primary)]">{optionChain.expiry_date}</span></span>
             <span className="text-[var(--text-muted)]">|</span>
             <span className="text-sm text-[var(--text-secondary)]">Updated: <span className="font-medium text-[var(--text-primary)]">{new Date().toLocaleTimeString()}</span></span>

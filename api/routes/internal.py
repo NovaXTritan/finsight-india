@@ -54,24 +54,21 @@ async def run_detection(x_scheduler_secret: str = Header(None)):
         "errors": [],
     }
 
-    # Step 1: Fetch fresh market data
+    # Step 1: Fetch fresh market data (async, concurrent)
+    import asyncio
     client = SmartAPIClient()
-    if client.authenticate():
-        client.load_instrument_tokens()
+    if await client.authenticate_async():
+        await client.load_instrument_tokens_async()
         await client.connect_db()
 
-        for symbol in NIFTY50_SYMBOLS:
+        # Fetch all symbols concurrently (semaphore limits to 10 at a time)
+        batch_results = await client.get_batch_historical_async(NIFTY50_SYMBOLS, days=5)
+        for symbol, df in batch_results.items():
             try:
-                df = client.get_historical_data(symbol, days=5)
-                if df is not None and not df.empty:
-                    saved = await client.save_candles_to_db(symbol, df)
-                    results["data_fetched"] += saved
+                saved = await client.save_candles_to_db(symbol, df)
+                results["data_fetched"] += saved
             except Exception as e:
-                results["errors"].append(f"{symbol}: data fetch - {str(e)}")
-
-            # Rate limit
-            import asyncio
-            await asyncio.sleep(0.3)
+                results["errors"].append(f"{symbol}: db save - {str(e)}")
 
         await client.close_db()
         logger.info(f"Data fetch complete: {results['data_fetched']} rows saved")
@@ -168,32 +165,30 @@ async def fetch_market_data(
     """
     _verify_scheduler_secret(x_scheduler_secret)
 
+    import asyncio
     target_symbols = symbols or NIFTY50_SYMBOLS
     client = SmartAPIClient()
 
-    if not client.authenticate():
+    if not await client.authenticate_async():
         raise HTTPException(
             status_code=503,
             detail="SmartAPI authentication failed"
         )
 
-    client.load_instrument_tokens()
+    await client.load_instrument_tokens_async()
     await client.connect_db()
 
     fetched = 0
     errors = []
 
-    for symbol in target_symbols:
+    # Fetch all symbols concurrently
+    batch_results = await client.get_batch_historical_async(target_symbols, days=days)
+    for symbol, df in batch_results.items():
         try:
-            df = client.get_historical_data(symbol, days=days)
-            if df is not None and not df.empty:
-                saved = await client.save_candles_to_db(symbol, df)
-                fetched += saved
+            saved = await client.save_candles_to_db(symbol, df)
+            fetched += saved
         except Exception as e:
             errors.append(f"{symbol}: {str(e)}")
-
-        import asyncio
-        await asyncio.sleep(0.3)
 
     await client.close_db()
 

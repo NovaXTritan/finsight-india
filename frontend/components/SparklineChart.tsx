@@ -24,7 +24,7 @@ export function SparklineChart({
     return (
       <div
         style={{ width, height }}
-        className="flex items-center justify-center text-[var(--text-muted)] text-xs bg-[var(--bg-overlay)] rounded-lg"
+        className="flex items-center justify-center text-[var(--text-muted)] text-xs bg-[var(--bg-muted)] rounded-lg"
       >
         No data
       </div>

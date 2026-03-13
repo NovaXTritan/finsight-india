@@ -279,14 +279,14 @@ export default function BacktestPage() {
       case 'Low': return 'bg-green-500/10 text-green-400 border border-green-500/20';
       case 'Medium': return 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20';
       case 'High': return 'bg-red-500/10 text-red-400 border border-red-500/20';
-      default: return 'bg-[var(--bg-overlay)] text-[var(--text-secondary)]';
+      default: return 'bg-[var(--bg-muted)] text-[var(--text-secondary)]';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
@@ -303,7 +303,7 @@ export default function BacktestPage() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 view === 'presets' || view === 'custom'
                   ? 'bg-primary-500/10 text-primary-400'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
               }`}
             >
               <Sparkles className="h-4 w-4 inline mr-2" />
@@ -314,7 +314,7 @@ export default function BacktestPage() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 view === 'history'
                   ? 'bg-primary-500/10 text-primary-400'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
               }`}
             >
               <History className="h-4 w-4 inline mr-2" />
@@ -326,7 +326,7 @@ export default function BacktestPage() {
 
       {/* Error */}
       {error && (
-        <div className="glass-card-dashboard border-l-4 border-l-red-500 p-4 flex items-center space-x-3 animate-slide-down">
+        <div className="card border-l-4 border-l-red-500 p-4 flex items-center space-x-3 animate-slide-down">
           <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0" />
           <span className="text-red-400 flex-1">{error}</span>
           <button onClick={() => setError(null)} className="p-1 hover:bg-red-900/20 rounded-lg transition-colors">
@@ -339,7 +339,7 @@ export default function BacktestPage() {
       {view === 'presets' && (
         <div className="space-y-6">
           {/* Step 1: Choose Strategy */}
-          <div className="glass-card-dashboard p-6">
+          <div className="card p-6">
             <div className="flex items-center space-x-2 mb-6">
               <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-sm">1</div>
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Choose a Strategy</h2>
@@ -356,7 +356,7 @@ export default function BacktestPage() {
                     className={`relative p-5 rounded-2xl text-left transition-all duration-300 border-2 group ${
                       selectedPreset?.id === preset.id
                         ? `${colors.selected} shadow-lg scale-[1.02]`
-                        : 'bg-[var(--bg-overlay)] border-[var(--border-primary)] hover:border-[var(--text-muted)] hover:shadow-md'
+                        : 'bg-[var(--bg-muted)] border-[var(--border-default)] hover:border-[var(--text-muted)] hover:shadow-md'
                     }`}
                   >
                     {selectedPreset?.id === preset.id && (
@@ -373,7 +373,7 @@ export default function BacktestPage() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRiskBadge(preset.risk)}`}>
                         {preset.risk} Risk
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-overlay)] text-[var(--text-secondary)] border border-[var(--border-primary)]">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-muted)] text-[var(--text-secondary)] border border-[var(--border-default)]">
                         {preset.timeframe}
                       </span>
                     </div>
@@ -384,7 +384,7 @@ export default function BacktestPage() {
           </div>
 
           {/* Step 2: Select Stocks */}
-          <div className="glass-card-dashboard p-6">
+          <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-sm">2</div>
@@ -399,14 +399,14 @@ export default function BacktestPage() {
                 <button
                   key={group.name}
                   onClick={() => selectSymbolGroup(group.symbols)}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-overlay)] text-primary-400 border border-[var(--border-primary)] hover:bg-primary-500/10 transition-all"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-muted)] text-primary-400 border border-[var(--border-default)] hover:bg-primary-500/10 transition-all"
                 >
                   {group.name}
                 </button>
               ))}
               <button
                 onClick={() => setSelectedSymbols([])}
-                className="px-3 py-1.5 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] transition-all"
+                className="px-3 py-1.5 rounded-full text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] transition-all"
               >
                 Clear All
               </button>
@@ -421,7 +421,7 @@ export default function BacktestPage() {
                   className={`px-2 py-2 rounded-lg text-xs font-medium transition-all ${
                     selectedSymbols.includes(symbol)
                       ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30 shadow-md'
-                      : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] hover:text-[var(--text-primary)] border border-transparent'
+                      : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)] border border-transparent'
                   }`}
                 >
                   {symbol}
@@ -431,7 +431,7 @@ export default function BacktestPage() {
           </div>
 
           {/* Step 3: Configure & Run */}
-          <div className="glass-card-dashboard p-6">
+          <div className="card p-6">
             <div className="flex items-center space-x-2 mb-6">
               <div className="w-8 h-8 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-sm">3</div>
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Configure & Run</h2>
@@ -452,7 +452,7 @@ export default function BacktestPage() {
                       className={`flex-1 py-2 rounded-lg text-sm font-medium font-mono transition-all ${
                         capital === amt
                           ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30 shadow-md'
-                          : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] hover:text-[var(--text-primary)] border border-transparent'
+                          : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)] border border-transparent'
                       }`}
                     >
                       {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}K`}
@@ -480,7 +480,7 @@ export default function BacktestPage() {
                       className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                         dateRange === period.value
                           ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30 shadow-md'
-                          : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)] hover:text-[var(--text-primary)] border border-transparent'
+                          : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] hover:text-[var(--text-primary)] border border-transparent'
                       }`}
                     >
                       {period.label}
@@ -497,7 +497,7 @@ export default function BacktestPage() {
                 </label>
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="w-full py-2 rounded-lg text-sm font-medium bg-[var(--bg-overlay)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-primary)] flex items-center justify-center space-x-2 transition-all"
+                  className="w-full py-2 rounded-lg text-sm font-medium bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] flex items-center justify-center space-x-2 transition-all"
                 >
                   <span>{showAdvanced ? 'Hide' : 'Show'} Advanced</span>
                   {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -507,7 +507,7 @@ export default function BacktestPage() {
 
             {/* Advanced Settings */}
             {showAdvanced && (
-              <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border-primary)] mb-6 animate-slide-down">
+              <div className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-[var(--bg-muted)] border border-[var(--border-default)] mb-6 animate-slide-down">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                     Stop Loss %
@@ -516,7 +516,7 @@ export default function BacktestPage() {
                     type="number"
                     value={stopLoss}
                     onChange={e => setStopLoss(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-overlay)] text-[var(--text-primary)] font-mono"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-muted)] text-[var(--text-primary)] font-mono"
                   />
                 </div>
                 <div>
@@ -527,7 +527,7 @@ export default function BacktestPage() {
                     type="number"
                     value={takeProfit}
                     onChange={e => setTakeProfit(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-overlay)] text-[var(--text-primary)] font-mono"
+                    className="w-full px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-muted)] text-[var(--text-primary)] font-mono"
                   />
                 </div>
               </div>
@@ -555,7 +555,7 @@ export default function BacktestPage() {
 
             {/* Summary */}
             {selectedPreset && selectedSymbols.length > 0 && (
-              <div className="mt-4 p-4 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border-primary)]">
+              <div className="mt-4 p-4 rounded-lg bg-[var(--bg-muted)] border border-[var(--border-default)]">
                 <p className="text-sm text-[var(--text-secondary)]">
                   Testing <span className="font-semibold text-primary-400">{selectedPreset.name}</span> strategy on{' '}
                   <span className="font-semibold text-primary-400 font-mono">{selectedSymbols.length} stocks</span> with{' '}
@@ -570,14 +570,14 @@ export default function BacktestPage() {
 
       {/* History View */}
       {view === 'history' && (
-        <div className="glass-card-dashboard overflow-hidden">
+        <div className="card overflow-hidden">
           {backtests.length > 0 ? (
-            <div className="divide-y divide-[var(--border-primary)]">
+            <div className="divide-y divide-[var(--border-default)]">
               {backtests.map(bt => (
                 <div
                   key={bt.id}
                   onClick={() => loadBacktestDetails(bt)}
-                  className="p-4 hover:bg-[var(--bg-overlay)] cursor-pointer transition-colors"
+                  className="p-4 hover:bg-[var(--bg-muted)] cursor-pointer transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -659,7 +659,7 @@ export default function BacktestPage() {
 
           {/* Header Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div className={`glass-card-dashboard p-5 rounded-2xl border-l-4 ${
+            <div className={`card p-5 rounded-2xl border-l-4 ${
               (selectedBacktest.total_return || 0) >= 0 ? 'border-l-green-500' : 'border-l-red-500'
             }`}>
               <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-1">
@@ -673,7 +673,7 @@ export default function BacktestPage() {
               </div>
             </div>
 
-            <div className="glass-card-dashboard p-5 rounded-2xl">
+            <div className="card p-5 rounded-2xl">
               <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-1">
                 <IndianRupee className="h-4 w-4" />
                 <span>Final Capital</span>
@@ -683,7 +683,7 @@ export default function BacktestPage() {
               </div>
             </div>
 
-            <div className="glass-card-dashboard p-5 rounded-2xl border-l-4 border-l-purple-500">
+            <div className="card p-5 rounded-2xl border-l-4 border-l-purple-500">
               <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-1">
                 <Gauge className="h-4 w-4" />
                 <span>Sharpe Ratio</span>
@@ -693,7 +693,7 @@ export default function BacktestPage() {
               </div>
             </div>
 
-            <div className="glass-card-dashboard p-5 rounded-2xl border-l-4 border-l-red-500">
+            <div className="card p-5 rounded-2xl border-l-4 border-l-red-500">
               <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-1">
                 <TrendingDown className="h-4 w-4" />
                 <span>Max Drawdown</span>
@@ -703,7 +703,7 @@ export default function BacktestPage() {
               </div>
             </div>
 
-            <div className="glass-card-dashboard p-5 rounded-2xl border-l-4 border-l-blue-500">
+            <div className="card p-5 rounded-2xl border-l-4 border-l-blue-500">
               <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-1">
                 <Target className="h-4 w-4" />
                 <span>Win Rate</span>
@@ -713,7 +713,7 @@ export default function BacktestPage() {
               </div>
             </div>
 
-            <div className="glass-card-dashboard p-5 rounded-2xl">
+            <div className="card p-5 rounded-2xl">
               <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)] mb-1">
                 <Activity className="h-4 w-4" />
                 <span>Total Trades</span>
@@ -726,7 +726,7 @@ export default function BacktestPage() {
 
           {/* Equity Curve */}
           {equityCurve && equityCurve.equity.length > 0 && (
-            <div className="glass-card-dashboard p-6 rounded-2xl">
+            <div className="card p-6 rounded-2xl">
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
                 <LineChart className="h-5 w-5 text-primary-400 mr-2" />
                 Equity Curve
@@ -760,7 +760,7 @@ export default function BacktestPage() {
 
           {/* Trade Stats & Table */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="glass-card-dashboard p-6 rounded-2xl">
+            <div className="card p-6 rounded-2xl">
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Trade Statistics</h3>
               <div className="space-y-3">
                 <div className="flex justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
@@ -779,20 +779,20 @@ export default function BacktestPage() {
                   <span className="text-[var(--text-secondary)]">Avg Loss</span>
                   <span className="font-semibold font-mono text-red-400">{formatCurrency(selectedBacktest.avg_loss)}</span>
                 </div>
-                <div className="flex justify-between p-3 bg-[var(--bg-overlay)] border border-[var(--border-primary)] rounded-lg">
+                <div className="flex justify-between p-3 bg-[var(--bg-muted)] border border-[var(--border-default)] rounded-lg">
                   <span className="text-[var(--text-secondary)]">Profit Factor</span>
                   <span className="font-semibold font-mono text-[var(--text-primary)]">{selectedBacktest.profit_factor?.toFixed(2) || '-'}</span>
                 </div>
               </div>
             </div>
 
-            <div className="lg:col-span-2 glass-card-dashboard rounded-2xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)]">
+            <div className="lg:col-span-2 card rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)]">
                 <h3 className="text-lg font-semibold text-[var(--text-primary)]">Recent Trades</h3>
               </div>
               <div className="overflow-x-auto max-h-80">
                 <table className="w-full">
-                  <thead className="bg-[var(--bg-overlay)] sticky top-0">
+                  <thead className="bg-[var(--bg-muted)] sticky top-0">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Symbol</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Entry</th>
@@ -800,9 +800,9 @@ export default function BacktestPage() {
                       <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">P&L</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[var(--border-primary)]">
+                  <tbody className="divide-y divide-[var(--border-default)]">
                     {trades.slice(0, 20).map(trade => (
-                      <tr key={trade.id} className="hover:bg-[var(--bg-overlay)]">
+                      <tr key={trade.id} className="hover:bg-[var(--bg-muted)]">
                         <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{trade.symbol}</td>
                         <td className="px-4 py-3 text-sm text-[var(--text-secondary)] font-mono">
                           {new Date(trade.entry_date).toLocaleDateString()}

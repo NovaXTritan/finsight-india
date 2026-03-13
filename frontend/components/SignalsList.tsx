@@ -107,32 +107,28 @@ const SignalCard = memo(function SignalCard({
     }
   }, [isRecording, signal.id, onActionRecorded]);
 
-  const DecisionIcon = decisionIcons[signal.agent_decision as keyof typeof decisionIcons] || Eye;
+  const DecisionIcon = decisionIcons[signal.signal_action as keyof typeof decisionIcons] || Eye;
   const glowClass = severityGlow[signal.severity as keyof typeof severityGlow] || '';
 
   return (
-    <div className={`glass-card-dashboard overflow-hidden card-hover-lift ${glowClass}`}>
+    <div className={`card overflow-hidden card-hover-lift ${glowClass}`}>
       <div
         className="p-4 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="flex items-start sm:items-center justify-between gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             {/* Symbol badge */}
-            <div className="min-w-[80px]">
-              <div className="inline-flex items-center px-3 py-1.5 bg-primary-500/10 border border-primary-500/20 rounded-lg">
-                <span className="font-bold text-primary-400 text-lg">{signal.symbol}</span>
-              </div>
+            <div className="inline-flex items-center px-2.5 py-1 bg-primary-500/10 border border-primary-500/20 rounded-lg">
+              <span className="font-bold text-primary-400 text-sm sm:text-lg">{signal.symbol}</span>
             </div>
 
             {/* Pattern Type */}
-            <div className="hidden sm:block">
-              <span className="text-sm text-[var(--text-secondary)]">{formatPatternType(signal.pattern_type)}</span>
-            </div>
+            <span className="hidden sm:inline text-sm text-[var(--text-secondary)]">{formatPatternType(signal.pattern_type)}</span>
 
             {/* Severity Badge */}
             <span
-              className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
+              className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded-full ${
                 severityStyles[signal.severity as keyof typeof severityStyles] || severityStyles.low
               }`}
             >
@@ -140,27 +136,27 @@ const SignalCard = memo(function SignalCard({
             </span>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {/* Agent Decision */}
             <div
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                decisionStyles[signal.agent_decision as keyof typeof decisionStyles] || 'bg-[var(--bg-overlay)]'
+              className={`hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                decisionStyles[signal.signal_action as keyof typeof decisionStyles] || 'bg-[var(--bg-muted)]'
               }`}
             >
               <DecisionIcon className="h-3.5 w-3.5" />
-              <span>{signal.agent_decision}</span>
+              <span>{signal.signal_action}</span>
             </div>
 
             {/* Confidence Stars */}
-            <div className="hidden sm:block text-right">
+            <div className="hidden md:block text-right">
               <div className="text-sm text-yellow-400" title={`Confidence Level ${signal.confidence_level || 1}/5`}>
                 {'★'.repeat(signal.confidence_level || 1)}{'☆'.repeat(5 - (signal.confidence_level || 1))}
               </div>
-              <div className="text-xs text-[var(--text-secondary)] font-mono">{(signal.agent_confidence * 100).toFixed(0)}%</div>
+              <div className="text-xs text-[var(--text-secondary)] font-mono">{((signal.statistical_confidence ?? 0) * 100).toFixed(0)}%</div>
             </div>
 
             <ChevronRight
-              className={`h-5 w-5 text-primary-400 transition-transform duration-200 ${
+              className={`h-5 w-5 text-primary-400 transition-transform duration-200 flex-shrink-0 ${
                 isExpanded ? 'rotate-90' : ''
               }`}
             />
@@ -176,9 +172,9 @@ const SignalCard = memo(function SignalCard({
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-2 border-t border-[var(--border-primary)] bg-[var(--bg-overlay)] animate-slide-down">
+        <div className="px-4 pb-4 pt-2 border-t border-[var(--border-default)] bg-[var(--bg-muted)] animate-slide-down">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border-primary)]">
+            <div className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border-default)]">
               <div className="text-xs text-[var(--text-secondary)]">Price</div>
               <div className="font-semibold font-mono text-[var(--text-primary)]">
                 {signal.price?.toLocaleString('en-IN', {
@@ -188,17 +184,17 @@ const SignalCard = memo(function SignalCard({
                 }) || '-'}
               </div>
             </div>
-            <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border-primary)]">
+            <div className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border-default)]">
               <div className="text-xs text-[var(--text-secondary)]">Volume</div>
               <div className="font-semibold font-mono text-[var(--text-primary)]">
                 {signal.volume?.toLocaleString('en-IN') || '-'}
               </div>
             </div>
-            <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border-primary)]">
+            <div className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border-default)]">
               <div className="text-xs text-[var(--text-secondary)]">Z-Score</div>
               <div className="font-semibold font-mono text-[var(--text-primary)]">{signal.z_score?.toFixed(2) || '-'}</div>
             </div>
-            <div className="bg-[var(--bg-raised)] rounded-lg p-3 border border-[var(--border-primary)]">
+            <div className="bg-[var(--bg-elevated)] rounded-lg p-3 border border-[var(--border-default)]">
               <div className="text-xs text-[var(--text-secondary)]">Pattern</div>
               <div className="font-semibold text-[var(--text-primary)]">{formatPatternType(signal.pattern_type)}</div>
             </div>
@@ -217,7 +213,7 @@ const SignalCard = memo(function SignalCard({
 
           {/* Sources */}
           {signal.sources && (
-            <div className="mb-3 p-4 bg-[var(--bg-overlay)] rounded-lg border border-[var(--border-primary)]">
+            <div className="mb-3 p-4 bg-[var(--bg-muted)] rounded-lg border border-[var(--border-default)]">
               <div className="flex items-center text-xs font-semibold text-[var(--text-secondary)] mb-2">
                 <AlertTriangle className="h-3.5 w-3.5 mr-1" />
                 Data Sources
@@ -233,14 +229,14 @@ const SignalCard = memo(function SignalCard({
           )}
 
           {/* Thought Process */}
-          {signal.thought_process && (
-            <div className="mb-3 p-4 bg-[var(--bg-overlay)] rounded-lg border border-[var(--border-primary)]">
+          {signal.statistical_analysis && (
+            <div className="mb-3 p-4 bg-[var(--bg-muted)] rounded-lg border border-[var(--border-default)]">
               <div className="flex items-center text-xs font-semibold text-primary-400 mb-2">
                 <Zap className="h-3.5 w-3.5 mr-1" />
-                AI Thought Process
+                Statistical Analysis
               </div>
               <div className="text-sm text-[var(--text-secondary)] whitespace-pre-line font-mono text-xs leading-relaxed">
-                {signal.thought_process}
+                {signal.statistical_analysis}
               </div>
             </div>
           )}
@@ -263,10 +259,10 @@ const SignalCard = memo(function SignalCard({
           )}
 
           {/* Quick Summary */}
-          {signal.agent_reason && !signal.context && (
-            <div className="mb-4 p-4 bg-[var(--bg-raised)] rounded-lg border border-[var(--border-primary)]">
-              <div className="text-xs text-[var(--text-secondary)] mb-1">AI Analysis</div>
-              <div className="text-sm text-[var(--text-secondary)]">{signal.agent_reason}</div>
+          {signal.reasoning && !signal.context && (
+            <div className="mb-4 p-4 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border-default)]">
+              <div className="text-xs text-[var(--text-secondary)] mb-1">Analysis</div>
+              <div className="text-sm text-[var(--text-secondary)]">{signal.reasoning}</div>
             </div>
           )}
 
@@ -284,15 +280,15 @@ const SignalCard = memo(function SignalCard({
 
           {/* Actions */}
           {showActions && !recordedAction && (
-            <div className="flex items-center space-x-2 pt-2">
-              <span className="text-xs text-[var(--text-secondary)] mr-2">Your action:</span>
+            <div className="flex items-center flex-wrap gap-2 pt-2">
+              <span className="text-xs text-[var(--text-secondary)]">Your action:</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleAction('ignored');
                 }}
                 disabled={isRecording}
-                className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-overlay)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-overlay)] transition-all disabled:opacity-50 border border-[var(--border-primary)]"
+                className="px-3 py-1.5 text-xs font-medium bg-[var(--bg-muted)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-muted)] transition-all disabled:opacity-50 border border-[var(--border-default)]"
               >
                 Ignored
               </button>
@@ -326,7 +322,7 @@ const SignalCard = memo(function SignalCard({
             </div>
           )}
 
-          <p className="text-[10px] text-[var(--text-muted)] mt-3 pt-2 border-t border-[var(--border-primary)]">
+          <p className="text-[10px] text-[var(--text-muted)] mt-3 pt-2 border-t border-[var(--border-default)]">
             Not investment advice. Statistical anomaly detection for informational purposes only.
           </p>
         </div>

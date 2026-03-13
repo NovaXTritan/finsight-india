@@ -265,6 +265,14 @@ export default function DashboardLayout({
                   <span className="text-xs">Search</span>
                   <kbd className="text-[10px] font-mono px-1.5 py-0.5 bg-[var(--bg-card)] border border-[var(--border-default)] rounded">⌘K</kbd>
                 </button>
+                {/* Theme toggle */}
+                <button
+                  onClick={() => useThemeStore.getState().toggleTheme()}
+                  className="p-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-muted)] hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-all"
+                  title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                >
+                  {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+                </button>
                 {/* User menu */}
                 <div className="relative">
                   <button
@@ -327,7 +335,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content with framer-motion */}
-        <main className="p-4 lg:p-6 pb-16">
+        <main className="p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
           <ErrorBoundary>
             <motion.div
               key={pathname}
@@ -340,16 +348,51 @@ export default function DashboardLayout({
           </ErrorBoundary>
         </main>
 
-        {/* Footer */}
-        <footer className="border-t border-[var(--border-default)] bg-[var(--bg-primary)]">
+        {/* Mobile bottom navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[var(--bg-primary)] border-t border-[var(--border-default)]">
+          <div className="flex items-center justify-around px-1 py-1.5">
+            {[
+              { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
+              { name: 'Signals', href: '/dashboard/signals', icon: Bell },
+              { name: 'Watchlist', href: '/dashboard/watchlist', icon: List },
+              { name: 'News', href: '/dashboard/news', icon: Newspaper },
+              { name: 'More', href: '#', icon: Menu, action: () => setSidebarOpen(true) },
+            ].map((item) => {
+              const isActive = item.href !== '#' && pathname === item.href;
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    if (item.action) {
+                      item.action();
+                    } else {
+                      router.push(item.href);
+                    }
+                  }}
+                  className={`flex flex-col items-center justify-center px-2 py-1 rounded-lg min-w-[56px] transition-colors ${
+                    isActive
+                      ? 'text-primary-400'
+                      : 'text-[var(--text-muted)] active:text-[var(--text-secondary)]'
+                  }`}
+                >
+                  <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-400' : ''}`} />
+                  <span className="text-[10px] mt-0.5 font-medium">{item.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Footer (desktop only) */}
+        <footer className="hidden lg:block border-t border-[var(--border-default)] bg-[var(--bg-primary)]">
           <div className="px-4 py-2 lg:px-6">
-            <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)]">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-[11px] text-[var(--text-muted)]">
               <span>&copy; {new Date().getFullYear()} FinSight India</span>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center flex-wrap justify-center gap-x-3 gap-y-0.5">
                 <Link href="/terms" className="text-primary-500 hover:text-primary-400 transition-colors">Terms</Link>
                 <Link href="/privacy" className="text-primary-500 hover:text-primary-400 transition-colors">Privacy</Link>
                 <Link href="/disclaimer" className="text-primary-500 hover:text-primary-400 transition-colors">Disclaimer</Link>
-                <span className="text-[var(--border-primary)]">|</span>
+                <span className="hidden sm:inline text-[var(--border-primary)]">|</span>
                 <span>Built by Divyanshu Kumar</span>
               </div>
             </div>

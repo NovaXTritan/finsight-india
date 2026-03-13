@@ -10,12 +10,15 @@ Supports multiple strategies:
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
 from .metrics import Trade, EquityPoint, BacktestMetrics, calculate_trade_pnl
+
+logger = logging.getLogger(__name__)
 
 
 class StrategyType(str, Enum):
@@ -103,42 +106,130 @@ class BacktestEngine:
         # Data storage
         self.data: Dict[str, pd.DataFrame] = {}
 
-    def load_data(self) -> bool:
-        """Load historical data for all symbols."""
+    async def load_data(self, db_pool=None) -> bool:
+        """Load historical data for all symbols.
+
+        Data source cascade: DB market_data → SmartAPI → yfinance.
+        """
+        extra_days = 250  # Extra history for indicator warmup (SMA_200)
+        query_start = self.start_date - timedelta(days=extra_days)
+
         for symbol in self.symbols:
-            try:
-                # Add .NS suffix for Indian stocks
-                ticker = f"{symbol}.NS"
-                df = yf.download(
-                    ticker,
-                    start=self.start_date - timedelta(days=100),  # Extra for indicators
-                    end=self.end_date + timedelta(days=1),
-                    progress=False
-                )
+            df = None
 
-                if df.empty:
-                    # Try without suffix (for indices)
-                    ticker = symbol
-                    df = yf.download(
-                        ticker,
-                        start=self.start_date - timedelta(days=100),
-                        end=self.end_date + timedelta(days=1),
-                        progress=False
-                    )
+            # 1. Try database market_data table (fastest)
+            if db_pool is not None:
+                try:
+                    df = await self._load_from_db(db_pool, symbol, query_start)
+                except Exception as e:
+                    logger.warning(f"DB load failed for {symbol}: {e}")
 
-                if df.empty:
-                    print(f"Warning: No data for {symbol}")
-                    continue
+            # 2. Try SmartAPI historical data
+            if df is None or df.empty:
+                try:
+                    df = self._load_from_smartapi(symbol, query_start)
+                except Exception as e:
+                    logger.warning(f"SmartAPI load failed for {symbol}: {e}")
 
-                # Calculate indicators
+            # 3. Fallback to yfinance
+            if df is None or df.empty:
+                try:
+                    df = self._load_from_yfinance(symbol, query_start)
+                except Exception as e:
+                    logger.warning(f"yfinance load failed for {symbol}: {e}")
+
+            if df is not None and not df.empty:
                 df = self._calculate_indicators(df)
                 self.data[symbol] = df
-
-            except Exception as e:
-                print(f"Error loading {symbol}: {e}")
-                continue
+            else:
+                logger.warning(f"No data for {symbol} from any source")
 
         return len(self.data) > 0
+
+    async def _load_from_db(self, db_pool, symbol: str, query_start: datetime) -> Optional[pd.DataFrame]:
+        """Load historical data from market_data table."""
+        rows = await db_pool.fetch("""
+            SELECT trade_date, open, high, low, close, volume
+            FROM market_data
+            WHERE symbol = $1 AND trade_date >= $2 AND trade_date <= $3
+            ORDER BY trade_date ASC
+        """, symbol, query_start.date(), self.end_date.date())
+
+        if not rows or len(rows) < 20:
+            return None
+
+        df = pd.DataFrame([dict(r) for r in rows])
+        df = df.rename(columns={
+            'trade_date': 'Date',
+            'open': 'Open', 'high': 'High',
+            'low': 'Low', 'close': 'Close',
+            'volume': 'Volume',
+        })
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.set_index('Date')
+        # Ensure numeric types
+        for col in ['Open', 'High', 'Low', 'Close']:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+        df['Volume'] = pd.to_numeric(df['Volume'], errors='coerce').fillna(0).astype(int)
+        logger.info(f"{symbol}: loaded {len(df)} rows from DB")
+        return df
+
+    def _load_from_smartapi(self, symbol: str, query_start: datetime) -> Optional[pd.DataFrame]:
+        """Load historical data from SmartAPI."""
+        from data.smartapi_client import get_smartapi_client
+
+        client = get_smartapi_client()
+        if not client._token_map:
+            client.load_instrument_tokens()
+
+        total_days = (self.end_date - query_start).days
+        df = client.get_historical_data_chunked(
+            symbol, total_days=total_days, chunk_days=55, interval="ONE_DAY"
+        )
+
+        if df is None or df.empty:
+            return None
+
+        # Convert to yfinance-compatible format
+        df = df.rename(columns={
+            'date': 'Date',
+            'open': 'Open', 'high': 'High',
+            'low': 'Low', 'close': 'Close',
+            'volume': 'Volume',
+        })
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.set_index('Date')
+        logger.info(f"{symbol}: loaded {len(df)} rows from SmartAPI")
+        return df
+
+    def _load_from_yfinance(self, symbol: str, query_start: datetime) -> Optional[pd.DataFrame]:
+        """Load historical data from yfinance."""
+        ticker = f"{symbol}.NS"
+        df = yf.download(
+            ticker,
+            start=query_start,
+            end=self.end_date + timedelta(days=1),
+            progress=False
+        )
+
+        if df.empty:
+            # Try without suffix (for indices)
+            df = yf.download(
+                symbol,
+                start=query_start,
+                end=self.end_date + timedelta(days=1),
+                progress=False
+            )
+
+        # Handle MultiIndex columns from newer yfinance
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+
+        if df.empty:
+            return None
+
+        logger.info(f"{symbol}: loaded {len(df)} rows from yfinance")
+        return df
 
     def _calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate technical indicators."""

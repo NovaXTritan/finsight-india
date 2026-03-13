@@ -42,6 +42,9 @@ COPY learning/ ./learning/
 COPY tracking/ ./tracking/
 COPY services/ ./services/
 
+# Create cache directory for SmartAPI instrument tokens
+RUN mkdir -p /app/data/.cache
+
 # Create non-root user for security
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser

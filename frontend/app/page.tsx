@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { motion } from 'framer-motion';
+import { useThemeStore } from '@/lib/store';
 import {
   TrendingUp,
   TrendingDown,
@@ -22,6 +23,8 @@ import {
   Lock,
   Activity,
   AlertTriangle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 const fadeUp = {
@@ -58,6 +61,7 @@ const SIGNAL_CASES = [
 
 export default function Home() {
   const { token } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -83,9 +87,16 @@ export default function Home() {
                 <a href="#how-it-works" className="hover:text-[var(--text-primary)] transition-colors">How it Works</a>
                 <a href="#features" className="hover:text-[var(--text-primary)] transition-colors">Features</a>
               </div>
-              <div className="flex items-center space-x-2">
-                <Link href="/login" className="btn-ghost text-sm">Login</Link>
-                <Link href="/register" className="btn-primary text-sm !py-2 !px-4">Get Started</Link>
+              <div className="flex items-center space-x-1.5 sm:space-x-2">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-muted)] transition-all"
+                  title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                >
+                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </button>
+                <Link href="/login" className="btn-ghost text-sm hidden sm:inline-flex">Login</Link>
+                <Link href="/register" className="btn-primary text-xs sm:text-sm !py-2 !px-3 sm:!px-4">Get Started</Link>
               </div>
             </div>
           </div>
@@ -93,7 +104,7 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="relative z-10 container mx-auto px-6 pt-24 pb-20">
+      <section className="relative z-10 container mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-14 sm:pb-20">
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -108,7 +119,7 @@ export default function Home() {
             </span>
           </motion.div>
 
-          <motion.h1 variants={fadeUp} className="text-4xl md:text-display-xl font-display text-[var(--text-primary)] mb-6 leading-[1.1]">
+          <motion.h1 variants={fadeUp} className="text-3xl sm:text-4xl md:text-display-xl font-display text-[var(--text-primary)] mb-6 leading-[1.1]">
             Detect Market Anomalies
             <br />
             <span className="gradient-text">Before They Move</span>
@@ -151,7 +162,7 @@ export default function Home() {
       <div className="gradient-divider" />
 
       {/* Signal Case Studies */}
-      <section id="proof" className="relative z-10 container mx-auto px-6 py-20">
+      <section id="proof" className="relative z-10 container mx-auto px-4 sm:px-6 py-12 sm:py-20">
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -252,7 +263,7 @@ export default function Home() {
       <div className="gradient-divider" />
 
       {/* How It Works */}
-      <section id="how-it-works" className="relative z-10 container mx-auto px-6 py-20">
+      <section id="how-it-works" className="relative z-10 container mx-auto px-4 sm:px-6 py-12 sm:py-20">
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -270,7 +281,7 @@ export default function Home() {
           </motion.div>
 
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { icon: Database, title: 'Data Ingestion', desc: 'SEBI filings, exchange feeds, corporate actions', step: '01' },
                 { icon: Brain, title: 'Z-Score Analysis', desc: 'Multi-timeframe statistical deviation computation', step: '02' },
@@ -299,7 +310,7 @@ export default function Home() {
       <div className="gradient-divider" />
 
       {/* Features - Bento Grid */}
-      <section id="features" className="relative z-10 container mx-auto px-6 py-20">
+      <section id="features" className="relative z-10 container mx-auto px-4 sm:px-6 py-12 sm:py-20">
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -372,7 +383,7 @@ export default function Home() {
       <div className="gradient-divider" />
 
       {/* CTA */}
-      <section className="relative z-10 container mx-auto px-6 py-20">
+      <section className="relative z-10 container mx-auto px-4 sm:px-6 py-12 sm:py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -380,7 +391,7 @@ export default function Home() {
           transition={{ duration: 0.5, ease: [0, 0, 0.2, 1] as const }}
         >
           <div
-            className="rounded-2xl p-10 md:p-14 text-center"
+            className="rounded-2xl p-6 sm:p-10 md:p-14 text-center"
             style={{
               background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.06) 0%, rgba(99, 102, 241, 0.04) 100%)',
               border: '1px solid rgba(6, 182, 212, 0.12)',

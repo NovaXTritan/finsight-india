@@ -90,7 +90,7 @@ export default function PortfolioPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -104,21 +104,21 @@ export default function PortfolioPage() {
           <div className="flex items-center space-x-3">
             <button
               onClick={fetchPortfolio}
-              className="p-2.5 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
+              className="p-2.5 hover:bg-[var(--bg-muted)] rounded-lg transition-colors"
               title="Refresh"
             >
               <RefreshCw className="h-5 w-5 text-primary-400" />
             </button>
             <button
               onClick={() => setShowTransactionModal(true)}
-              className="flex items-center space-x-2 px-4 py-2.5 bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:bg-[var(--bg-overlay)] text-primary-400 rounded-lg transition-all"
+              className="flex items-center space-x-2 px-4 py-2.5 bg-[var(--bg-muted)] border border-[var(--border-default)] hover:bg-[var(--bg-muted)] text-primary-400 rounded-lg transition-all"
             >
               <History className="h-4 w-4" />
               <span>Add Transaction</span>
             </button>
             <button
               onClick={() => setShowAddModal(true)}
-              className="btn-glass-primary px-5 py-2.5 flex items-center space-x-2"
+              className="btn-primary px-5 py-2.5 flex items-center space-x-2"
             >
               <Plus className="h-4 w-4" />
               <span>Add Holding</span>
@@ -130,7 +130,7 @@ export default function PortfolioPage() {
       {/* Summary Cards */}
       {summary && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card-dashboard p-5 card-hover-lift">
+          <div className="card p-5 card-hover-lift">
             <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
               <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
                 <Wallet className="h-4 w-4 text-primary-400" />
@@ -142,7 +142,7 @@ export default function PortfolioPage() {
             </p>
           </div>
 
-          <div className="glass-card-dashboard p-5 card-hover-lift">
+          <div className="card p-5 card-hover-lift">
             <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
               <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <PieChart className="h-4 w-4 text-blue-400" />
@@ -154,7 +154,7 @@ export default function PortfolioPage() {
             </p>
           </div>
 
-          <div className={`glass-card-dashboard p-5 card-hover-lift border-l-4 ${
+          <div className={`card p-5 card-hover-lift border-l-4 ${
             summary.total_gain_loss >= 0 ? 'border-l-green-500' : 'border-l-red-500'
           }`}>
             <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
@@ -179,7 +179,7 @@ export default function PortfolioPage() {
             </p>
           </div>
 
-          <div className={`glass-card-dashboard p-5 card-hover-lift border-l-4 ${
+          <div className={`card p-5 card-hover-lift border-l-4 ${
             summary.day_change >= 0 ? 'border-l-green-500' : 'border-l-red-500'
           }`}>
             <div className="flex items-center space-x-2 text-[var(--text-secondary)] mb-2">
@@ -207,14 +207,14 @@ export default function PortfolioPage() {
       )}
 
       {/* Tabs */}
-      <div className="glass-card-dashboard px-6 py-3">
+      <div className="card px-6 py-3">
         <nav className="flex space-x-2">
           <button
             onClick={() => setActiveTab('holdings')}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeTab === 'holdings'
                 ? 'bg-primary-500/10 text-primary-400'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
             }`}
           >
             Holdings ({holdings.length})
@@ -224,7 +224,7 @@ export default function PortfolioPage() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeTab === 'transactions'
                 ? 'bg-primary-500/10 text-primary-400'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
             }`}
           >
             Transactions ({transactions.length})
@@ -234,7 +234,7 @@ export default function PortfolioPage() {
 
       {/* Holdings Table */}
       {activeTab === 'holdings' && (
-        <div className="glass-card-dashboard overflow-hidden">
+        <div className="card overflow-hidden">
           {isLoading ? (
             <div className="p-12 text-center">
               <div className="relative mx-auto w-16 h-16 mb-4">
@@ -252,14 +252,14 @@ export default function PortfolioPage() {
               <p className="text-[var(--text-secondary)] font-medium">No holdings yet</p>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="mt-4 btn-glass-primary px-6 py-2.5"
+                className="mt-4 btn-primary px-6 py-2.5"
               >
                 Add your first holding
               </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="table-glass w-full">
+              <table className="table w-full">
                 <thead>
                   <tr>
                     <th>Symbol</th>
@@ -313,7 +313,7 @@ export default function PortfolioPage() {
                               setEditingHolding(holding);
                               setShowAddModal(true);
                             }}
-                            className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
+                            className="p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors"
                             title="Edit"
                           >
                             <Edit2 className="h-4 w-4 text-primary-400" />
@@ -338,7 +338,7 @@ export default function PortfolioPage() {
 
       {/* Transactions Table */}
       {activeTab === 'transactions' && (
-        <div className="glass-card-dashboard overflow-hidden">
+        <div className="card overflow-hidden">
           {transactions.length === 0 ? (
             <div className="p-12 text-center">
               <div className="relative mx-auto w-20 h-20 mb-4">
@@ -349,7 +349,7 @@ export default function PortfolioPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="table-glass w-full">
+              <table className="table w-full">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -476,12 +476,12 @@ function HoldingModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] w-full max-w-md p-6 mx-4 rounded-lg animate-slide-down">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] w-full max-w-md p-6 mx-4 rounded-lg animate-slide-down">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             {isEdit ? 'Edit Holding' : 'Add Holding'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors">
             <X className="h-5 w-5 text-[var(--text-secondary)]" />
           </button>
         </div>
@@ -499,7 +499,7 @@ function HoldingModal({
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="input-glass w-full"
+              className="input w-full"
               placeholder="RELIANCE"
               required
               disabled={isEdit}
@@ -512,7 +512,7 @@ function HoldingModal({
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="input-glass w-full font-mono"
+              className="input w-full font-mono"
               placeholder="100"
               required
               min="1"
@@ -527,7 +527,7 @@ function HoldingModal({
                 type="number"
                 value={avgPrice}
                 onChange={(e) => setAvgPrice(e.target.value)}
-                className="input-glass w-full pl-10 font-mono"
+                className="input w-full pl-10 font-mono"
                 placeholder="2500.00"
                 required
                 min="0.01"
@@ -541,7 +541,7 @@ function HoldingModal({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="input-glass w-full"
+              className="input w-full"
               placeholder="Investment thesis..."
               rows={2}
             />
@@ -551,14 +551,14 @@ function HoldingModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 btn-glass-secondary"
+              className="flex-1 btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 btn-glass-primary disabled:opacity-50"
+              className="flex-1 btn-primary disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : isEdit ? 'Update' : 'Add'}
             </button>
@@ -614,10 +614,10 @@ function TransactionModal({
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-primary)] w-full max-w-md p-6 mx-4 max-h-[90vh] overflow-y-auto rounded-lg animate-slide-down">
+      <div className="bg-[var(--bg-elevated)] border border-[var(--border-default)] w-full max-w-md p-6 mx-4 max-h-[90vh] overflow-y-auto rounded-lg animate-slide-down">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Transaction</h2>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors">
             <X className="h-5 w-5 text-[var(--text-secondary)]" />
           </button>
         </div>
@@ -644,7 +644,7 @@ function TransactionModal({
                         : t === 'SELL'
                         ? 'bg-red-500/10 text-red-400 border-2 border-red-500'
                         : 'bg-blue-500/10 text-blue-400 border-2 border-blue-500'
-                      : 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] border-2 border-transparent'
+                      : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] border-2 border-transparent'
                   }`}
                 >
                   {t}
@@ -659,7 +659,7 @@ function TransactionModal({
               type="text"
               value={symbol}
               onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className="input-glass w-full"
+              className="input w-full"
               placeholder="RELIANCE"
               required
             />
@@ -671,7 +671,7 @@ function TransactionModal({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="input-glass w-full"
+              className="input w-full"
               required
             />
           </div>
@@ -684,7 +684,7 @@ function TransactionModal({
                   type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="input-glass w-full font-mono"
+                  className="input w-full font-mono"
                   placeholder="100"
                   required
                   min="1"
@@ -699,7 +699,7 @@ function TransactionModal({
                     type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="input-glass w-full pl-10 font-mono"
+                    className="input w-full pl-10 font-mono"
                     placeholder="2500.00"
                     required
                     min="0.01"
@@ -717,7 +717,7 @@ function TransactionModal({
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="input-glass w-full pl-10 font-mono"
+                  className="input w-full pl-10 font-mono"
                   placeholder="5000.00"
                   required
                   min="0.01"
@@ -735,7 +735,7 @@ function TransactionModal({
                 type="number"
                 value={fees}
                 onChange={(e) => setFees(e.target.value)}
-                className="input-glass w-full pl-10 font-mono"
+                className="input w-full pl-10 font-mono"
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -748,7 +748,7 @@ function TransactionModal({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="input-glass w-full"
+              className="input w-full"
               placeholder="Transaction notes..."
               rows={2}
             />
@@ -758,14 +758,14 @@ function TransactionModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 btn-glass-secondary"
+              className="flex-1 btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 btn-glass-primary disabled:opacity-50"
+              className="flex-1 btn-primary disabled:opacity-50"
             >
               {isSubmitting ? 'Adding...' : 'Add Transaction'}
             </button>

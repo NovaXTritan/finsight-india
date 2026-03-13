@@ -108,7 +108,7 @@ export default function SignalDetailPage() {
             </span>
           </div>
           <p className="text-sm text-[var(--text-muted)] mt-0.5">
-            {signal.pattern_type.replace(/_/g, ' ')} | Z-Score: {signal.z_score.toFixed(2)} | Detected {new Date(signal.detected_at).toLocaleDateString('en-IN')}
+            {signal.pattern_type.replace(/_/g, ' ')} | Z-Score: {signal.z_score?.toFixed(2) ?? '-'} | Detected {new Date(signal.detected_at).toLocaleDateString('en-IN')}
           </p>
         </div>
       </div>
@@ -130,12 +130,12 @@ export default function SignalDetailPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-muted)]">Z-Score</p>
-            <p className="text-lg font-mono font-semibold text-[var(--text-primary)]">{signal.z_score.toFixed(2)}</p>
+            <p className="text-lg font-mono font-semibold text-[var(--text-primary)]">{signal.z_score?.toFixed(2) ?? '-'}</p>
           </div>
           <div>
             <p className="text-xs text-[var(--text-muted)]">Confidence</p>
             <p className="text-lg font-mono font-semibold text-[var(--text-primary)]">
-              {signal.agent_confidence ? `${(signal.agent_confidence * 100).toFixed(0)}%` : 'N/A'}
+              {signal.statistical_confidence != null ? `${(signal.statistical_confidence * 100).toFixed(0)}%` : 'N/A'}
             </p>
           </div>
         </div>
@@ -216,15 +216,15 @@ export default function SignalDetailPage() {
         </div>
       )}
 
-      {/* AI Thought Process */}
-      {signal.thought_process && (
+      {/* Statistical Analysis */}
+      {signal.statistical_analysis && (
         <div className="card p-4">
           <h2 className="text-heading font-display text-[var(--text-primary)] mb-3 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary-400" />
-            AI Analysis
+            Statistical Analysis
           </h2>
           <div className="text-sm text-[var(--text-secondary)] whitespace-pre-line leading-relaxed bg-[var(--bg-muted)] p-3 rounded-lg font-mono text-xs">
-            {signal.thought_process}
+            {signal.statistical_analysis}
           </div>
         </div>
       )}
@@ -251,9 +251,9 @@ export default function SignalDetailPage() {
               <tbody>
                 {signal.historical_similar.map((h) => (
                   <tr key={h.id} className="border-b border-[var(--border-default)] hover:bg-[var(--bg-muted)]">
-                    <td className="py-2 px-2 font-mono font-medium text-[var(--text-primary)]">{h.symbol}</td>
-                    <td className="py-2 px-2 text-[var(--text-secondary)]">{h.pattern_type.replace(/_/g, ' ')}</td>
-                    <td className="py-2 px-2 text-right font-mono">{h.z_score.toFixed(2)}</td>
+                    <td className="py-2 px-2 font-mono font-medium text-[var(--text-primary)]">{h.symbol || signal.symbol}</td>
+                    <td className="py-2 px-2 text-[var(--text-secondary)]">{(h.pattern_type || '').replace(/_/g, ' ')}</td>
+                    <td className="py-2 px-2 text-right font-mono">{h.z_score?.toFixed(2) ?? '-'}</td>
                     <td className={`py-2 px-2 text-right font-mono ${
                       h.return_3d !== null ? (h.return_3d >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-[var(--text-muted)]'
                     }`}>
@@ -275,7 +275,7 @@ export default function SignalDetailPage() {
 
       {/* Disclaimer */}
       <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
-        This is an AI-generated anomaly detection signal for educational/research purposes only.
+        This is a statistically-generated anomaly detection signal for educational/research purposes only.
         Not investment advice. Past performance does not guarantee future results. Always do your
         own research and consult a SEBI-registered advisor before making investment decisions.
       </p>

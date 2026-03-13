@@ -9,12 +9,12 @@ import dynamic from 'next/dynamic';
 
 const SparklineChart = dynamic(
   () => import('@/components/SparklineChart').then(mod => mod.SparklineChart),
-  { ssr: false, loading: () => <div className="w-[100px] h-[36px] bg-[var(--bg-overlay)] rounded animate-pulse" /> }
+  { ssr: false, loading: () => <div className="w-[100px] h-[36px] bg-[var(--bg-muted)] rounded animate-pulse" /> }
 );
 
 const StockChart = dynamic(
   () => import('@/components/StockChart').then(mod => mod.StockChart),
-  { ssr: false, loading: () => <div className="h-[300px] bg-[var(--bg-overlay)] rounded animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-[300px] bg-[var(--bg-muted)] rounded animate-pulse" /> }
 );
 import {
   Star,
@@ -123,7 +123,7 @@ export default function WatchlistPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
@@ -134,7 +134,7 @@ export default function WatchlistPage() {
               <div className="flex items-center space-x-3 text-[var(--text-secondary)]">
                 <span>Track your favorite stocks with live prices</span>
                 {lastUpdated && (
-                  <span className="flex items-center text-xs text-[var(--text-muted)] bg-[var(--bg-overlay)] px-2 py-1 rounded">
+                  <span className="flex items-center text-xs text-[var(--text-muted)] bg-[var(--bg-muted)] px-2 py-1 rounded">
                     <Clock className="h-3 w-3 mr-1" />
                     {lastUpdated}
                   </span>
@@ -145,7 +145,7 @@ export default function WatchlistPage() {
           <button
             onClick={fetchEnrichedData}
             disabled={isLoading}
-            className="btn-glass-secondary flex items-center space-x-2"
+            className="btn-secondary flex items-center space-x-2"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh Prices</span>
@@ -159,8 +159,8 @@ export default function WatchlistPage() {
         </div>
 
         <div className="lg:col-span-2">
-          <div className="glass-card-dashboard overflow-hidden">
-            <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)] flex items-center justify-between">
+          <div className="card overflow-hidden">
+            <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Your Stocks</h2>
               <span className="text-sm text-[var(--text-muted)] font-mono">{enrichedData.length} symbols</span>
             </div>
@@ -177,17 +177,17 @@ export default function WatchlistPage() {
                 <p className="text-sm mt-1">Add symbols to see their prices and charts</p>
               </div>
             ) : (
-              <div className="divide-y divide-[var(--border-primary)]">
+              <div className="divide-y divide-[var(--border-default)]">
                 {enrichedData.map((stock) => {
                   const symbolSignals = signals[stock.symbol] || [];
                   const isSelected = selectedSymbol === stock.symbol;
-                  const isPositive = (stock.day_change_pct || 0) >= 0;
+                  const isPositive = (stock.day_change_pct ?? 0) >= 0;
 
                   return (
                     <div key={stock.symbol}>
                       <div
                         className={`px-6 py-4 cursor-pointer transition-colors ${
-                          isSelected ? 'bg-[var(--bg-overlay)]' : 'hover:bg-[var(--bg-overlay)]'
+                          isSelected ? 'bg-[var(--bg-muted)]' : 'hover:bg-[var(--bg-muted)]'
                         }`}
                         onClick={() => setSelectedSymbol(isSelected ? null : stock.symbol)}
                       >
@@ -236,10 +236,10 @@ export default function WatchlistPage() {
                                 ) : (
                                   <TrendingDown className="h-4 w-4 mr-1" />
                                 )}
-                                {stock.day_change !== undefined && (
+                                {stock.day_change != null && (
                                   <span>
                                     {stock.day_change >= 0 ? '+' : ''}
-                                    {stock.day_change.toFixed(2)} ({stock.day_change_pct?.toFixed(2)}%)
+                                    {stock.day_change.toFixed(2)} ({(stock.day_change_pct ?? 0).toFixed(2)}%)
                                   </span>
                                 )}
                               </div>
@@ -252,20 +252,20 @@ export default function WatchlistPage() {
                         </div>
 
                         <div className="flex items-center space-x-3 text-xs text-[var(--text-muted)]">
-                          {stock.pe_ratio && (
-                            <span className="px-2 py-1 bg-[var(--bg-overlay)] rounded border border-[var(--border-primary)]">PE: <span className="font-medium font-mono text-[var(--text-secondary)]">{stock.pe_ratio.toFixed(1)}</span></span>
+                          {stock.pe_ratio != null && (
+                            <span className="px-2 py-1 bg-[var(--bg-muted)] rounded border border-[var(--border-default)]">PE: <span className="font-medium font-mono text-[var(--text-secondary)]">{stock.pe_ratio.toFixed(1)}</span></span>
                           )}
                           {stock.market_cap && (
-                            <span className="px-2 py-1 bg-[var(--bg-overlay)] rounded border border-[var(--border-primary)]">MCap: <span className="font-medium font-mono text-[var(--text-secondary)]">{formatMarketCap(stock.market_cap)}</span></span>
+                            <span className="px-2 py-1 bg-[var(--bg-muted)] rounded border border-[var(--border-default)]">MCap: <span className="font-medium font-mono text-[var(--text-secondary)]">{formatMarketCap(stock.market_cap)}</span></span>
                           )}
                           {stock.volume && (
-                            <span className="px-2 py-1 bg-[var(--bg-overlay)] rounded border border-[var(--border-primary)]">Vol: <span className="font-medium font-mono text-[var(--text-secondary)]">{formatVolume(stock.volume)}</span></span>
+                            <span className="px-2 py-1 bg-[var(--bg-muted)] rounded border border-[var(--border-default)]">Vol: <span className="font-medium font-mono text-[var(--text-secondary)]">{formatVolume(stock.volume)}</span></span>
                           )}
 
-                          {stock.position_52w !== undefined && (
-                            <div className="flex items-center space-x-2 px-2 py-1 bg-[var(--bg-overlay)] rounded border border-[var(--border-primary)]">
+                          {stock.position_52w != null && (
+                            <div className="flex items-center space-x-2 px-2 py-1 bg-[var(--bg-muted)] rounded border border-[var(--border-default)]">
                               <span>52W:</span>
-                              <div className="w-24 h-1.5 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                              <div className="w-24 h-1.5 bg-[var(--border-default)] rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all ${
                                     stock.position_52w > 80 ? 'bg-green-400' :
@@ -282,32 +282,32 @@ export default function WatchlistPage() {
 
                       {/* Expanded Section */}
                       {isSelected && (
-                        <div className="px-6 pb-4 bg-[var(--bg-overlay)] border-t border-[var(--border-primary)] animate-slide-down">
+                        <div className="px-6 pb-4 bg-[var(--bg-muted)] border-t border-[var(--border-default)] animate-slide-down">
                           {/* Chart */}
                           <div className="py-4">
                             <StockChart symbol={stock.symbol} height={300} defaultPeriod="1mo" />
                           </div>
 
                           <div className="py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] p-3 rounded-lg">
+                            <div className="bg-[var(--bg-primary)] border border-[var(--border-default)] p-3 rounded-lg">
                               <div className="text-xs text-[var(--text-muted)]">52W High</div>
                               <div className="font-semibold text-[var(--text-primary)] font-mono">
                                 {stock.high_52w ? `₹${stock.high_52w.toLocaleString()}` : '-'}
                               </div>
                             </div>
-                            <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] p-3 rounded-lg">
+                            <div className="bg-[var(--bg-primary)] border border-[var(--border-default)] p-3 rounded-lg">
                               <div className="text-xs text-[var(--text-muted)]">52W Low</div>
                               <div className="font-semibold text-[var(--text-primary)] font-mono">
                                 {stock.low_52w ? `₹${stock.low_52w.toLocaleString()}` : '-'}
                               </div>
                             </div>
-                            <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] p-3 rounded-lg">
+                            <div className="bg-[var(--bg-primary)] border border-[var(--border-default)] p-3 rounded-lg">
                               <div className="text-xs text-[var(--text-muted)]">Prev Close</div>
                               <div className="font-semibold text-[var(--text-primary)] font-mono">
                                 {stock.prev_close ? `₹${stock.prev_close.toLocaleString()}` : '-'}
                               </div>
                             </div>
-                            <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] p-3 rounded-lg">
+                            <div className="bg-[var(--bg-primary)] border border-[var(--border-default)] p-3 rounded-lg">
                               <div className="text-xs text-[var(--text-muted)]">Avg Volume</div>
                               <div className="font-semibold text-[var(--text-primary)] font-mono">
                                 {formatVolume(stock.avg_volume)}
@@ -316,7 +316,7 @@ export default function WatchlistPage() {
                           </div>
 
                           {symbolSignals.length > 0 && (
-                            <div className="pt-3 border-t border-[var(--border-primary)]">
+                            <div className="pt-3 border-t border-[var(--border-default)]">
                               <div className="flex items-center space-x-2 mb-3">
                                 <div className="p-1.5 bg-primary-500/10 rounded">
                                   <Bell className="h-4 w-4 text-primary-400" />
@@ -332,7 +332,7 @@ export default function WatchlistPage() {
                             </div>
                           )}
 
-                          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[var(--border-primary)]">
+                          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[var(--border-default)]">
                             <button className="flex items-center px-3 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] rounded-lg transition-all">
                               <Eye className="h-4 w-4 mr-1.5" />
                               View Details

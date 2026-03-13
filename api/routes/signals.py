@@ -23,9 +23,9 @@ DEMO_SIGNALS = [
         "price": 2890.50,
         "volume": 15000000,
         "detected_at": (datetime.now() - timedelta(hours=2)).isoformat(),
-        "agent_decision": "MONITOR",
-        "agent_confidence": 0.85,
-        "agent_reason": "Unusual volume detected. 3.5x above 20-day average. Could indicate institutional activity ahead of quarterly results.",
+        "signal_action": "MONITOR",
+        "statistical_confidence": 0.85,
+        "reasoning": "Unusual volume detected. 3.5x above 20-day average. Could indicate institutional activity ahead of quarterly results.",
         "context": "Volume spike detected 3.5 standard deviations above the 20-day average. Previous similar patterns have preceded 2-3% price moves within 48 hours.",
         "is_demo": True
     },
@@ -38,9 +38,9 @@ DEMO_SIGNALS = [
         "price": 1520.00,
         "volume": 8500000,
         "detected_at": (datetime.now() - timedelta(hours=5)).isoformat(),
-        "agent_decision": "BUY_CONSIDERATION",
-        "agent_confidence": 0.72,
-        "agent_reason": "Stock breaking out of 52-week consolidation range with above-average volume. Technical setup suggests potential upside.",
+        "signal_action": "BUY_CONSIDERATION",
+        "statistical_confidence": 0.72,
+        "reasoning": "Stock breaking out of 52-week consolidation range with above-average volume. Technical setup suggests potential upside.",
         "context": "Price crossed above 1500 resistance level which held for 3 months. RSI at 65 indicates momentum without overbought conditions.",
         "is_demo": True
     },
@@ -53,9 +53,9 @@ DEMO_SIGNALS = [
         "price": 785.25,
         "volume": 22000000,
         "detected_at": (datetime.now() - timedelta(hours=8)).isoformat(),
-        "agent_decision": "ALERT",
-        "agent_confidence": 0.91,
-        "agent_reason": "Extreme volatility detected. Intraday range exceeds 4% which is 4.2 standard deviations above normal. News catalyst likely.",
+        "signal_action": "ALERT",
+        "statistical_confidence": 0.91,
+        "reasoning": "Extreme volatility detected. Intraday range exceeds 4% which is 4.2 standard deviations above normal. News catalyst likely.",
         "context": "EV segment announcement expected. Options IV spiking. Historical pattern suggests major move within 24 hours.",
         "is_demo": True
     },
@@ -68,9 +68,9 @@ DEMO_SIGNALS = [
         "price": 1650.00,
         "volume": 12000000,
         "detected_at": (datetime.now() - timedelta(hours=12)).isoformat(),
-        "agent_decision": "RESEARCH",
-        "agent_confidence": 0.68,
-        "agent_reason": "Unusual call buying detected at 1700 strike. Open interest increased 200% in a single session.",
+        "signal_action": "RESEARCH",
+        "statistical_confidence": 0.68,
+        "reasoning": "Unusual call buying detected at 1700 strike. Open interest increased 200% in a single session.",
         "context": "Smart money appears to be positioning for upside. RBI policy meeting next week could be the catalyst.",
         "is_demo": True
     },
@@ -83,9 +83,9 @@ DEMO_SIGNALS = [
         "price": 1425.00,
         "volume": 6500000,
         "detected_at": (datetime.now() - timedelta(hours=18)).isoformat(),
-        "agent_decision": "WATCH",
-        "agent_confidence": 0.55,
-        "agent_reason": "Price diverging from sector trend. While NIFTY IT is down 1%, BHARTIARTL shows resilience with 0.5% gain.",
+        "signal_action": "WATCH",
+        "statistical_confidence": 0.55,
+        "reasoning": "Price diverging from sector trend. While NIFTY IT is down 1%, BHARTIARTL shows resilience with 0.5% gain.",
         "context": "Relative strength indicating potential sector rotation. 5G spectrum news flow positive.",
         "is_demo": True
     },
@@ -98,9 +98,9 @@ DEMO_SIGNALS = [
         "price": 3850.00,
         "volume": 4200000,
         "detected_at": (datetime.now() - timedelta(hours=24)).isoformat(),
-        "agent_decision": "OPPORTUNITY",
-        "agent_confidence": 0.75,
-        "agent_reason": "Stock testing 200-day moving average support at 3820. Historical bounce rate at this level is 78%.",
+        "signal_action": "OPPORTUNITY",
+        "statistical_confidence": 0.75,
+        "reasoning": "Stock testing 200-day moving average support at 3820. Historical bounce rate at this level is 78%.",
         "context": "Long-term uptrend intact. Current test of 200 DMA could be buying opportunity with defined risk at 3750.",
         "is_demo": True
     },
@@ -380,7 +380,7 @@ async def get_signal(
 
         # Fetch historical similar signals (same symbol + pattern type)
         historical = await conn.fetch("""
-            SELECT a.id, a.detected_at, a.z_score, a.price, a.severity,
+            SELECT a.id, a.symbol, a.pattern_type, a.detected_at, a.z_score, a.price, a.severity,
                    so3.return_pct as return_3d, so3.was_correct as correct_3d,
                    so5.return_pct as return_5d, so5.was_correct as correct_5d
             FROM anomalies a
@@ -394,6 +394,8 @@ async def get_signal(
         signal_dict["historical_similar"] = [
             {
                 "id": h["id"],
+                "symbol": h["symbol"],
+                "pattern_type": h["pattern_type"],
                 "detected_at": h["detected_at"].isoformat(),
                 "z_score": float(h["z_score"]),
                 "price": float(h["price"]),
@@ -405,6 +407,16 @@ async def get_signal(
             }
             for h in historical
         ]
+
+        # Rename DB column names to API field names
+        for old, new in [
+            ('agent_decision', 'signal_action'),
+            ('agent_confidence', 'statistical_confidence'),
+            ('agent_reason', 'reasoning'),
+            ('thought_process', 'statistical_analysis'),
+        ]:
+            if old in signal_dict:
+                signal_dict[new] = signal_dict.pop(old)
 
         return signal_dict
 

@@ -181,9 +181,9 @@ export function StockChart({ symbol, height = 400, showControls = true, defaultP
   const isPositive = priceChange >= 0;
 
   return (
-    <div className="glass-card-dashboard overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)]">
+      <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h3 className="text-lg font-bold text-[var(--text-primary)] font-mono">{symbol}</h3>
@@ -214,7 +214,7 @@ export function StockChart({ symbol, height = 400, showControls = true, defaultP
             <button
               onClick={fetchData}
               disabled={isLoading}
-              className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
+              className="p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors"
             >
               <RefreshCw className={`h-4 w-4 text-[var(--text-muted)] ${isLoading ? 'animate-spin' : ''}`} />
             </button>
@@ -231,7 +231,7 @@ export function StockChart({ symbol, height = 400, showControls = true, defaultP
                 className={`px-3 py-1.5 text-xs font-medium rounded transition-all ${
                   selectedPeriod.value === period.value
                     ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
                 }`}
               >
                 {period.label}
@@ -265,7 +265,7 @@ export function StockChart({ symbol, height = 400, showControls = true, defaultP
 
       {/* OHLCV Summary bar */}
       {lastCandle && (
-        <div className="px-6 py-2.5 border-t border-[var(--border-primary)] bg-[var(--bg-overlay)]">
+        <div className="px-6 py-2.5 border-t border-[var(--border-default)] bg-[var(--bg-muted)]">
           <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
             <div className="flex items-center space-x-4 font-mono">
               <span>O: <span className="text-[var(--text-secondary)]">{lastCandle.open.toFixed(2)}</span></span>

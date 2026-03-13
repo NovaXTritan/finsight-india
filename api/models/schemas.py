@@ -1,7 +1,7 @@
 """
 API Models - Pydantic schemas for request/response validation
 """
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import Optional, List
 from datetime import datetime, date as DateType
 
@@ -80,6 +80,8 @@ class WatchlistResponse(BaseModel):
 
 class Signal(BaseModel):
     """Individual signal/anomaly."""
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     symbol: str
     pattern_type: str
@@ -88,12 +90,12 @@ class Signal(BaseModel):
     price: float
     volume: int
     detected_at: datetime
-    agent_decision: Optional[str] = None
-    agent_confidence: Optional[float] = None
-    agent_reason: Optional[str] = None
+    signal_action: Optional[str] = Field(None, validation_alias='agent_decision')
+    statistical_confidence: Optional[float] = Field(None, validation_alias='agent_confidence')
+    reasoning: Optional[str] = Field(None, validation_alias='agent_reason')
     context: Optional[str] = None
     sources: Optional[str] = None
-    thought_process: Optional[str] = None
+    statistical_analysis: Optional[str] = Field(None, validation_alias='thought_process')
     confidence_level: int = 1
     catalyst_context: Optional[dict] = None
 

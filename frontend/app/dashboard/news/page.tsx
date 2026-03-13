@@ -7,7 +7,7 @@ export default function NewsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -20,7 +20,7 @@ export default function NewsPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-overlay)] border border-[var(--border-primary)] rounded-lg">
+          <div className="flex items-center space-x-2 px-4 py-2 bg-[var(--bg-muted)] border border-[var(--border-default)] rounded-lg">
             <Rss className="h-4 w-4 text-orange-400" />
             <span className="text-sm font-medium text-[var(--text-secondary)]">Live Feed</span>
             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -29,8 +29,8 @@ export default function NewsPage() {
       </div>
 
       {/* Sources Info */}
-      <div className="glass-card-dashboard overflow-hidden">
-        <div className="bg-[var(--bg-overlay)] border-b border-[var(--border-primary)] px-6 py-4">
+      <div className="card overflow-hidden">
+        <div className="bg-[var(--bg-muted)] border-b border-[var(--border-default)] px-6 py-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
               <Bell className="h-5 w-5 text-primary-400" />

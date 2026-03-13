@@ -73,7 +73,7 @@ function ResetPasswordForm() {
         </p>
         <Link
           href="/forgot-password"
-          className="btn-glass-primary inline-flex items-center px-6 py-3"
+          className="btn-primary inline-flex items-center px-6 py-3"
         >
           Request New Reset Link
         </Link>
@@ -91,7 +91,7 @@ function ResetPasswordForm() {
         </p>
         <Link
           href="/login"
-          className="btn-glass-primary inline-flex items-center px-6 py-3"
+          className="btn-primary inline-flex items-center px-6 py-3"
         >
           Go to Login
         </Link>
@@ -124,7 +124,7 @@ function ResetPasswordForm() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="input-glass pl-12 pr-12"
+              className="input pl-12 pr-12"
               placeholder="Minimum 8 characters"
               required
               minLength={8}
@@ -144,7 +144,7 @@ function ResetPasswordForm() {
                   <div
                     key={level}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      strength >= level ? strengthColors[strength] : 'bg-[var(--bg-overlay)]'
+                      strength >= level ? strengthColors[strength] : 'bg-[var(--bg-muted)]'
                     }`}
                   />
                 ))}
@@ -166,7 +166,7 @@ function ResetPasswordForm() {
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input-glass pl-12"
+              className="input pl-12"
               placeholder="Confirm your new password"
               required
               minLength={8}
@@ -180,7 +180,7 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={isLoading || password !== confirmPassword || password.length < 8}
-          className="w-full btn-glass-primary py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full btn-primary py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
@@ -212,7 +212,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {/* Card */}
-        <div className="glass-card p-8">
+        <div className="card p-8">
           <Suspense fallback={
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary-500" />

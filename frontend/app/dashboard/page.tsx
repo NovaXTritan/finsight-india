@@ -74,7 +74,7 @@ export default function DashboardPage() {
       {/* Welcome + Quick Stats */}
       <motion.div variants={fadeUp} className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <h1 className="text-display-md font-display text-[var(--text-primary)]">
+          <h1 className="text-xl sm:text-display-md font-display text-[var(--text-primary)]">
             Welcome back, <span className="text-primary-400">{user?.name?.split(' ')[0]}</span>
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Here&apos;s what&apos;s happening in the market today</p>
@@ -110,14 +110,14 @@ export default function DashboardPage() {
           {/* Chart */}
           <motion.div variants={fadeUp}>
             <div className="card overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-default)]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[var(--border-default)] gap-2">
                 <div className="flex items-center space-x-2">
                   <BarChart3 className="h-4 w-4 text-primary-400" />
-                  <h2 className="text-heading font-display text-[var(--text-primary)]">Price Chart</h2>
+                  <h2 className="text-sm sm:text-heading font-display text-[var(--text-primary)]">Price Chart</h2>
                 </div>
                 {watchlistSymbols.length > 0 && (
                   <div className="flex items-center space-x-1 overflow-x-auto scrollbar-hide">
-                    {watchlistSymbols.slice(0, 8).map(sym => (
+                    {watchlistSymbols.slice(0, 6).map(sym => (
                       <button
                         key={sym}
                         onClick={() => setChartSymbol(sym)}

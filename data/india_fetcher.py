@@ -1,12 +1,12 @@
 """
 Indian Market Data Fetcher
 
-Fetches data from:
-1. NSE India (indices, FII/DII, bulk deals)
-2. Yahoo Finance (stock prices with .NS suffix)
-3. News RSS feeds
-
-NSE requires proper headers to avoid 403 errors.
+Data source priority:
+1. SmartAPI (Angel One) — real-time prices and intraday charts
+2. NSE India — indices, FII/DII, Nifty 50 constituents
+3. Yahoo Finance — historical fallback
+4. PostgreSQL market_data — cached SmartAPI data
+5. Static fallback — hardcoded (last resort)
 """
 import asyncio
 import aiohttp
@@ -179,15 +179,15 @@ class IndiaDataFetcher:
     """
     Main Indian market data fetcher.
 
-    Combines:
-    - NSE direct API for real-time data
-    - Yahoo Finance for historical data and prices
+    Priority: SmartAPI → NSE → Yahoo → DB cache → static fallback.
     """
 
-    def __init__(self):
+    def __init__(self, db_pool=None):
         self.nse = NSEFetcher()
+        self.db_pool = db_pool  # Optional asyncpg pool for market_data table
         self._cache = {}
         self._cache_ttl = 60  # Cache TTL in seconds
+        self._smartapi = None  # Lazy-loaded SmartAPI singleton
 
     async def close(self):
         """Close all connections."""
@@ -212,27 +212,253 @@ class IndiaDataFetcher:
         self._cache[key] = (time.time(), value)
 
     # =========================================================================
+    # SMARTAPI ACCESS
+    # =========================================================================
+
+    def _get_smartapi(self):
+        """Get or initialize SmartAPI singleton (lazy, stays authenticated)."""
+        if self._smartapi is None:
+            try:
+                from data.smartapi_client import get_smartapi_client
+                client = get_smartapi_client()
+                # Ensure token map is loaded
+                if not client._token_map:
+                    client.load_instrument_tokens()
+                self._smartapi = client
+            except Exception as e:
+                logger.warning(f"SmartAPI init failed: {e}")
+        return self._smartapi
+
+    async def _get_smartapi_async(self):
+        """Get SmartAPI singleton with async token loading."""
+        if self._smartapi is None:
+            try:
+                from data.smartapi_client import get_smartapi_client
+                client = get_smartapi_client()
+                if not client._token_map:
+                    await client.load_instrument_tokens_async()
+                self._smartapi = client
+            except Exception as e:
+                logger.warning(f"SmartAPI init failed: {e}")
+        return self._smartapi
+
+    # =========================================================================
+    # DATABASE HELPERS (market_data table from SmartAPI)
+    # =========================================================================
+
+    async def _get_nifty50_from_db(self) -> Optional[pd.DataFrame]:
+        """Get latest Nifty 50 stock data from market_data table."""
+        if not self.db_pool:
+            return None
+
+        try:
+            from data.smartapi_client import NIFTY50_SYMBOLS
+            async with self.db_pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT DISTINCT ON (symbol)
+                        symbol, open, high, low, close, volume, trade_date
+                    FROM market_data
+                    WHERE symbol = ANY($1::text[])
+                    ORDER BY symbol, trade_date DESC
+                """, NIFTY50_SYMBOLS)
+
+            if not rows or len(rows) < 10:
+                return None
+
+            records = []
+            for r in rows:
+                close = float(r["close"])
+                open_p = float(r["open"])
+                # Estimate prev_close as open (close approximation)
+                change = close - open_p
+                change_pct = (change / open_p * 100) if open_p > 0 else 0
+                records.append({
+                    "symbol": r["symbol"],
+                    "open": float(r["open"]),
+                    "high": float(r["high"]),
+                    "low": float(r["low"]),
+                    "last_price": close,
+                    "prev_close": open_p,
+                    "change": round(change, 2),
+                    "change_pct": round(change_pct, 2),
+                    "volume": int(r["volume"] or 0),
+                    "value": 0,
+                })
+
+            logger.info(f"DB returned data for {len(records)} Nifty 50 stocks")
+            return pd.DataFrame(records)
+        except Exception as e:
+            logger.warning(f"DB Nifty 50 query failed: {e}")
+            return None
+
+    async def _get_price_from_db(self, symbol: str) -> Optional[float]:
+        """Get latest closing price from market_data table."""
+        if not self.db_pool:
+            return None
+
+        clean = symbol.replace(".NS", "").replace(".BO", "").upper()
+        try:
+            async with self.db_pool.acquire() as conn:
+                row = await conn.fetchrow("""
+                    SELECT close FROM market_data
+                    WHERE symbol = $1
+                    ORDER BY trade_date DESC
+                    LIMIT 1
+                """, clean)
+            if row:
+                return float(row["close"])
+        except Exception as e:
+            logger.warning(f"DB price query failed for {clean}: {e}")
+        return None
+
+    async def _get_stock_candles_from_db(
+        self, symbol: str, days: int = 60
+    ) -> Optional[pd.DataFrame]:
+        """Get OHLCV candles from market_data table."""
+        if not self.db_pool:
+            return None
+
+        clean = symbol.replace(".NS", "").replace(".BO", "").upper()
+        try:
+            async with self.db_pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT trade_date as datetime, open, high, low, close, volume
+                    FROM market_data
+                    WHERE symbol = $1
+                    ORDER BY trade_date DESC
+                    LIMIT $2
+                """, clean, days)
+
+            if not rows or len(rows) < 2:
+                return None
+
+            df = pd.DataFrame([dict(r) for r in rows])
+            df = df.sort_values("datetime").reset_index(drop=True)
+            df.columns = [c.lower() for c in df.columns]
+            logger.info(f"DB returned {len(df)} candles for {clean}")
+            return df
+        except Exception as e:
+            logger.warning(f"DB candle query failed for {clean}: {e}")
+        return None
+
+    async def _get_indices_from_db(self) -> Optional[Dict]:
+        """
+        Compute approximate index data from constituent stock prices in DB.
+        Uses Nifty 50 stocks to derive a rough index picture.
+        """
+        if not self.db_pool:
+            return None
+
+        try:
+            async with self.db_pool.acquire() as conn:
+                # Get latest 2 trading days of data for all Nifty 50 stocks
+                rows = await conn.fetch("""
+                    WITH latest_dates AS (
+                        SELECT DISTINCT trade_date FROM market_data
+                        WHERE symbol = 'RELIANCE'
+                        ORDER BY trade_date DESC LIMIT 2
+                    )
+                    SELECT m.symbol, m.trade_date, m.open, m.high, m.low, m.close, m.volume
+                    FROM market_data m
+                    WHERE m.trade_date IN (SELECT trade_date FROM latest_dates)
+                    ORDER BY m.symbol, m.trade_date
+                """)
+
+            if not rows or len(rows) < 10:
+                return None
+
+            # Group by symbol, get today vs previous
+            from collections import defaultdict
+            by_symbol = defaultdict(list)
+            for r in rows:
+                by_symbol[r["symbol"]].append(r)
+
+            # Count advances/declines to get a market picture
+            advances = 0
+            declines = 0
+            total_change_pct = 0
+            count = 0
+
+            for sym, days_data in by_symbol.items():
+                if len(days_data) >= 2:
+                    today = days_data[-1]
+                    prev = days_data[-2]
+                    today_close = float(today["close"])
+                    prev_close = float(prev["close"])
+                    if prev_close > 0:
+                        chg_pct = (today_close - prev_close) / prev_close * 100
+                        total_change_pct += chg_pct
+                        count += 1
+                        if chg_pct > 0:
+                            advances += 1
+                        else:
+                            declines += 1
+
+            if count == 0:
+                return None
+
+            avg_change_pct = total_change_pct / count
+
+            # Use the average to estimate index change
+            # Approximate Nifty 50 around 22000-24000 range
+            nifty_approx = 23000
+            nifty_change = nifty_approx * avg_change_pct / 100
+
+            indices = {
+                "NIFTY 50": {
+                    "value": round(nifty_approx + nifty_change, 2),
+                    "change": round(nifty_change, 2),
+                    "change_pct": round(avg_change_pct, 2),
+                    "open": round(nifty_approx, 2),
+                    "high": round(nifty_approx + abs(nifty_change) * 1.5, 2),
+                    "low": round(nifty_approx - abs(nifty_change) * 0.5, 2),
+                },
+            }
+
+            logger.info(f"DB derived index data: avg change {avg_change_pct:.2f}%, A/D={advances}/{declines}")
+            return {"data": indices, "data_source": "database", "is_live": False}
+
+        except Exception as e:
+            logger.warning(f"DB index derivation failed: {e}")
+            return None
+
+    # =========================================================================
     # STOCK DATA
     # =========================================================================
 
-    def fetch_stock_data(
+    async def _fetch_from_smartapi(
         self,
         symbol: str,
         period: str = "5d",
         interval: str = "5m"
     ) -> Optional[pd.DataFrame]:
-        """
-        Fetch historical stock data using Yahoo Finance.
+        """Fetch stock data from SmartAPI (async, primary source)."""
+        client = await self._get_smartapi_async()
+        if not client:
+            return None
 
-        Args:
-            symbol: Stock symbol (with or without .NS suffix)
-            period: Data period (5d, 1mo, 3mo, etc.)
-            interval: Data interval (1m, 5m, 15m, 1h, 1d, etc.)
+        clean = symbol.replace(".NS", "").replace(".BO", "").upper()
+        period_days = {"1d": 1, "5d": 5, "1mo": 30, "3mo": 90, "6mo": 180, "1y": 365}
+        days = period_days.get(period, 5)
 
-        Returns:
-            DataFrame with OHLCV data
-        """
-        # Ensure .NS suffix for Indian stocks
+        try:
+            candles = await client.get_intraday_candles_async(clean, interval=interval, days=days)
+            if candles and len(candles) > 0:
+                df = pd.DataFrame(candles)
+                df.columns = [c.lower() for c in df.columns]
+                return df
+        except Exception as e:
+            logger.warning(f"SmartAPI chart failed for {clean}: {e}")
+
+        return None
+
+    def _fetch_from_yahoo(
+        self,
+        symbol: str,
+        period: str = "5d",
+        interval: str = "5m"
+    ) -> Optional[pd.DataFrame]:
+        """Fetch stock data from Yahoo Finance (secondary source)."""
         if not symbol.endswith((".NS", ".BO")):
             symbol = f"{symbol}.NS"
 
@@ -241,24 +467,16 @@ class IndiaDataFetcher:
             df = ticker.history(period=period, interval=interval)
 
             if df.empty:
-                logger.warning(f"No data returned for {symbol}, using fallback")
-                candles = get_fallback_stock_candles(symbol, period, interval)
-                return pd.DataFrame(candles) if candles else None
+                return None
 
-            # Standardize column names
             df = df.reset_index()
             df.columns = [c.lower() for c in df.columns]
-
-            # Rename 'date' or 'datetime' to 'datetime'
             if 'date' in df.columns:
                 df = df.rename(columns={'date': 'datetime'})
-
             return df
-
         except Exception as e:
-            logger.error(f"Error fetching {symbol}: {e}, using fallback")
-            candles = get_fallback_stock_candles(symbol, period, interval)
-            return pd.DataFrame(candles) if candles else None
+            logger.warning(f"Yahoo chart failed for {symbol}: {e}")
+            return None
 
     async def fetch_stock_data_async(
         self,
@@ -266,17 +484,58 @@ class IndiaDataFetcher:
         period: str = "5d",
         interval: str = "5m"
     ) -> Optional[pd.DataFrame]:
-        """Async version - runs in thread pool."""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, self.fetch_stock_data, symbol, period, interval
-        )
+        """
+        Fetch stock data: SmartAPI → Yahoo → DB → static fallback.
 
-    def get_current_price(self, symbol: str) -> Optional[float]:
-        """Get current price for a stock."""
+        Args:
+            symbol: Stock symbol (e.g., RELIANCE)
+            period: 1d, 5d, 1mo, 3mo, 6mo, 1y
+            interval: 1m, 5m, 15m, 30m, 1h, 1d
+        """
+        loop = asyncio.get_event_loop()
+
+        # 1. SmartAPI (async, best for intraday)
+        df = await self._fetch_from_smartapi(symbol, period, interval)
+        if df is not None and not df.empty:
+            return df
+
+        # 2. Yahoo Finance
+        df = await loop.run_in_executor(
+            None, self._fetch_from_yahoo, symbol, period, interval
+        )
+        if df is not None and not df.empty:
+            return df
+
+        # 3. Database (daily candles only)
+        period_days = {"1d": 1, "5d": 5, "1mo": 30, "3mo": 90, "6mo": 180, "1y": 365}
+        days = period_days.get(period, 30)
+        db_df = await self._get_stock_candles_from_db(symbol, days=days)
+        if db_df is not None and not db_df.empty:
+            return db_df
+
+        # 4. Static fallback
+        logger.warning(f"All sources failed for {symbol}, using static fallback")
+        candles = get_fallback_stock_candles(symbol, period, interval)
+        return pd.DataFrame(candles) if candles else None
+
+    async def _get_price_smartapi(self, symbol: str) -> Optional[float]:
+        """Get live price from SmartAPI (async, uses Quote API)."""
+        client = await self._get_smartapi_async()
+        if not client:
+            return None
+        clean = symbol.replace(".NS", "").replace(".BO", "").upper()
+        try:
+            result = await client.get_live_price_async(clean)
+            if result and result.get("price"):
+                return result["price"]
+        except Exception as e:
+            logger.warning(f"SmartAPI price failed for {clean}: {e}")
+        return None
+
+    def _get_price_yahoo(self, symbol: str) -> Optional[float]:
+        """Get current price from Yahoo Finance."""
         if not symbol.endswith((".NS", ".BO")):
             symbol = f"{symbol}.NS"
-
         try:
             ticker = yf.Ticker(symbol)
             info = ticker.info
@@ -284,18 +543,33 @@ class IndiaDataFetcher:
             if price:
                 return price
         except Exception as e:
-            logger.error(f"Error getting price for {symbol}: {e}")
-
-        # Fallback
-        fallback_price = get_fallback_price(symbol)
-        if fallback_price:
-            logger.warning(f"Using fallback price for {symbol}")
-        return fallback_price
+            logger.warning(f"Yahoo price failed for {symbol}: {e}")
+        return None
 
     async def get_current_price_async(self, symbol: str) -> Optional[float]:
-        """Async version - runs in thread pool."""
+        """Get price: SmartAPI → Yahoo → DB → static fallback."""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.get_current_price, symbol)
+
+        # 1. SmartAPI (async, near real-time via Quote API)
+        price = await self._get_price_smartapi(symbol)
+        if price:
+            return price
+
+        # 2. Yahoo Finance
+        price = await loop.run_in_executor(None, self._get_price_yahoo, symbol)
+        if price:
+            return price
+
+        # 3. Database
+        db_price = await self._get_price_from_db(symbol)
+        if db_price:
+            return db_price
+
+        # 4. Static fallback
+        fallback_price = get_fallback_price(symbol)
+        if fallback_price:
+            logger.warning(f"Using static fallback price for {symbol}")
+        return fallback_price
 
     # =========================================================================
     # INDICES
@@ -388,8 +662,15 @@ class IndiaDataFetcher:
             self._set_cache("indices", result)
             return result
 
-        # Fallback to static data when cloud IPs are blocked
-        logger.warning("Both NSE and Yahoo Finance failed, using fallback indices data")
+        # Try database-derived index data
+        db_indices = await self._get_indices_from_db()
+        if db_indices:
+            logger.info("Using database-derived index data")
+            self._set_cache("indices", db_indices)
+            return db_indices
+
+        # Final fallback to static data
+        logger.warning("All sources failed, using static fallback indices data")
         fallback_data = get_fallback_indices()
         result = {"data": fallback_data, "data_source": "fallback", "is_live": False}
         self._set_cache("indices", result)
@@ -525,8 +806,39 @@ class IndiaDataFetcher:
                 })
             return pd.DataFrame(rows)
 
-        # Fallback: Yahoo Finance batch download for top Nifty stocks
-        logger.warning("NSE Nifty 50 unavailable, trying Yahoo Finance batch...")
+        # Fallback 1: SmartAPI Quote API (1 call for all 50 symbols)
+        logger.warning("NSE Nifty 50 unavailable, trying SmartAPI Quote API...")
+        try:
+            from data.smartapi_client import NIFTY50_SYMBOLS
+            client = await self._get_smartapi_async()
+            if client:
+                batch_prices = await client.get_batch_prices_async(NIFTY50_SYMBOLS)
+                if batch_prices and len(batch_prices) >= 10:
+                    rows = []
+                    for sym, pdata in batch_prices.items():
+                        ltp = pdata.get("price", 0)
+                        prev = pdata.get("close", 0) or pdata.get("open", 0)
+                        rows.append({
+                            "symbol": sym,
+                            "open": pdata.get("open", 0),
+                            "high": pdata.get("high", 0),
+                            "low": pdata.get("low", 0),
+                            "last_price": ltp,
+                            "prev_close": prev,
+                            "change": pdata.get("change", round(ltp - prev, 2) if prev else 0),
+                            "change_pct": pdata.get("change_pct", round(
+                                ((ltp - prev) / prev * 100) if prev else 0, 2
+                            )),
+                            "volume": pdata.get("volume", 0),
+                            "value": 0,
+                        })
+                    logger.info(f"SmartAPI Quote API returned data for {len(rows)} stocks")
+                    return pd.DataFrame(rows)
+        except Exception as e:
+            logger.warning(f"SmartAPI Quote API failed: {e}")
+
+        # Fallback 2: Yahoo Finance batch download for top Nifty stocks
+        logger.warning("SmartAPI failed, trying Yahoo Finance batch...")
         try:
             symbols_yf = [s.replace(".NS", "") for s in config.INDIA_SYMBOLS]
             tickers_str = " ".join(config.INDIA_SYMBOLS)
@@ -568,6 +880,12 @@ class IndiaDataFetcher:
         except Exception as e:
             logger.warning(f"Yahoo Finance batch download failed: {e}")
 
+        # Try database (market_data table from SmartAPI)
+        db_df = await self._get_nifty50_from_db()
+        if db_df is not None and not db_df.empty:
+            logger.info(f"Using database Nifty 50 data ({len(db_df)} stocks)")
+            return db_df
+
         # Final fallback to static data
         logger.warning("All sources failed, using static fallback Nifty 50 data")
         return pd.DataFrame(get_fallback_nifty50())
@@ -577,12 +895,12 @@ class IndiaDataFetcher:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
-def get_india_fetcher() -> IndiaDataFetcher:
+def get_india_fetcher(db_pool=None) -> IndiaDataFetcher:
     """Get India data fetcher instance."""
-    return IndiaDataFetcher()
+    return IndiaDataFetcher(db_pool=db_pool)
 
 
-async def fetch_india_market_summary() -> Dict:
+async def fetch_india_market_summary(db_pool=None) -> Dict:
     """
     Fetch a summary of Indian market data.
 
@@ -593,7 +911,7 @@ async def fetch_india_market_summary() -> Dict:
     - top_gainers: Top gaining stocks
     - top_losers: Top losing stocks
     """
-    fetcher = IndiaDataFetcher()
+    fetcher = IndiaDataFetcher(db_pool=db_pool)
 
     try:
         # Fetch data concurrently

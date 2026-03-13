@@ -148,6 +148,7 @@ body {
     @apply relative rounded-xl overflow-hidden;
     background: var(--bg-card);
     border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-card);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .card:hover {
@@ -522,41 +523,17 @@ body {
 }
 
 /* ================================
-   BACKWARD COMPATIBILITY ALIASES
-   Map old class names to new system
-   (remove these as pages are updated)
+   UTILITIES (kept)
    ================================ */
 
-.glass-card { @apply card; }
-.glass-card-dark { @apply card; }
-.glass-card-dashboard { @apply card; }
-.glass-card-purple { @apply card; background: var(--bg-muted); }
-.btn-glass-primary { @apply btn-primary; }
-.btn-glass-secondary { @apply btn-secondary; }
-.btn-glass-ghost { @apply btn-ghost; }
-.input-glass { @apply input; }
-.input-glass-light { @apply input; }
-.table-glass { @apply table; }
-.tab-glass { @apply tab; }
-.tab-glass-active { @apply tab-active; }
-.tab-glass-inactive { @apply tab-inactive; }
-.badge-glow { @apply badge; }
-.badge-glass { @apply badge; }
-.modal-glass { @apply modal; }
-.progress-gradient { @apply progress; }
-.progress-gradient-bar { @apply progress-bar; }
-.card-hover-lift { @apply card; }
-.card-hover-glow { @apply card; }
-.glow-card { @apply card; }
-.gradient-border-card { @apply card-interactive; }
+/* Mobile safe area for bottom nav */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 .animate-page-enter { animation: slideUp 0.3s ease-out; }
-.stagger-children > * { animation: slideUp 0.3s ease-out both; }
-.stagger-children > *:nth-child(1) { animation-delay: 0.03s; }
-.stagger-children > *:nth-child(2) { animation-delay: 0.06s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.09s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.12s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.15s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.18s; }
 .icon-glow { filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.3)); }
 .nav-glass {
   background: var(--nav-glass-bg);

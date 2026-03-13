@@ -21,7 +21,7 @@ import api from '@/lib/api';
 
 const MacroTrendChart = dynamic(
   () => import('@/components/MacroTrendChart').then(mod => mod.MacroTrendChart),
-  { ssr: false, loading: () => <div className="w-full h-[280px] bg-[var(--bg-overlay)] rounded animate-pulse" /> }
+  { ssr: false, loading: () => <div className="w-full h-[280px] bg-[var(--bg-muted)] rounded animate-pulse" /> }
 );
 import { HealthScorecard } from '@/components/HealthScorecard';
 
@@ -152,12 +152,12 @@ function SummaryCard({
   colorClass: string;
 }) {
   return (
-    <div className="glass-card-dashboard p-5 card-hover-lift">
+    <div className="card p-5 card-hover-lift">
       <div className="flex items-center justify-between mb-3">
         <div className={`p-2.5 ${colorClass} rounded-lg`}>
           <Icon className="h-5 w-5 text-white" />
         </div>
-        <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-overlay)] px-2 py-1 rounded-full">{period}</span>
+        <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-muted)] px-2 py-1 rounded-full">{period}</span>
       </div>
       <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-1">{title}</h3>
       <div className="flex items-end justify-between">
@@ -176,7 +176,7 @@ function SummaryCard({
 function InsightCard({ insight }: { insight: MacroInsight }) {
   const signalColors: Record<string, string> = {
     BULLISH: 'bg-green-500/10 text-green-400 border-green-500/20',
-    NEUTRAL: 'bg-[var(--bg-overlay)] text-[var(--text-secondary)] border-[var(--border-primary)]',
+    NEUTRAL: 'bg-[var(--bg-muted)] text-[var(--text-secondary)] border-[var(--border-default)]',
     CAUTIOUS: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
     BEARISH: 'bg-red-500/10 text-red-400 border-red-500/20',
   };
@@ -189,7 +189,7 @@ function InsightCard({ insight }: { insight: MacroInsight }) {
   };
 
   return (
-    <div className={`glass-card-dashboard p-5 border-l-4 ${signalBorders[insight.signal] || signalBorders.NEUTRAL}`}>
+    <div className={`card p-5 border-l-4 ${signalBorders[insight.signal] || signalBorders.NEUTRAL}`}>
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-semibold text-[var(--text-primary)]">{insight.indicator}</h4>
         <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${signalColors[insight.signal] || signalColors.NEUTRAL}`}>
@@ -210,13 +210,13 @@ function InsightCard({ insight }: { insight: MacroInsight }) {
 
       <div className="space-y-3">
         {insight.sector_impacts.map((impact, idx) => (
-          <div key={idx} className="bg-[var(--bg-overlay)] rounded-lg p-4 border border-[var(--border-primary)]">
+          <div key={idx} className="bg-[var(--bg-muted)] rounded-lg p-4 border border-[var(--border-default)]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-[var(--text-primary)]">{impact.sector}</span>
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 impact.impact.includes('Positive') ? 'bg-green-500/10 text-green-400' :
                 impact.impact.includes('Negative') ? 'bg-red-500/10 text-red-400' :
-                'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
+                'bg-[var(--bg-muted)] text-[var(--text-secondary)]'
               }`}>
                 {impact.impact}
               </span>
@@ -323,11 +323,11 @@ export default function MacroPage() {
 
   if (error) {
     return (
-      <div className="glass-card-dashboard p-12 text-center">
+      <div className="card p-12 text-center">
         <div className="text-red-500 mb-4">{error}</div>
         <button
           onClick={fetchData}
-          className="btn-glass-primary px-6 py-2.5"
+          className="btn-primary px-6 py-2.5"
         >
           Retry
         </button>
@@ -338,7 +338,7 @@ export default function MacroPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -353,7 +353,7 @@ export default function MacroPage() {
             <select
               value={months}
               onChange={(e) => setMonths(parseInt(e.target.value))}
-              className="input-glass-light text-sm"
+              className="input text-sm"
             >
               <option value={3}>3 Months</option>
               <option value={6}>6 Months</option>
@@ -362,7 +362,7 @@ export default function MacroPage() {
             </select>
             <button
               onClick={fetchData}
-              className="p-2.5 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
+              className="p-2.5 hover:bg-[var(--bg-muted)] rounded-lg transition-colors"
             >
               <RefreshCw className="h-5 w-5 text-primary-400" />
             </button>
@@ -371,7 +371,7 @@ export default function MacroPage() {
       </div>
 
       {/* Tabs */}
-      <div className="glass-card-dashboard px-6 py-3">
+      <div className="card px-6 py-3">
         <nav className="flex space-x-2">
           {(['overview', 'charts', 'insights'] as const).map((tab) => (
             <button
@@ -380,7 +380,7 @@ export default function MacroPage() {
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 activeTab === tab
                   ? 'bg-primary-500/10 text-primary-400'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-overlay)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-muted)]'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -448,7 +448,7 @@ export default function MacroPage() {
 
           {/* Quick Insights */}
           {insights.length > 0 && (
-            <div className="glass-card-dashboard p-6 bg-[var(--bg-overlay)]">
+            <div className="card p-6 bg-[var(--bg-muted)]">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="p-2 bg-primary-500/10 border border-primary-500/20 rounded-lg">
                   <Lightbulb className="h-5 w-5 text-primary-400" />
@@ -457,13 +457,13 @@ export default function MacroPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {insights.slice(0, 3).map((insight, idx) => (
-                  <div key={idx} className="bg-[var(--bg-raised)] backdrop-blur-sm rounded-lg p-4 border border-[var(--border-primary)]">
+                  <div key={idx} className="bg-[var(--bg-elevated)] backdrop-blur-sm rounded-lg p-4 border border-[var(--border-default)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-[var(--text-primary)]">{insight.indicator}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         insight.signal === 'BULLISH' ? 'bg-green-500/10 text-green-400' :
                         insight.signal === 'BEARISH' ? 'bg-red-500/10 text-red-400' :
-                        'bg-[var(--bg-overlay)] text-[var(--text-secondary)]'
+                        'bg-[var(--bg-muted)] text-[var(--text-secondary)]'
                       }`}>
                         {insight.signal}
                       </span>
@@ -558,7 +558,7 @@ export default function MacroPage() {
           </div>
 
           {/* PMI Interpretation Guide */}
-          <div className="glass-card-dashboard p-6">
+          <div className="card p-6">
             <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Understanding PMI</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="bg-green-500/10 p-4 rounded-lg border border-green-500/20">
@@ -586,7 +586,7 @@ export default function MacroPage() {
           </div>
 
           {/* Correlation Info */}
-          <div className="glass-card-dashboard p-5 bg-blue-500/10 border-l-4 border-l-blue-500">
+          <div className="card p-5 bg-blue-500/10 border-l-4 border-l-blue-500">
             <div className="flex items-start">
               <Info className="h-5 w-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
               <div className="text-sm text-blue-300">

@@ -12,7 +12,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Header */}
-      <div className="glass-card p-6">
+      <div className="card p-6">
         <div className="flex items-center space-x-3">
           <div className="p-3 bg-primary-500 rounded-xl">
             <Settings className="h-6 w-6 text-white" />
@@ -25,8 +25,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Profile Section */}
-      <div className="glass-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)] flex items-center space-x-2">
+      <div className="card overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center space-x-2">
           <User className="h-5 w-5 text-primary-400" />
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Profile</h2>
         </div>
@@ -42,8 +42,8 @@ export default function SettingsPage() {
               <div className="text-sm text-[var(--text-secondary)]">{user?.email}</div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-primary)]">
-            <div className="p-4 bg-[var(--bg-overlay)] rounded-xl">
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-default)]">
+            <div className="p-4 bg-[var(--bg-muted)] rounded-xl">
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                 Member Since
               </label>
@@ -57,7 +57,7 @@ export default function SettingsPage() {
                   : '-'}
               </div>
             </div>
-            <div className="p-4 bg-[var(--bg-overlay)] rounded-xl">
+            <div className="p-4 bg-[var(--bg-muted)] rounded-xl">
               <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                 Current Plan
               </label>
@@ -72,8 +72,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Subscription Section */}
-      <div className="glass-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)] flex items-center space-x-2">
+      <div className="card overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center space-x-2">
           <CreditCard className="h-5 w-5 text-primary-400" />
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Subscription</h2>
         </div>
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                 <div className="flex items-center space-x-2 text-sm text-[var(--text-secondary)]">
                   <span>{user?.watchlist_count} / {user?.tier_limit} watchlist symbols used</span>
                 </div>
-                <div className="mt-2 h-2 bg-[var(--bg-overlay)] rounded-full overflow-hidden w-48">
+                <div className="mt-2 h-2 bg-[var(--bg-muted)] rounded-full overflow-hidden w-48">
                   <div
                     className={`h-full rounded-full transition-all ${
                       (user?.watchlist_count || 0) >= (user?.tier_limit || 1)
@@ -105,7 +105,7 @@ export default function SettingsPage() {
               </div>
             </div>
             {user?.tier === 'free' && (
-              <button className="btn-glass-primary flex items-center space-x-2">
+              <button className="btn-primary flex items-center space-x-2">
                 <Sparkles className="h-4 w-4" />
                 <span>Upgrade to Pro</span>
               </button>
@@ -138,8 +138,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Notifications Section */}
-      <div className="glass-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)] flex items-center space-x-2">
+      <div className="card overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center space-x-2">
           <Bell className="h-5 w-5 text-primary-400" />
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Notifications</h2>
         </div>
@@ -163,14 +163,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Security Section */}
-      <div className="glass-card overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-primary)] bg-[var(--bg-overlay)] flex items-center space-x-2">
+      <div className="card overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center space-x-2">
           <Shield className="h-5 w-5 text-primary-400" />
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Security</h2>
         </div>
         <div className="p-6">
           <button
-            className="btn-glass-secondary"
+            className="btn-secondary"
             onClick={() => setShowChangePassword(true)}
           >
             Change Password
@@ -206,7 +206,7 @@ function TierCard({
           ? 'border-primary-500/40 bg-primary-500/10'
           : current
           ? 'border-green-500/40 bg-green-500/10'
-          : 'border-[var(--border-primary)] bg-[var(--bg-overlay)] hover:border-primary-500/30'
+          : 'border-[var(--border-default)] bg-[var(--bg-muted)] hover:border-primary-500/30'
       }`}
     >
       <div className="flex items-center space-x-2">
@@ -281,7 +281,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-md p-6 animate-page-enter">
+      <div className="card w-full max-w-md p-6 animate-page-enter">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-primary-500/20 rounded-lg">
@@ -291,7 +291,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[var(--bg-overlay)] rounded-lg transition-colors"
+            className="p-2 hover:bg-[var(--bg-muted)] rounded-lg transition-colors"
           >
             <X className="h-5 w-5 text-[var(--text-muted)]" />
           </button>
@@ -320,7 +320,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
                   type={showPasswords ? 'text' : 'password'}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="input-glass pr-10"
+                  className="input pr-10"
                   placeholder="Enter current password"
                   required
                 />
@@ -342,7 +342,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
                 type={showPasswords ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="input-glass"
+                className="input"
                 placeholder="Minimum 8 characters"
                 required
                 minLength={8}
@@ -357,7 +357,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
                 type={showPasswords ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input-glass"
+                className="input"
                 placeholder="Confirm new password"
                 required
                 minLength={8}
@@ -371,14 +371,14 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 btn-glass-secondary py-3"
+                className="flex-1 btn-secondary py-3"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading || newPassword !== confirmPassword || newPassword.length < 8}
-                className="flex-1 btn-glass-primary py-3 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 btn-primary py-3 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
@@ -407,7 +407,7 @@ function ToggleSetting({
   defaultChecked: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-[var(--bg-overlay)] rounded-xl">
+    <div className="flex items-center justify-between p-4 bg-[var(--bg-muted)] rounded-xl">
       <div>
         <div className="font-medium text-[var(--text-primary)]">{label}</div>
         <div className="text-sm text-[var(--text-secondary)]">{description}</div>
@@ -418,7 +418,7 @@ function ToggleSetting({
           className="sr-only peer"
           defaultChecked={defaultChecked}
         />
-        <div className="w-11 h-6 bg-[var(--bg-primary)] border border-[var(--border-primary)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-transparent after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--text-muted)] after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500 peer-checked:after:bg-white"></div>
+        <div className="w-11 h-6 bg-[var(--bg-primary)] border border-[var(--border-default)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-transparent after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--text-muted)] after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500 peer-checked:after:bg-white"></div>
       </label>
     </div>
   );

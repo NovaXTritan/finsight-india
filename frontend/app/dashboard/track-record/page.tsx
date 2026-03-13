@@ -38,15 +38,15 @@ export default function TrackRecordPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="glass-card-dashboard p-6">
+        <div className="card p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-[var(--bg-overlay)] rounded w-1/3" />
-            <div className="h-4 bg-[var(--bg-overlay)] rounded w-2/3" />
+            <div className="h-8 bg-[var(--bg-muted)] rounded w-1/3" />
+            <div className="h-4 bg-[var(--bg-muted)] rounded w-2/3" />
           </div>
         </div>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="glass-card-dashboard p-6">
-            <div className="animate-pulse h-32 bg-[var(--bg-overlay)] rounded" />
+          <div key={i} className="card p-6">
+            <div className="animate-pulse h-32 bg-[var(--bg-muted)] rounded" />
           </div>
         ))}
       </div>
@@ -56,7 +56,7 @@ export default function TrackRecordPage() {
   if (!data || data.total_signals === 0) {
     return (
       <div className="space-y-6">
-        <div className="glass-card-dashboard p-6">
+        <div className="card p-6">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
               <Target className="h-6 w-6 text-primary-400" />
@@ -67,7 +67,7 @@ export default function TrackRecordPage() {
             </div>
           </div>
         </div>
-        <div className="glass-card-dashboard p-12 text-center">
+        <div className="card p-12 text-center">
           <Target className="h-12 w-12 mx-auto text-[var(--text-muted)] mb-4" />
           <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No Track Record Yet</h3>
           <p className="text-[var(--text-secondary)]">
@@ -85,7 +85,7 @@ export default function TrackRecordPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -98,7 +98,7 @@ export default function TrackRecordPage() {
               </p>
             </div>
           </div>
-          <button onClick={fetchData} className="btn-glass-secondary flex items-center space-x-2">
+          <button onClick={fetchData} className="btn-secondary flex items-center space-x-2">
             <RefreshCw className="h-4 w-4" />
             <span>Refresh</span>
           </button>
@@ -107,11 +107,11 @@ export default function TrackRecordPage() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card-dashboard p-5">
+        <div className="card p-5">
           <div className="text-sm text-[var(--text-muted)] mb-1">Total Signals</div>
           <div className="text-2xl font-bold text-[var(--text-primary)] font-mono">{data.total_signals}</div>
         </div>
-        <div className="glass-card-dashboard p-5">
+        <div className="card p-5">
           <div className="text-sm text-[var(--text-muted)] mb-1">3-Day Hit Rate</div>
           <div className={`text-2xl font-bold font-mono ${
             hitRate3d && hitRate3d.hit_rate >= 35 ? 'text-green-400' : 'text-[var(--text-primary)]'
@@ -122,7 +122,7 @@ export default function TrackRecordPage() {
             {hitRate3d ? `${hitRate3d.hits}/${hitRate3d.total} signals` : 'No data yet'}
           </div>
         </div>
-        <div className="glass-card-dashboard p-5">
+        <div className="card p-5">
           <div className="text-sm text-[var(--text-muted)] mb-1">5-Day Hit Rate</div>
           <div className={`text-2xl font-bold font-mono ${
             hitRate5d && hitRate5d.hit_rate >= 35 ? 'text-green-400' : 'text-[var(--text-primary)]'
@@ -133,7 +133,7 @@ export default function TrackRecordPage() {
             {hitRate5d ? `${hitRate5d.hits}/${hitRate5d.total} signals` : 'No data yet'}
           </div>
         </div>
-        <div className="glass-card-dashboard p-5">
+        <div className="card p-5">
           <div className="text-sm text-[var(--text-muted)] mb-1">Avg 3D Return</div>
           <div className={`text-2xl font-bold font-mono ${
             hitRate3d && hitRate3d.avg_return > 0 ? 'text-green-400' : hitRate3d && hitRate3d.avg_return < 0 ? 'text-red-400' : 'text-[var(--text-primary)]'
@@ -144,7 +144,7 @@ export default function TrackRecordPage() {
       </div>
 
       {/* Hit Rates by Horizon */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center">
           <BarChart3 className="h-5 w-5 mr-2 text-primary-400" />
           Hit Rates by Horizon
@@ -152,7 +152,7 @@ export default function TrackRecordPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[var(--border-primary)]">
+              <tr className="border-b border-[var(--border-default)]">
                 <th className="text-left py-3 text-[var(--text-muted)] font-medium">Horizon</th>
                 <th className="text-right py-3 text-[var(--text-muted)] font-medium">Tracked</th>
                 <th className="text-right py-3 text-[var(--text-muted)] font-medium">Hits</th>
@@ -162,7 +162,7 @@ export default function TrackRecordPage() {
             </thead>
             <tbody>
               {Object.entries(data.hit_rates).map(([horizon, stats]) => (
-                <tr key={horizon} className="border-b border-[var(--border-primary)] last:border-0">
+                <tr key={horizon} className="border-b border-[var(--border-default)] last:border-0">
                   <td className="py-3 text-[var(--text-primary)] font-medium">{horizon}</td>
                   <td className="py-3 text-right text-[var(--text-secondary)] font-mono">{stats.total}</td>
                   <td className="py-3 text-right text-[var(--text-secondary)] font-mono">{stats.hits}</td>
@@ -206,14 +206,14 @@ export default function TrackRecordPage() {
 
       {/* By Signal Type */}
       {activeTab === 'by_type' && (
-        <div className="glass-card-dashboard p-6">
+        <div className="card p-6">
           <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Performance by Signal Type</h3>
           {Object.keys(data.by_signal_type).length === 0 ? (
             <p className="text-[var(--text-muted)]">No signal type data yet.</p>
           ) : (
             <div className="space-y-3">
               {Object.entries(data.by_signal_type).map(([type, stats]) => (
-                <div key={type} className="p-4 bg-[var(--bg-overlay)] rounded-lg border border-[var(--border-primary)] flex items-center justify-between">
+                <div key={type} className="p-4 bg-[var(--bg-muted)] rounded-lg border border-[var(--border-default)] flex items-center justify-between">
                   <div>
                     <div className="text-sm font-medium text-[var(--text-primary)]">{type.replace(/_/g, ' ')}</div>
                     <div className="text-xs text-[var(--text-muted)]">{stats.count} signals</div>
@@ -239,7 +239,7 @@ export default function TrackRecordPage() {
 
       {/* By Stock */}
       {activeTab === 'by_stock' && (
-        <div className="glass-card-dashboard p-6">
+        <div className="card p-6">
           <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Performance by Stock</h3>
           {Object.keys(data.by_stock).length === 0 ? (
             <p className="text-[var(--text-muted)]">No stock data yet.</p>
@@ -247,7 +247,7 @@ export default function TrackRecordPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border-primary)]">
+                  <tr className="border-b border-[var(--border-default)]">
                     <th className="text-left py-3 text-[var(--text-muted)] font-medium">Stock</th>
                     <th className="text-right py-3 text-[var(--text-muted)] font-medium">Signals</th>
                     <th className="text-right py-3 text-[var(--text-muted)] font-medium">3D Hit Rate</th>
@@ -256,7 +256,7 @@ export default function TrackRecordPage() {
                 </thead>
                 <tbody>
                   {Object.entries(data.by_stock).map(([stock, stats]) => (
-                    <tr key={stock} className="border-b border-[var(--border-primary)] last:border-0">
+                    <tr key={stock} className="border-b border-[var(--border-default)] last:border-0">
                       <td className="py-3 text-[var(--text-primary)] font-medium">{stock}</td>
                       <td className="py-3 text-right text-[var(--text-secondary)] font-mono">{stats.count}</td>
                       <td className="py-3 text-right font-mono">
@@ -280,14 +280,14 @@ export default function TrackRecordPage() {
 
       {/* Recent Signals */}
       {activeTab === 'recent' && (
-        <div className="glass-card-dashboard p-6">
+        <div className="card p-6">
           <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Recent Signals with Outcomes</h3>
           {data.recent_signals.length === 0 ? (
             <p className="text-[var(--text-muted)]">No recent signals.</p>
           ) : (
             <div className="space-y-3">
               {data.recent_signals.map((sig) => (
-                <div key={sig.id} className="p-4 bg-[var(--bg-overlay)] rounded-lg border border-[var(--border-primary)]">
+                <div key={sig.id} className="p-4 bg-[var(--bg-muted)] rounded-lg border border-[var(--border-default)]">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <span className="font-semibold text-[var(--text-primary)]">{sig.symbol}</span>

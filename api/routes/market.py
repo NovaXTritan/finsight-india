@@ -25,6 +25,13 @@ settings = get_settings()
 router = APIRouter(prefix="/market", tags=["Indian Market"])
 
 
+def _get_fetcher() -> IndiaDataFetcher:
+    """Create fetcher with DB pool for market_data fallback."""
+    from api.core.database import db
+    pool = db.pool if db and db.pool else None
+    return IndiaDataFetcher(db_pool=pool)
+
+
 # =============================================================================
 # MODULE-LEVEL TTL CACHE
 # Avoids re-fetching market data that doesn't change every second.
@@ -79,7 +86,9 @@ async def get_market_summary(
         return cached
 
     try:
-        summary = await fetch_india_market_summary()
+        from api.core.database import db
+        pool = db.pool if db and db.pool else None
+        summary = await fetch_india_market_summary(db_pool=pool)
         _set_cache("summary", summary)
         return summary
     except Exception as e:
@@ -104,7 +113,7 @@ async def get_indices(
     if cached is not None:
         return cached
 
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         raw = await fetcher.get_indices()
         # get_indices now returns {data, data_source, is_live}
@@ -139,7 +148,7 @@ async def get_fii_dii(
     if cached is not None:
         return cached
 
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         data = await fetcher.get_fii_dii()
         if not data:
@@ -164,7 +173,7 @@ async def get_bulk_deals(
     if cached is not None:
         return cached
 
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         deals = await fetcher.get_bulk_deals()
         result = {"deals": deals, "count": len(deals), "date": datetime.now().strftime("%Y-%m-%d")}
@@ -188,7 +197,7 @@ async def get_block_deals(
     if cached is not None:
         return cached
 
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         deals = await fetcher.get_block_deals()
         result = {"deals": deals, "count": len(deals), "date": datetime.now().strftime("%Y-%m-%d")}
@@ -207,7 +216,7 @@ async def get_market_status(
 
     Market hours: 9:15 AM - 3:30 PM IST (Mon-Fri)
     """
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         is_open = await fetcher.is_market_open()
         return {
@@ -237,7 +246,7 @@ async def get_nifty50_stocks(
     if cached is not None:
         return cached
 
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         df = await fetcher.get_nifty50_live()
         if df is None or df.empty:
@@ -458,7 +467,7 @@ async def get_stock_data(
 
     Returns OHLCV data as list of candles.
     """
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         df = await fetcher.fetch_stock_data_async(symbol, period=period, interval=interval)
 
@@ -499,7 +508,7 @@ async def get_stock_price(
 
     Returns current market price.
     """
-    fetcher = IndiaDataFetcher()
+    fetcher = _get_fetcher()
     try:
         price = await fetcher.get_current_price_async(symbol)
 
@@ -514,3 +523,91 @@ async def get_stock_price(
         }
     finally:
         await fetcher.close()
+
+
+@router.get("/debug-sources")
+async def debug_data_sources(
+    user_id: str = Depends(get_current_user_id)
+):
+    """
+    Diagnostic endpoint to test which data sources are working.
+    Tests NSE, Yahoo Finance, and database availability.
+    """
+    import yfinance as yf
+
+    results = {"timestamp": datetime.now().isoformat(), "sources": {}}
+
+    # Test 0: SmartAPI (async Quote API)
+    try:
+        from data.smartapi_client import get_smartapi_client
+        client = get_smartapi_client()
+        if not client._token_map:
+            await client.load_instrument_tokens_async()
+        price_data = await client.get_live_price_async("RELIANCE")
+        if price_data and price_data.get("price"):
+            results["sources"]["smartapi"] = {
+                "status": "ok",
+                "sample_price": price_data["price"],
+                "authenticated": client._last_auth is not None,
+                "method": "quote_api",
+            }
+        else:
+            results["sources"]["smartapi"] = {"status": "no_data", "authenticated": client._last_auth is not None}
+    except Exception as e:
+        results["sources"]["smartapi"] = {"status": "error", "error": str(e)}
+
+    # Test 1: Yahoo Finance
+    try:
+        ticker = yf.Ticker("RELIANCE.NS")
+        hist = ticker.history(period="2d")
+        if hist is not None and not hist.empty:
+            price = float(hist["Close"].iloc[-1])
+            results["sources"]["yahoo"] = {
+                "status": "ok",
+                "sample_price": price,
+                "rows": len(hist),
+            }
+        else:
+            results["sources"]["yahoo"] = {"status": "empty", "error": "No data returned"}
+    except Exception as e:
+        results["sources"]["yahoo"] = {"status": "error", "error": str(e)}
+
+    # Test 2: NSE direct
+    try:
+        fetcher = _get_fetcher()
+        nse_data = await fetcher.nse.get_all_indices()
+        if nse_data and "data" in nse_data:
+            results["sources"]["nse"] = {"status": "ok", "indices_count": len(nse_data["data"])}
+        else:
+            results["sources"]["nse"] = {"status": "empty", "error": "No data"}
+        await fetcher.close()
+    except Exception as e:
+        results["sources"]["nse"] = {"status": "error", "error": str(e)}
+
+    # Test 3: Database market_data
+    try:
+        from api.core.database import db
+        if db and db.pool:
+            async with db.pool.acquire() as conn:
+                count = await conn.fetchval("SELECT COUNT(*) FROM market_data")
+                latest = await conn.fetchrow(
+                    "SELECT symbol, trade_date, close FROM market_data ORDER BY trade_date DESC LIMIT 1"
+                )
+            latest_dict = None
+            if latest:
+                latest_dict = {
+                    "symbol": latest["symbol"],
+                    "trade_date": str(latest["trade_date"]),
+                    "close": float(latest["close"]),
+                }
+            results["sources"]["database"] = {
+                "status": "ok" if count > 0 else "empty",
+                "total_rows": count,
+                "latest": latest_dict,
+            }
+        else:
+            results["sources"]["database"] = {"status": "no_pool", "error": "DB pool not available"}
+    except Exception as e:
+        results["sources"]["database"] = {"status": "error", "error": str(e)}
+
+    return results

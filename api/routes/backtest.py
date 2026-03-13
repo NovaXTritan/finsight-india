@@ -86,8 +86,8 @@ async def run_backtest(
             initial_capital=config.initial_capital
         )
 
-        # Load data
-        if not engine.load_data():
+        # Load data (DB → SmartAPI → yfinance cascade)
+        if not await engine.load_data(db_pool=db.pool):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to load historical data for symbols"

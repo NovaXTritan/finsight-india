@@ -203,16 +203,12 @@ async def get_enriched_watchlist(
     db: APIDatabase = Depends(get_db)
 ):
     """
-    Get watchlist with enriched data including live prices, fundamentals, and sparkline data.
-
-    Returns for each symbol:
-    - Current price and day change
-    - 5-day price history for sparkline
-    - 52-week high/low position
-    - Key fundamentals (PE, Market Cap)
+    Get watchlist with enriched data: live prices (SmartAPI), sparkline (DB),
+    52W high/low (DB), with yfinance as fallback.
     """
-    import yfinance as yf
     from datetime import datetime, timedelta
+    from data.smartapi_client import get_smartapi_client
+    import time
 
     # Demo mode - use in-memory watchlist
     if db.pool is None:
@@ -224,113 +220,164 @@ async def get_enriched_watchlist(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-
         symbols = await db.get_watchlist(user_id)
+
     if not symbols:
-        return {
-            "symbols": [],
-            "count": 0,
-            "timestamp": datetime.now().isoformat()
-        }
+        return {"symbols": [], "count": 0, "timestamp": datetime.now().isoformat()}
+
+    # Initialize SmartAPI client once (async)
+    client = get_smartapi_client()
+    if not client._token_map:
+        await client.load_instrument_tokens_async()
+
+    # --- 1. Batch fetch all live prices in ONE API call ---
+    live_prices: Dict[str, Dict] = {}
+    try:
+        live_prices = await client.get_batch_prices_async(symbols)
+        if live_prices:
+            logger.info(f"Quote API returned {len(live_prices)} prices in 1 call")
+    except Exception as e:
+        logger.warning(f"SmartAPI Quote API batch failed: {e}")
+
+    async def _get_db_history(symbol: str, days: int = 250):
+        """Get historical data from market_data table."""
+        if not db.pool:
+            return []
+        try:
+            rows = await db.pool.fetch("""
+                SELECT trade_date, open, high, low, close, volume
+                FROM market_data WHERE symbol = $1
+                ORDER BY trade_date DESC LIMIT $2
+            """, symbol, days)
+            return rows
+        except Exception:
+            return []
 
     async def fetch_stock_data(symbol: str) -> Optional[Dict[str, Any]]:
-        """Fetch enriched data for a single stock."""
-        try:
-            ticker = yf.Ticker(f"{symbol}.NS")
+        """Enrich with DB history. Live price already fetched via batch Quote API."""
 
-            # Get current info
-            info = ticker.info
+        current_price = None
+        day_open = None
+        volume = None
+        data_source = "unknown"
+        high_52w = None
+        low_52w = None
 
-            # Get 5-day history for sparkline
-            hist = ticker.history(period="5d")
-            sparkline_data = []
-            if not hist.empty:
-                sparkline_data = [
-                    {"date": d.strftime("%Y-%m-%d"), "price": round(p, 2)}
-                    for d, p in zip(hist.index, hist['Close'])
-                ]
+        # --- 1. Use pre-fetched Quote API data ---
+        quote = live_prices.get(symbol)
+        if quote and quote.get("price"):
+            current_price = quote["price"]
+            day_open = quote.get("open")
+            volume = quote.get("volume")
+            high_52w = quote.get("high_52w")
+            low_52w = quote.get("low_52w")
+            data_source = "smartapi"
 
-            current_price = info.get('currentPrice') or info.get('regularMarketPrice')
-            prev_close = info.get('previousClose') or info.get('regularMarketPreviousClose')
+        # --- 2. DB: sparkline + 52W high/low + prev close ---
+        db_rows = await _get_db_history(symbol, 250)
 
-            day_change = None
-            day_change_pct = None
-            if current_price and prev_close:
-                day_change = round(current_price - prev_close, 2)
-                day_change_pct = round((day_change / prev_close) * 100, 2)
+        sparkline_data = []
+        prev_close = None
+        avg_volume = None
 
-            high_52w = info.get('fiftyTwoWeekHigh')
-            low_52w = info.get('fiftyTwoWeekLow')
+        if db_rows:
+            recent = db_rows[:5]
+            sparkline_data = [
+                {"date": str(r["trade_date"]), "price": round(float(r["close"]), 2)}
+                for r in reversed(recent)
+            ]
 
-            # Calculate position in 52-week range
-            position_52w = None
-            if current_price and high_52w and low_52w and high_52w != low_52w:
-                position_52w = round(((current_price - low_52w) / (high_52w - low_52w)) * 100, 1)
+            if len(db_rows) >= 2:
+                prev_close = float(db_rows[1]["close"])
+            elif len(db_rows) == 1:
+                prev_close = float(db_rows[0]["open"])
 
-            return {
-                "symbol": symbol,
-                "name": info.get('shortName') or info.get('longName') or symbol,
-                "current_price": current_price,
-                "prev_close": prev_close,
-                "day_change": day_change,
-                "day_change_pct": day_change_pct,
-                "high_52w": high_52w,
-                "low_52w": low_52w,
-                "position_52w": position_52w,
-                "pe_ratio": info.get('trailingPE'),
-                "market_cap": info.get('marketCap'),
-                "volume": info.get('volume') or info.get('regularMarketVolume'),
-                "avg_volume": info.get('averageVolume'),
-                "sparkline": sparkline_data,
-                "last_updated": datetime.now().isoformat()
-            }
-        except Exception as e:
-            logger.warning(f"Failed to fetch data for {symbol} from yfinance: {e}, trying fallback")
-            # Use fallback data
-            from data.market_fallback import FALLBACK_PRICES, FALLBACK_NIFTY50
-            fallback_stock = next((s for s in FALLBACK_NIFTY50 if s["symbol"] == symbol), None)
-            if fallback_stock:
-                price = fallback_stock["last_price"]
-                prev = fallback_stock["prev_close"]
-                return {
-                    "symbol": symbol,
-                    "name": symbol,
-                    "current_price": price,
-                    "prev_close": prev,
-                    "day_change": round(price - prev, 2),
-                    "day_change_pct": round(((price - prev) / prev) * 100, 2),
-                    "high_52w": round(price * 1.25, 2),
-                    "low_52w": round(price * 0.75, 2),
-                    "position_52w": 65.0,
-                    "pe_ratio": None,
-                    "market_cap": None,
-                    "volume": fallback_stock["volume"],
-                    "avg_volume": fallback_stock["volume"],
-                    "sparkline": [],
-                    "last_updated": datetime.now().isoformat(),
-                }
-            return {
-                "symbol": symbol,
-                "name": symbol,
-                "error": str(e),
-                "sparkline": []
-            }
+            # 52W high/low from DB if Quote API didn't provide
+            if high_52w is None:
+                highs = [float(r["high"]) for r in db_rows]
+                if highs:
+                    high_52w = max(highs)
+            if low_52w is None:
+                lows = [float(r["low"]) for r in db_rows]
+                if lows:
+                    low_52w = min(lows)
 
-    # Fetch data for all symbols concurrently (limit to 10 at a time)
+            vols = [int(r["volume"]) for r in db_rows[:20] if r["volume"]]
+            if vols:
+                avg_volume = int(sum(vols) / len(vols))
+
+            if current_price is None:
+                current_price = float(db_rows[0]["close"])
+                day_open = float(db_rows[0]["open"])
+                volume = int(db_rows[0]["volume"] or 0)
+                data_source = "database"
+
+        # --- 3. Fallback to yfinance if still no price ---
+        if current_price is None:
+            try:
+                import yfinance as yf
+                hist = yf.Ticker(f"{symbol}.NS").history(period="5d")
+                if not hist.empty:
+                    current_price = round(float(hist['Close'].iloc[-1]), 2)
+                    if len(hist) >= 2:
+                        prev_close = round(float(hist['Close'].iloc[-2]), 2)
+                    day_open = round(float(hist['Open'].iloc[-1]), 2)
+                    volume = int(hist['Volume'].iloc[-1])
+                    sparkline_data = [
+                        {"date": d.strftime("%Y-%m-%d"), "price": round(float(p), 2)}
+                        for d, p in zip(hist.index, hist['Close'])
+                    ]
+                    data_source = "yahoo"
+            except Exception as yf_err:
+                logger.warning(f"yfinance also failed for {symbol}: {yf_err}")
+
+        if current_price is None:
+            return None
+
+        # Use quote change data if available, else compute
+        if quote and quote.get("change_pct") is not None:
+            day_change = quote.get("change", 0)
+            day_change_pct = quote.get("change_pct", 0)
+            if prev_close is None:
+                prev_close = round(current_price - day_change, 2) if day_change else day_open
+        else:
+            if prev_close is None:
+                prev_close = day_open
+            day_change = round(current_price - prev_close, 2) if prev_close else 0
+            day_change_pct = round((day_change / prev_close) * 100, 2) if prev_close else 0
+
+        position_52w = None
+        if high_52w and low_52w and high_52w != low_52w:
+            position_52w = round(((current_price - low_52w) / (high_52w - low_52w)) * 100, 1)
+
+        return {
+            "symbol": symbol,
+            "name": symbol,
+            "current_price": current_price,
+            "prev_close": prev_close,
+            "day_change": day_change,
+            "day_change_pct": day_change_pct,
+            "high_52w": high_52w,
+            "low_52w": low_52w,
+            "position_52w": position_52w,
+            "pe_ratio": None,
+            "market_cap": None,
+            "volume": volume,
+            "avg_volume": avg_volume,
+            "sparkline": sparkline_data,
+            "last_updated": datetime.now().isoformat(),
+            "data_source": data_source,
+        }
+
+    # Fetch DB history for all symbols concurrently (prices already fetched)
     enriched_data = []
-
-    # Process in batches to avoid rate limits
-    batch_size = 10
-    for i in range(0, len(symbols), batch_size):
-        batch = symbols[i:i + batch_size]
-        tasks = [fetch_stock_data(symbol) for symbol in batch]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for result in results:
-            if isinstance(result, Exception):
-                logger.error(f"Error fetching stock data: {result}")
-            elif result:
-                enriched_data.append(result)
+    tasks = [fetch_stock_data(sym) for sym in symbols]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for result in results:
+        if isinstance(result, Exception):
+            logger.error(f"Error fetching stock data: {result}")
+        elif result:
+            enriched_data.append(result)
 
     return {
         "symbols": enriched_data,

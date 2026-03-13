@@ -123,7 +123,7 @@ export default function SignalsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card-dashboard p-6">
+      <div className="card p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-primary-500/10 border border-primary-500/20 rounded-lg">
@@ -138,44 +138,45 @@ export default function SignalsPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center flex-wrap gap-2 sm:gap-3">
             <button
               onClick={toggleDemoMode}
-              className={`flex items-center px-4 py-2.5 rounded-lg border transition-all ${
+              className={`flex items-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border transition-all text-sm ${
                 isDemoMode
                   ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400'
-                  : 'bg-[var(--bg-overlay)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-primary-500/30'
+                  : 'bg-[var(--bg-muted)] border-[var(--border-default)] text-[var(--text-secondary)] hover:border-primary-500/30'
               }`}
             >
               {isDemoMode ? (
-                <ToggleRight className="h-5 w-5 mr-2 text-yellow-400" />
+                <ToggleRight className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-yellow-400" />
               ) : (
-                <ToggleLeft className="h-5 w-5 mr-2" />
+                <ToggleLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
               )}
-              {isDemoMode ? 'Demo Mode' : 'Real Data'}
+              {isDemoMode ? 'Demo' : 'Real'}
             </button>
 
             {!isDemoMode && (
               <button
                 onClick={runDetection}
                 disabled={isDetecting}
-                className="btn-glass-primary flex items-center space-x-2"
+                className="btn-primary flex items-center space-x-1.5 sm:space-x-2 text-sm"
               >
                 {isDetecting ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
                   <Zap className="h-4 w-4" />
                 )}
-                <span>Run Detection</span>
+                <span className="hidden sm:inline">Run Detection</span>
+                <span className="sm:hidden">Detect</span>
               </button>
             )}
 
             <button
               onClick={() => isDemoMode ? fetchDemoSignals() : fetchSignals(page)}
-              className="btn-glass-secondary flex items-center space-x-2"
+              className="btn-secondary flex items-center space-x-1.5 sm:space-x-2 text-sm"
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Refresh</span>
+              <span className="hidden sm:inline">Refresh</span>
             </button>
           </div>
         </div>
@@ -183,7 +184,7 @@ export default function SignalsPage() {
 
       {/* Demo Mode Banner */}
       {isDemoMode && (
-        <div className="glass-card-dashboard border-l-2 border-l-yellow-500 p-4">
+        <div className="card border-l-2 border-l-yellow-500 p-4">
           <div className="flex items-start">
             <div className="p-2 bg-yellow-500/10 rounded-lg mr-3">
               <AlertTriangle className="h-5 w-5 text-yellow-400" />
@@ -202,7 +203,7 @@ export default function SignalsPage() {
 
       {/* Detection Message */}
       {detectionMessage && (
-        <div className={`glass-card-dashboard p-4 border-l-2 ${
+        <div className={`card p-4 border-l-2 ${
           detectionMessage.includes('Found') || detectionMessage.includes('complete')
             ? 'border-l-green-500'
             : 'border-l-primary-500'
@@ -215,12 +216,12 @@ export default function SignalsPage() {
       )}
 
       {/* Signal Type Legend */}
-      <div className="glass-card-dashboard p-5">
-        <div className="flex items-center space-x-2 mb-4">
-          <Sparkles className="h-5 w-5 text-primary-400" />
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Signal Types</h3>
+      <div className="card p-3 sm:p-5">
+        <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary-400" />
+          <h3 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)]">Signal Types</h3>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {[
             { name: 'Volume Spike', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
             { name: 'Breakout', color: 'bg-green-500/10 text-green-400 border-green-500/20' },
@@ -262,12 +263,12 @@ export default function SignalsPage() {
       </div>
 
       {/* Signals List */}
-      <div className="glass-card-dashboard overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="p-5">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-24 bg-[var(--bg-overlay)] rounded-lg" />
+                <div key={i} className="h-24 bg-[var(--bg-muted)] rounded-lg" />
               ))}
             </div>
           ) : signals.length === 0 ? (
@@ -283,7 +284,7 @@ export default function SignalsPage() {
               <button
                 onClick={runDetection}
                 disabled={isDetecting}
-                className="btn-glass-primary"
+                className="btn-primary"
               >
                 <Play className="h-4 w-4 mr-2 inline" />
                 {isDetecting ? 'Detecting...' : 'Run Detection Now'}
@@ -299,7 +300,7 @@ export default function SignalsPage() {
                     className={`p-5 rounded-lg border transition-all ${
                       isDemo
                         ? 'border-yellow-500/20 bg-yellow-500/5'
-                        : 'bg-[var(--bg-overlay)] border-[var(--border-primary)]'
+                        : 'bg-[var(--bg-muted)] border-[var(--border-default)]'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -334,25 +335,25 @@ export default function SignalsPage() {
                             maximumFractionDigits: 2,
                           })}
                         </div>
-                        <div className={`text-sm font-medium ${decisionColors[signal.agent_decision] || 'text-[var(--text-muted)]'}`}>
-                          {signal.agent_decision?.replace(/_/g, ' ')}
+                        <div className={`text-sm font-medium ${decisionColors[signal.signal_action] || 'text-[var(--text-muted)]'}`}>
+                          {signal.signal_action?.replace(/_/g, ' ')}
                         </div>
                       </div>
                     </div>
 
                     <div className="mb-3">
-                      <p className="text-sm text-[var(--text-secondary)]">{signal.agent_reason}</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{signal.reasoning}</p>
                     </div>
 
                     {'context' in signal && signal.context && (
-                      <div className="mb-3 p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-primary)]">
+                      <div className="mb-3 p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-default)]">
                         <p className="text-xs text-[var(--text-muted)]">{signal.context}</p>
                       </div>
                     )}
 
                     {/* Catalyst Context */}
                     {signal.catalyst_context && Object.keys(signal.catalyst_context).length > 0 && (
-                      <div className="mb-3 p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-primary)] space-y-1">
+                      <div className="mb-3 p-3 bg-[var(--bg-primary)] rounded-lg border border-[var(--border-default)] space-y-1">
                         <p className="text-xs font-semibold text-[var(--text-secondary)] mb-1">Catalyst Context</p>
                         {Object.entries(signal.catalyst_context).map(([key, val]) => (
                           <p key={key} className="text-xs text-[var(--text-muted)]">
@@ -362,7 +363,7 @@ export default function SignalsPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-xs text-[var(--text-muted)] pt-3 border-t border-[var(--border-primary)]">
+                    <div className="flex items-center justify-between text-xs text-[var(--text-muted)] pt-3 border-t border-[var(--border-default)]">
                       <span>
                         Detected: {new Date(signal.detected_at).toLocaleString()}
                       </span>
@@ -371,7 +372,7 @@ export default function SignalsPage() {
                           {'★'.repeat(signal.confidence_level || 1)}{'☆'.repeat(5 - (signal.confidence_level || 1))}
                         </span>
                         <span className="px-2 py-1 bg-primary-500/10 rounded text-primary-400 font-medium font-mono">
-                          {((signal.agent_confidence || 0) * 100).toFixed(0)}%
+                          {((signal.statistical_confidence || 0) * 100).toFixed(0)}%
                         </span>
                       </div>
                     </div>
@@ -384,7 +385,7 @@ export default function SignalsPage() {
 
         {/* Pagination */}
         {!isDemoMode && totalPages > 1 && (
-          <div className="px-5 py-4 border-t border-[var(--border-primary)] flex items-center justify-between">
+          <div className="px-5 py-4 border-t border-[var(--border-default)] flex items-center justify-between">
             <div className="text-sm text-[var(--text-muted)] font-mono">
               Page {page} of {totalPages} ({total} signals)
             </div>
@@ -392,14 +393,14 @@ export default function SignalsPage() {
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:border-[var(--text-muted)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-lg bg-[var(--bg-muted)] border border-[var(--border-default)] hover:border-[var(--text-muted)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setPage(p => p + 1)}
                 disabled={!hasMore}
-                className="p-2 rounded-lg bg-[var(--bg-overlay)] border border-[var(--border-primary)] hover:border-[var(--text-muted)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-lg bg-[var(--bg-muted)] border border-[var(--border-default)] hover:border-[var(--text-muted)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
